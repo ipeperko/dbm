@@ -1,0 +1,61 @@
+cmake_minimum_required(VERSION 3.10)
+
+set(DBM_VERSION 1.0.0)
+project(dbm VERSION "${DBM_VERSION}" LANGUAGES CXX)
+
+option(DBM_BUILD_TESTS "Build dbm tests" OFF)
+
+set(CMAKE_CXX_STANDARD 17)
+
+if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
+    add_definitions(-DNDEBUG)
+endif()
+
+include_directories(PUBLIC include)
+
+file(GLOB SOURCES
+    src/*.cpp
+    src/drivers/mysql/mysql_session.cpp
+    src/drivers/sqlite/sqlite_session.cpp
+    )
+
+set (LIBS)
+
+# MySQL library
+find_library(MYSQL_LIB mysqlclient)
+
+if (MYSQL_LIB)
+    message("checking for libmysqlclient ... ok")
+    add_definitions("-DDBM_MYSQL")
+    list(APPEND LIBS "mysqlclient")
+else ()
+    message("checking for libmysqlclient ... not found")
+endif()
+
+# SQLite library
+find_library(SQLITE3_LIB sqlite3)
+
+if (SQLITE3_LIB)
+    message("checking for libsqlite3 ... ok")
+    add_definitions("-DDBM_SQLITE3")
+    list(APPEND LIBS "sqlite3")
+else ()
+    message("checking for libsqlite3 ... not found")
+endif()
+
+# Compile static library
+add_library(dbm_static STATIC ${SOURCES})
+target_link_libraries(dbm_static ${LIBS})
+
+# Compile shared library
+add_library(dbm SHARED ${SOURCES})
+target_link_libraries(dbm ${LIBS})
+
+install(TARGETS dbm_static dbm DESTINATION lib)
+install(DIRECTORY include/ DESTINATION include/dbm)
+
+if (DBM_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()
+
