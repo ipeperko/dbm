@@ -345,9 +345,6 @@ void test_model()
 
     model model = get_test_model<SessionType>();
 
-    // Add model item - not present in database
-    //model.items().emplace_back(dbm::key("model_only")); // doesn't exist in database
-
     // Add database item - not present in model
     session.query("ALTER TABLE " + model.table_name() + " ADD COLUMN db_only INTEGER DEFAULT NULL");
     session.query("ALTER TABLE " + model.table_name() + " ADD COLUMN db_only2 INTEGER DEFAULT NULL");
@@ -373,7 +370,7 @@ void test_model()
     // delete record
     model.delete_record(session);
     {
-        auto s2(session);
+        SessionType s2(session);
         s2.open();
         auto rows = s2.select("SELECT * FROM " + tbl_name + " WHERE id=" + std::to_string(data_fields.id));
         BOOST_TEST(rows.empty());
@@ -405,7 +402,7 @@ void test_model()
     // delete record
     model.delete_record(session);
     {
-        auto s2(session);
+        SessionType s2(session);
         s2.open();
         auto rows = s2.select("SELECT * FROM " + tbl_name + " WHERE id=" + std::to_string(data_fields.id));
         BOOST_TEST(rows.empty());
@@ -418,7 +415,7 @@ void test_model()
     model >> session;
 
     {
-        auto s2(session);
+        SessionType s2(session);
         s2.open();
         auto rows = s2.select("SELECT * FROM " + tbl_name + " WHERE id=" + std::to_string(data_fields.id));
         BOOST_TEST(rows.size() == 1);

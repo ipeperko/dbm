@@ -144,6 +144,10 @@ void mysql_session::init(const std::string& host_name, const std::string& user, 
 
 void mysql_session::open()
 {
+    if (conn__) {
+        return;
+    }
+
     /* initialize connection handler */
     conn__ = mysql_init(nullptr);
 
