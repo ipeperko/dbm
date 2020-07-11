@@ -44,7 +44,7 @@ public:
         : value_(value)
     {}
 
-    explicit named_type(named_type const& oth)
+    named_type(named_type const& oth)
         : value_(oth.value_)
     {}
 
@@ -52,21 +52,13 @@ public:
         : value_(std::move(value))
     {}
 
-    explicit named_type(named_type&& oth)
+    named_type(named_type&& oth)
         : value_(std::move(oth.value_))
     {}
 
-    named_type& operator=(const named_type& oth)
-    {
-        value_ = oth.value_;
-        return *this;
-    }
+    named_type& operator=(const named_type& oth) = default;
 
-    named_type& operator=(named_type&& oth)
-    {
-        value_ = std::move(oth.value_);
-        return *this;
-    }
+    named_type& operator=(named_type&& oth) = default;
 
     bool operator==(const named_type& oth) const
     {
