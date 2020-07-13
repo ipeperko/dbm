@@ -69,11 +69,6 @@ private:
     char* p_ {nullptr};
 };
 
-int callback(void*, int, char**, char**)
-{
-    return 0;
-}
-
 }// namespace
 
 sqlite_session::sqlite_session()
@@ -89,7 +84,6 @@ sqlite_session::sqlite_session(const sqlite_session& oth)
     : session(oth)
     , db_name_(oth.db_name_)
 {
-    *this = oth;
 }
 
 sqlite_session& sqlite_session::operator=(const sqlite_session& oth)
