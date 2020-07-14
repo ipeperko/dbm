@@ -1,8 +1,7 @@
 #ifndef DBM_CONTAINER_IMPL_HPP
 #define DBM_CONTAINER_IMPL_HPP
 
-namespace dbm {
-namespace detail {
+namespace dbm::detail {
 
 using container_conf = uint32_t;
 
@@ -112,7 +111,6 @@ private:
     validator_fn validator_;
 };
 
-} // namespace detail
-} // namespace dbm
+} // namespace
 
 #endif //DBM_CONTAINER_IMPL_HPP

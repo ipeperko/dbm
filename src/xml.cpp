@@ -1,11 +1,7 @@
-#ifndef XML_CPP
-#define XML_CPP
-
 #include "xml.hpp"
 #include "dbm_common.hpp"
 
-namespace dbm {
-namespace xml {
+namespace dbm::xml {
 
 /*
  * -------------------------------------------------------------------
@@ -759,7 +755,4 @@ std::string node::to_string(bool declr, unsigned ident) const
     return ss.str();
 }
 
-} // namespace xml
-} // namespace dbm
-
-#endif //XML_CPP
+} // namespace

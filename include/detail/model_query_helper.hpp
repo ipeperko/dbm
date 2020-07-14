@@ -3,8 +3,7 @@
 
 #include "model.hpp"
 
-namespace dbm {
-namespace detail {
+namespace dbm::detail {
 
 struct param_session_type_mysql
 {};
@@ -224,7 +223,6 @@ public:
     }
 };
 
-}
-}
+} // namespace
 
 #endif //DBM_MODEL_QUERY_HELPER_HPP

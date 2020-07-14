@@ -3,9 +3,7 @@
 
 #include <sstream>
 
-namespace dbm {
-namespace kind {
-namespace detail {
+namespace dbm::kind::detail {
 
 template<typename T, template<typename> class CrtpType>
 struct nt_crtp
@@ -84,8 +82,6 @@ private:
     T value_;
 };
 
-} // namespace detail
-} // namespace kind
 } // namespace dbm
 
 namespace std {

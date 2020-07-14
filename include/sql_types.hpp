@@ -4,8 +4,7 @@
 #include "dbm_common.hpp"
 #include <sstream>
 
-namespace dbm {
-namespace kind {
+namespace dbm::kind {
 
 /**
  * Sql field names vector
@@ -431,7 +430,6 @@ private:
     std::vector<std::vector<std::optional<std::string>>> data_;
 };
 
-} // namespace kind
-} // namespace dbm
+} // namespace
 
 #endif //DBM_SQL_TYPES_HPP

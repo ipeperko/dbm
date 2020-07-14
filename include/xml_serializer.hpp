@@ -5,8 +5,7 @@
 #include "xml.hpp"
 #include "dbm_common.hpp"
 
-namespace dbm {
-namespace xml {
+namespace dbm::xml {
 
 class deserializer : public dbm::deserializer
 {
@@ -183,7 +182,6 @@ private:
     deserializer dser_;
 };
 
-}// namespace xml
 }// namespace dbm
 
 #endif//DBM_XML_SERIALIZER_HPP

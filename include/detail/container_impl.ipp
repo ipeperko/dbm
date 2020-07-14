@@ -1,8 +1,7 @@
 #ifndef DBM_CONTAINER_IMPL_IPP
 #define DBM_CONTAINER_IMPL_IPP
 
-namespace dbm {
-namespace detail {
+namespace dbm::detail {
 
 template<typename T, template<typename> class ContType, container_conf conf>
 std::string container_impl<T, ContType, conf>::to_string() const
@@ -213,7 +212,6 @@ bool container_impl<T, ContType, conf>::deserialize(deserializer& s, std::string
     }
 }
 
-} // namespace detail
 } // namespace dbm
 
 #endif

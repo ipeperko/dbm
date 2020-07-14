@@ -6,8 +6,7 @@
 #include <sstream>
 #include <unordered_map>
 
-namespace dbm {
-namespace xml {
+namespace dbm::xml {
 
 /*
  * -------------------------------------------------------------------
@@ -278,7 +277,6 @@ protected:
     attribute_map attrs_;
 };
 
-}// namespace xml
-}// namespace dbm
+}// namespace
 
 #endif//DBM_XML_HPP
