@@ -215,6 +215,7 @@ cmake ..
 make
 make install
 ```
+CMake automatically searches for dependent libraries mysqlclient and sqlite3 and compiles each driver only if found on the system.
 
 To build tests add -DDBM_BUILD_TESTS=ON to cmake command.
 
