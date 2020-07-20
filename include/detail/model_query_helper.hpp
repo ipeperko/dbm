@@ -41,6 +41,10 @@ public:
 
         for (const auto& it : model_.items()) {
 
+            if (it.direction() == kind::direction::read_only) {
+                continue;
+            }
+
             if (it.is_defined()) {
 
                 if (i) {
@@ -83,7 +87,7 @@ public:
                 q += "OR REPLACE ";
             }
         }
-        else {
+        else if constexpr (is_MySql()) {
             if (model_.ignore_insert_) {
                 q += "IGNORE ";
             }
@@ -103,19 +107,20 @@ public:
 
     std::string read_query(const std::string& extra_condition) const
     {
-        std::string q = "SELECT " ; //* FROM " + model_.table_ + " WHERE ";
+        std::string q = "SELECT " ;
         std::string what;
-        // TODO: no need for *, replace with only present model keys
 
         // keys
         int n = 0;
         for (const auto& it : model_.items_) {
-            if (n) {
-                what += ",";
-            }
+            if (it.direction() != kind::direction::write_only) {
+                if (n) {
+                    what += ",";
+                }
 
-            what += it.key().get();
-            ++n;
+                what += it.key().get();
+                ++n;
+            }
         }
 
         q += what + " FROM " + model_.table_ + " WHERE ";
@@ -123,7 +128,7 @@ public:
         // primary
         n = 0;
         for (const auto& it : model_.items_) {
-
+            // TODO: write only direction
             if (!it.is_primary()) {
                 continue;
             }

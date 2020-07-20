@@ -21,6 +21,7 @@ public:
         , required_(oth.required_)
         , dbtype_(oth.dbtype_)
         , taggable_(oth.taggable_)
+        , direction_(oth.direction_)
         , cont_(oth.cont_->clone())
     {
     }
@@ -46,6 +47,7 @@ public:
             required_ = oth.required_;
             dbtype_ = oth.dbtype_;
             taggable_ = oth.taggable_;
+            direction_ = oth.direction_;
             cont_ = oth.cont_->clone();
         }
         return *this;
@@ -98,6 +100,11 @@ public:
         return dbtype_;
     }
 
+    kind::direction direction() const
+    {
+        return direction_;
+    }
+
     void set(const kind::key& v)
     {
         key_ = v;
@@ -126,6 +133,11 @@ public:
     void set(const kind::taggable& v)
     {
         taggable_ = v;
+    }
+
+    void set(kind::direction v)
+    {
+        direction_ = v;
     }
 
     void set(container_ptr&& v)
@@ -231,6 +243,7 @@ private:
     kind::required required_{false};
     kind::dbtype dbtype_ {""};
     kind::taggable taggable_ {true};
+    kind::direction direction_{kind::direction::read_write};
     container_ptr cont_;
 };
 

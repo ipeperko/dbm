@@ -83,6 +83,13 @@ typedef detail::named_type<std::string, detail::parameter_dbtype, detail::printa
 typedef detail::named_type<bool, detail::parameter_null, detail::printable> null;
 typedef detail::named_type<bool, detail::parameter_taggable, detail::printable> taggable;
 
+enum class direction
+{
+    read_write,
+    read_only,
+    write_only,
+};
+
 #ifdef DBM_EXPERIMENTAL_BLOB
 typedef std::vector<char> blob;
 #endif

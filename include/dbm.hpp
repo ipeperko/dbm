@@ -14,6 +14,7 @@ using required = kind::required;
 using dbtype = kind::dbtype;
 using null = kind::null;
 using taggable = kind::taggable;
+using direction = kind::direction;
 
 #ifdef DBM_EXPERIMENTAL_BLOB
 using blob = kind::blob;

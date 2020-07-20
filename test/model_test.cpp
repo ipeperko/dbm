@@ -33,13 +33,13 @@ BOOST_AUTO_TEST_CASE(db_config)
         std::string arg = framework::master_test_suite().argv[i];
 
         if (arg == "--mysql-host") {
-            mysql_host = framework::master_test_suite().argv[i+1];
+            mysql_host = framework::master_test_suite().argv[i + 1];
         }
         else if (arg == "--mysql-username" || arg == "--db-username") {
-            mysql_username = framework::master_test_suite().argv[i+1];
+            mysql_username = framework::master_test_suite().argv[i + 1];
         }
         else if (arg == "--mysql-password" || arg == "--db-password") {
-            mysql_password = framework::master_test_suite().argv[i+1];
+            mysql_password = framework::master_test_suite().argv[i + 1];
         }
     }
 
@@ -99,12 +99,12 @@ BOOST_AUTO_TEST_CASE(model_test_replace_container)
 BOOST_AUTO_TEST_CASE(model_test_serialization)
 {
     dbm::model model("tbl", {
-        { dbm::local<int>(13), dbm::key("id") },
-        { dbm::local<std::string>("honda"), dbm::key("name") },
-        { dbm::local(220), dbm::key("speed"), dbm::tag("tag_speed") },
-        { dbm::local(1500), dbm::key("weight"), dbm::taggable(false) },
-        { dbm::local<int>(), dbm::key("not_defined") },
-                      });
+                                { dbm::local<int>(13), dbm::key("id") },
+                                { dbm::local<std::string>("honda"), dbm::key("name") },
+                                { dbm::local(220), dbm::key("speed"), dbm::tag("tag_speed") },
+                                { dbm::local(1500), dbm::key("weight"), dbm::taggable(false) },
+                                { dbm::local<int>(), dbm::key("not_defined") },
+                            });
 
     BOOST_TEST(model.at("not_defined").is_null());
     BOOST_TEST(!model.at("not_defined").is_defined());
@@ -127,14 +127,13 @@ BOOST_AUTO_TEST_CASE(model_test_serialization)
     BOOST_REQUIRE_THROW(model.serialize(serializer), std::exception);
 }
 
-int getActiveProfileId(int controller_id) {
+int getActiveProfileId(int controller_id)
+{
 
     int active_profile_id;
     dbm::model model("table",
-                     {
-                         { dbm::key("profile"), dbm::local(active_profile_id) },
-                         { dbm::key("profile2"), dbm::binding(active_profile_id) }
-                     });
+                     { { dbm::key("profile"), dbm::local(active_profile_id) },
+                       { dbm::key("profile2"), dbm::binding(active_profile_id) } });
     return active_profile_id;
 }
 
@@ -143,14 +142,12 @@ BOOST_AUTO_TEST_CASE(webserver_table_active_profile)
     getActiveProfileId(1);
 }
 
-
-
 namespace {
 struct DataFields
 {
-    int id {0};
+    int id { 0 };
     std::string name;
-    int int_not_null {0};
+    int int_not_null { 0 };
 };
 } // namespace
 
@@ -211,7 +208,8 @@ dbm::model get_test_model()
             { dbm::local<std::string>(),
               dbm::key("timestamp"),
               dbm::tag("timestamp_tag"),
-              dbm::dbtype("TIMESTAMP" + ts) },
+              dbm::dbtype("TIMESTAMP" + ts),
+              dbm::direction::read_write },
         }
     };
 }
@@ -456,13 +454,12 @@ BOOST_AUTO_TEST_CASE(const_json_serializer)
 
     const nlohmann::json j {
         { "id", 1 },
-        { "name", "rambo"},
+        { "name", "rambo" },
         { "score", 2.34 },
         { "armed", true },
         { "id_s", "2" },
         { "score_s", "3.45" },
     };
-
 
     nlohmann::deserializer ser2(j);
     int a;
@@ -484,16 +481,15 @@ BOOST_AUTO_TEST_CASE(const_json_serializer)
     BOOST_TEST(nlohmann::deserializer(j).deserialize("score_s", score) == parse_result::error);
 }
 
-
 BOOST_AUTO_TEST_CASE(model_find_item)
 {
     dbm::model m("",
-                      {
-                          { dbm::local(1), dbm::key("controller_id"), dbm::primary(true), dbm::taggable(false) },
-                          { dbm::local<time_t>(), dbm::key("time"), dbm::primary(true) },
-                          { dbm::local<int>(), dbm::key("element_id"), dbm::primary(true) },
-                          { dbm::local<double>(), dbm::key("value") },
-                      });
+                 {
+                     { dbm::local(1), dbm::key("controller_id"), dbm::primary(true), dbm::taggable(false) },
+                     { dbm::local<time_t>(), dbm::key("time"), dbm::primary(true) },
+                     { dbm::local<int>(), dbm::key("element_id"), dbm::primary(true) },
+                     { dbm::local<double>(), dbm::key("value") },
+                 });
 
     bool test = std::end(m.items()) == m.end();
     BOOST_TEST(test);
@@ -515,7 +511,7 @@ BOOST_AUTO_TEST_CASE(nlohmann_json_test)
 {
     const nlohmann::json j {
         { "id", 1 },
-        { "name", "rambo"},
+        { "name", "rambo" },
         { "score", 2.34 },
         { "armed", true }
     };
