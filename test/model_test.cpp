@@ -172,7 +172,7 @@ dbm::model get_test_model()
     }
 #endif
 
-    return dbm::model {
+    dbm::model m {
         dbm_test_table_name,
         {
             { dbm::binding(data_fields.id),
@@ -212,6 +212,15 @@ dbm::model get_test_model()
               dbm::direction::read_write },
         }
     };
+
+    if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
+        m.emplace_back(dbm::local<time_t>(),
+                       dbm::key("UNIX_TIMESTAMP(timestamp)"),
+                       dbm::tag("unixtime_tag"),
+                       dbm::direction::read_only);
+    }
+
+    return m;
 }
 
 template<typename SessionType>

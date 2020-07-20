@@ -196,13 +196,11 @@ public:
                 primary_keys += it.key().get();
             }
 
-            if (!keys.empty()) {
-                keys += ", ";
-            }
-            keys += it.key().get();
-
             if (!it.dbtype().get().empty()) {
-                keys += " " + it.dbtype().get();
+                if (!keys.empty()) {
+                    keys += ", ";
+                }
+                keys += it.key().get() + " " + it.dbtype().get();
             }
         }
 
