@@ -115,6 +115,7 @@ taggable | true | Defines if item will be serialized.
 defined | false | Defines if value has been set. If 'defined' is false it won't be written to db or serializer.
 null | true | Defines if value is null.
 required | false | Defines if value 'defined' should always be true. Otherwise exception is thrown.
+direction | bidirectional | Item configuration for database write/read (bidirectional, read_only, write_only)
 local | | Value container with local storage of any supported type.
 binding | | Value container with binding.
 
@@ -237,7 +238,6 @@ config::set_custom_exception(nullptr); // library default exceptions
 - blob support
 - sql aliases
 - timestamp to unix time conversion
-- model item read/write config
 - sql joins
 - table creation from models 
 - Postgres
