@@ -88,7 +88,7 @@ std::string b64_encode(const void* _bytes_to_encode, size_t in_len)
     return encoded;
 }
 
-std::string b64_decode(std::string const& s)
+std::string b64_decode(std::string_view s)
 {
     std::string decoded;
     int in_len = s.size();

@@ -159,7 +159,7 @@ private:
 };
 
 extern std::string b64_encode(void const*, size_t len);
-extern std::string b64_decode(std::string const& s);
+extern std::string b64_decode(std::string_view s);
 
 } // namespace utils
 } // namespace dbm
