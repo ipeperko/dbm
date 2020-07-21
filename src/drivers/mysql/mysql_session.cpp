@@ -142,6 +142,11 @@ void mysql_session::init(const std::string& host_name, const std::string& user, 
     opt_flags = flags;
 }
 
+void mysql_session::set_database_name(const std::string& name)
+{
+    opt_db_name = name;
+}
+
 void mysql_session::open()
 {
     if (conn__) {
