@@ -394,6 +394,11 @@ public:
         return fmap_;
     }
 
+    size_t size() const
+    {
+        return data_.size();
+    }
+
     bool empty() const
     {
         return data_.empty();
