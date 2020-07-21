@@ -186,7 +186,7 @@ void mysql_session::query(const std::string& statement)
     }
 }
 
-kind::sql_rows mysql_session::select(const std::string& statement)
+kind::sql_rows mysql_session::select_rows(const std::string& statement)
 {
     kind::sql_rows rows;
     unsigned num_fields = 0;

@@ -140,7 +140,7 @@ void sqlite_session::query(const std::string& statement)
     }
 }
 
-kind::sql_rows sqlite_session::select(const std::string& statement)
+kind::sql_rows sqlite_session::select_rows(const std::string& statement)
 {
     int rc;
     int nRow;

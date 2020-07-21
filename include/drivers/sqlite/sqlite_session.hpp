@@ -25,7 +25,6 @@ public:
     void close() override;
 
     void query(const std::string& statement) override;
-    kind::sql_rows select(const std::string& statement) override;
 
     std::string write_model_query(const model& m) const override;
     std::string read_model_query(const model& m, const std::string& extra_condition) const override;
@@ -38,6 +37,7 @@ public:
     void transaction_rollback() override { throw_exception<std::domain_error>("TODO sqlite transaction"); }
 
 private:
+    kind::sql_rows select_rows(const std::string& statement) override;
     void free_table();
 
     std::string db_name_;// database file name

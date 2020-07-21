@@ -34,6 +34,11 @@ void session::query(const std::string& statement)
     mstatement = statement;
 }
 
+kind::sql_rows session::select(const std::string& statement)
+{
+    return select_rows(statement);
+}
+
 kind::sql_rows session::select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria)
 {
     std::string& statement = mstatement;
@@ -54,7 +59,7 @@ kind::sql_rows session::select(const std::vector<std::string>& what, const std::
         statement += " " + criteria;
     }
 
-    return select(statement);
+    return select_rows(statement);
 }
 
 void session::create_database(const std::string& db_name, bool if_not_exists)
