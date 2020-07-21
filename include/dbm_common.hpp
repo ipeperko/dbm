@@ -85,7 +85,7 @@ typedef detail::named_type<bool, detail::parameter_taggable, detail::printable> 
 
 enum class direction
 {
-    read_write,
+    bidirectional,
     read_only,
     write_only,
 };

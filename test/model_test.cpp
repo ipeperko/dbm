@@ -174,51 +174,58 @@ dbm::model get_test_model()
 
     dbm::model m {
         dbm_test_table_name,
-        {
-            { dbm::binding(data_fields.id),
-              dbm::key("id"),
-              dbm::tag("tag_id"),
-              dbm::primary(true),
-              dbm::dbtype("INTEGER NOT NULL" + autoincr_str) },
-            { dbm::binding(data_fields.name),
-              dbm::key("text_not_null"),
-              dbm::tag("tag_text_not_null"),
-              dbm::dbtype("TEXT NOT NULL") },
-            { dbm::local<std::string>(),
-              dbm::key("text_with_null"),
-              dbm::tag("tag_text_with_null"),
-              dbm::required(true),
-              dbm::dbtype("TEXT DEFAULT NULL") },
-            { dbm::binding(data_fields.int_not_null),
-              dbm::key("int_not_null"),
-              dbm::tag("tag_int_not_null"),
-              dbm::dbtype("INTEGER NOT NULL") },
-            { dbm::local<int>(),
-              dbm::key("int_with_null"),
-              dbm::tag("tag_int_with_null"),
-              dbm::dbtype("INTEGER DEFAULT NULL") },
-            { dbm::local<bool>(),
-              dbm::key("tiny_int_not_null"),
-              dbm::tag("tag_tiny_int_not_null"),
-              dbm::dbtype("TINYINT NOT NULL") },
-            { dbm::local<bool>(),
-              dbm::key("tiny_int_with_null"),
-              dbm::tag("tag_tiny_int_with_null"),
-              dbm::dbtype("TINYINT DEFAULT NULL") },
-            { dbm::local<std::string>(),
-              dbm::key("timestamp"),
-              dbm::tag("timestamp_tag"),
-              dbm::dbtype("TIMESTAMP" + ts),
-              dbm::direction::read_write },
-        }
+        { { dbm::binding(data_fields.id),
+            dbm::key("id"),
+            dbm::tag("tag_id"),
+            dbm::primary(true),
+            dbm::dbtype("INTEGER NOT NULL" + autoincr_str) },
+          { dbm::binding(data_fields.name),
+            dbm::key("text_not_null"),
+            dbm::tag("tag_text_not_null"),
+            dbm::dbtype("TEXT NOT NULL") },
+          { dbm::local<std::string>(),
+            dbm::key("text_with_null"),
+            dbm::tag("tag_text_with_null"),
+            dbm::required(true),
+            dbm::dbtype("TEXT DEFAULT NULL") },
+          { dbm::binding(data_fields.int_not_null),
+            dbm::key("int_not_null"),
+            dbm::tag("tag_int_not_null"),
+            dbm::dbtype("INTEGER NOT NULL") },
+          { dbm::local<int>(),
+            dbm::key("int_with_null"),
+            dbm::tag("tag_int_with_null"),
+            dbm::dbtype("INTEGER DEFAULT NULL") },
+          { dbm::local<bool>(),
+            dbm::key("tiny_int_not_null"),
+            dbm::tag("tag_tiny_int_not_null"),
+            dbm::dbtype("TINYINT NOT NULL") },
+          { dbm::local<bool>(),
+            dbm::key("tiny_int_with_null"),
+            dbm::tag("tag_tiny_int_with_null"),
+            dbm::dbtype("TINYINT DEFAULT NULL") },
+          { dbm::local<std::string>(),
+            dbm::key("timestamp"),
+            dbm::tag("timestamp_tag"),
+            dbm::dbtype("TIMESTAMP" + ts) } }
     };
 
+#ifdef DBM_MYSQL
     if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
         m.emplace_back(dbm::local<time_t>(),
                        dbm::key("UNIX_TIMESTAMP(timestamp)"),
                        dbm::tag("unixtime_tag"),
                        dbm::direction::read_only);
     }
+#endif
+#ifdef DBM_SQLITE3
+    if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
+        m.emplace_back(dbm::local<time_t>(),
+                       dbm::key("strftime('%s',timestamp)"),
+                       dbm::tag("unixtime_tag"),
+                       dbm::direction::read_only);
+    }
+#endif
 
     return m;
 }

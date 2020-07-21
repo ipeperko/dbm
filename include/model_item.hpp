@@ -243,7 +243,7 @@ private:
     kind::required required_{false};
     kind::dbtype dbtype_ {""};
     kind::taggable taggable_ {true};
-    kind::direction direction_{kind::direction::read_write};
+    kind::direction direction_{kind::direction::bidirectional};
     container_ptr cont_;
 };
 
