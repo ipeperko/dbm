@@ -1,5 +1,5 @@
-#ifndef DBM_VALUE_HPP
-#define DBM_VALUE_HPP
+#ifndef DBM_CONTAINER_HPP
+#define DBM_CONTAINER_HPP
 
 #include "dbm_common.hpp"
 #include "serializer.hpp"
@@ -145,4 +145,4 @@ container_ptr binding(T& ref, Validator&& validator = nullptr, bool null = false
 
 }// namespace dbm
 
-#endif//DBM_VALUE_HPP
+#endif//DBM_CONTAINER_HPP
