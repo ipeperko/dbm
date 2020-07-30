@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-
-set(DBM_VERSION 1.0.0)
-project(dbm VERSION "${DBM_VERSION}" LANGUAGES CXX)
+project(dbm VERSION 1.0.0 DESCRIPTION "Database table models with serialization " LANGUAGES CXX)
 
 option(DBM_BUILD_TESTS "Build dbm tests" OFF)
 
@@ -23,7 +21,6 @@ set (LIBS)
 
 # MySQL library
 find_library(MYSQL_LIB mysqlclient)
-
 if (MYSQL_LIB)
     message("checking for libmysqlclient ... ok")
     add_definitions("-DDBM_MYSQL")
@@ -34,7 +31,6 @@ endif()
 
 # SQLite library
 find_library(SQLITE3_LIB sqlite3)
-
 if (SQLITE3_LIB)
     message("checking for libsqlite3 ... ok")
     add_definitions("-DDBM_SQLITE3")
@@ -46,14 +42,18 @@ endif()
 # Compile static library
 add_library(dbm_static STATIC ${SOURCES})
 target_link_libraries(dbm_static ${LIBS})
+set_target_properties(dbm_static PROPERTIES OUTPUT_NAME dbm)
 
 # Compile shared library
 add_library(dbm SHARED ${SOURCES})
 target_link_libraries(dbm ${LIBS})
+set_target_properties(dbm PROPERTIES VERSION ${PROJECT_VERSION})
 
-install(TARGETS dbm_static dbm DESTINATION lib)
+# Install library
+install(TARGETS dbm dbm_static DESTINATION lib)
 install(DIRECTORY include/ DESTINATION include/dbm)
 
+# Tests
 if (DBM_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
