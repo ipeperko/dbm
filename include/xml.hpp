@@ -268,6 +268,7 @@ public:
     std::string to_string(bool declr, unsigned ident) const;
 
 protected:
+    std::string to_string_helper(bool declr, int level, unsigned ident) const;
     void set_parent(node* parent) { parent_ = parent; }
 
     std::string tag_;

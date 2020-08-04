@@ -707,6 +707,11 @@ std::string node::to_string(unsigned ident) const
 
 std::string node::to_string(bool declr, unsigned ident) const
 {
+    return to_string_helper(declr, 0, ident);
+}
+
+std::string node::to_string_helper(bool declr, int level, unsigned int ident) const
+{
     std::ostringstream ss;
     unsigned item_ident;
 
@@ -716,7 +721,7 @@ std::string node::to_string(bool declr, unsigned ident) const
 
     // Ident
     if (ident) {
-        item_ident = level() * ident;
+        item_ident = level * ident;
         if (is_root() && declr) {
             ss << "\n";
         }
@@ -739,7 +744,7 @@ std::string node::to_string(bool declr, unsigned ident) const
 
     // Items
     for (const auto& it : items_) {
-        ss << it.to_string(false, ident);
+        ss << it.to_string_helper(false, level + 1, ident);
     }
 
     if (ident && (value_.empty() && !items_.empty())) {
