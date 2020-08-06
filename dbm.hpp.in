@@ -5,6 +5,10 @@
 #include "sql_types.hpp"
 #include "model.hpp"
 
+#define DBM_VERSION_MAJOR @dbm_VERSION_MAJOR@
+#define DBM_VERSION_MINOR @dbm_VERSION_MINOR@
+#define DBM_VERSION_PATCH @dbm_VERSION_PATCH@
+
 namespace dbm {
 
 using key = kind::key;
