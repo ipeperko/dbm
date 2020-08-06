@@ -278,6 +278,203 @@ protected:
     attribute_map attrs_;
 };
 
+
+/*
+ * -------------------------------------------------------------------
+ * Bindings
+ * -------------------------------------------------------------------
+ */
+
+class binding_base
+{
+public:
+    explicit binding_base(string_view key)
+        : key_(key)
+    {}
+
+    virtual ~binding_base() = default;
+
+    virtual void deserialize(const node& n) = 0;
+
+    virtual node serialize() const = 0;
+
+    std::string const& key()
+    {
+        return key_;
+    }
+
+protected:
+    std::string key_;
+};
+
+
+// Binding template
+template<typename T>
+class binding : public binding_base
+{
+    T& x;
+public:
+    explicit binding(string_view key, T& x)
+        : binding_base(key)
+        , x(x)
+    {}
+
+    void deserialize(const node& n) override
+    {
+        std::istringstream is(n.value());
+        if (!(is >> x)) {
+            throw std::runtime_error("Conversion failed - " + key_ + ":" + n.value());
+        }
+    }
+
+    node serialize() const override
+    {
+        std::ostringstream ss;
+        ss << x;
+        return { key_, ss.str()};
+    }
+};
+
+// std::string specialization
+template<>
+class binding<std::string> : public binding_base
+{
+    std::string& x;
+
+public:
+    explicit binding(string_view key, std::string& x)
+        : binding_base(key)
+        , x(x)
+    {}
+
+    void deserialize(const node& n) override
+    {
+        x = n.value();
+    }
+
+    node serialize() const override
+    {
+        return { key_, x};
+    }
+};
+
+// Enum binding
+template<typename Enum, typename EnumBase>
+class binding_enum : public binding_base
+{
+    Enum& x;
+
+public:
+    explicit binding_enum(string_view key, Enum& x)
+        : binding_base(key)
+        , x(x)
+    {}
+
+    void deserialize(const node& n) override
+    {
+        std::istringstream is(n.value());
+        EnumBase xx;
+
+        if (!(is >> xx)) {
+            throw std::runtime_error("Conversion failed - " + key_ + ":" + n.value());
+        }
+
+        x = static_cast<Enum>(xx);
+    }
+
+    node serialize() const override
+    {
+        std::ostringstream ss;
+        EnumBase xx = static_cast<EnumBase>(x);
+        ss << xx;
+        return { key_, ss.str()};
+    }
+};
+
+// Function binding
+template<typename FNfromXml, typename FNtoXml>
+class binding_func : public binding_base
+{
+    FNfromXml from_xml;
+    FNtoXml to_xml;
+
+public:
+    explicit binding_func(string_view key, FNfromXml from_xml, FNtoXml to_xml)
+        : binding_base(key)
+        , from_xml(from_xml)
+        , to_xml(to_xml)
+    {}
+    ~binding_func() = default;
+
+    void deserialize(const node& n) override
+    {
+        from_xml(n);
+    }
+
+    node serialize() const override
+    {
+        return to_xml();
+    }
+};
+
+class model : public std::vector<binding_base*>
+{
+public:
+    model() {}
+
+    ~model()
+    {
+        for (auto& it : *this) {
+            delete it;
+        }
+    }
+
+    template<typename T>
+    void add_binding(string_view key, T& ref)
+    {
+        push_back(new binding<T>(key, ref));
+    }
+
+    template<typename TEnum, typename TEnumBase>
+    void add_binding_enum(string_view key, TEnum& ref)
+    {
+        push_back(new binding_enum<TEnum, TEnumBase>(key, ref));
+    }
+
+    template<typename FNfromXml = void(const node&), typename FNtoXml = node(void)>
+    void add_binding_func(string_view key, FNfromXml from_xml, FNtoXml to_xml)
+    {
+        push_back(new binding_func<FNfromXml, FNtoXml>(key, from_xml, to_xml));
+    }
+
+    void from_xml(const node& root)
+    {
+        for (auto it = root.begin(); it != root.end(); it++) {
+            auto binding = find_by_key(it->tag());
+            if (binding != end()) {
+                (*binding)->deserialize(*it);
+            }
+        }
+    }
+
+    void to_xml(node& root)
+    {
+        for (const auto& it : *this) {
+            root.add() = it->serialize();
+        }
+    }
+
+    iterator find_by_key(string_view key)
+    {
+        for (auto it = begin(); it != end(); ++it) {
+            if ((*it)->key() == key) {
+                return it;
+            }
+        }
+        return end();
+    }
+};
+
 }// namespace
 
 #endif//DBM_XML_HPP
