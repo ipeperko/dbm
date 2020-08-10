@@ -4,7 +4,7 @@ dist: focal
 
 before_install:
   - sudo apt-get -y install mysql-server libmysqlclient-dev libsqlite3-dev libboost-test-dev libboost-filesystem-dev
-  - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
+  - mysql -u root -e 'CREATE DATABASE IF NOT EXISTS test;'
 
 services:
   - mysql
