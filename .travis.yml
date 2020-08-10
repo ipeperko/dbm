@@ -1,9 +1,9 @@
 language: generic
 
-dist: bionic
+dist: focal
 
 before_install:
-  - sudo apt-get -y install libmysqlclient-dev libsqlite3-dev
+  - sudo apt-get -y install libmysqlclient-dev libsqlite3-dev libboost-dev
 
 matrix:
   include:
