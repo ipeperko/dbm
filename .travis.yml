@@ -16,12 +16,8 @@ before_install:
   - wget -O boost_${BOOST_VERSION}.tar.gz https://dl.bintray.com/boostorg/release/${BOOST_DOT_VER}/source/boost_${BOOST_VERSION}.tar.gz && tar -xzf boost_${BOOST_VERSION}.tar.gz
   - cd boost_${BOOST_VERSION}
   - ./bootstrap.sh --without-libraries=graph,locale,regex,serialization,wave,mpi > build.log 2>&1 || (cat build.log && exit 1)
-  - sudo ./b2 link=static -j2 install > build.log 2>&1 || (cat build.log && exit 1)
-  - cd ./tools/build
-  - ./bootstrap.sh
-  - sudo ./b2 install > build.log 2>&1 || (cat build.log && exit 1)
+  - sudo ./b2 -j2 install > build.log 2>&1 || (cat build.log && exit 1)
   - sudo ldconfig
-  - echo "Boost install end"
   # Boost install end
   - sudo apt-get -y install libmysqlclient-dev libsqlite3-dev
   - mysql -u root -e 'CREATE DATABASE IF NOT EXISTS test;'
@@ -73,7 +69,7 @@ matrix:
 
 
 script:
-  - cd ${PROJECT_DIR}
+  - cd $TRAVIS_BUILD_DIR
   - pwd
   - ls
   - if [[ "$CXX" == clang* ]]; then export CXXFLAGS="-stdlib=libc++"; fi
