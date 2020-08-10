@@ -10,6 +10,7 @@ env:
     - BOOST_DOT_VER=1.72.0
 
 before_install:
+  #  Boost instalation
   - wget -O boost_${BOOST_VERSION}.tar.gz https://dl.bintray.com/boostorg/release/${BOOST_DOT_VER}/source/boost_${BOOST_VERSION}.tar.gz && tar -xzf boost_${BOOST_VERSION}.tar.gz
   #- sudo apt-get -y install libmysqlclient-dev libsqlite3-dev libboost-test-dev libboost-filesystem-dev
   - cd boost_${BOOST_VERSION}
@@ -18,6 +19,8 @@ before_install:
   - cd ./tools/build
   - ./bootstrap.sh
   - sudo ./b2 install > build.log 2>&1 || (cat build.log && exit 1)
+  - sudo ldconfig
+  - cd -
   - sudo apt-get -y install libmysqlclient-dev libsqlite3-dev
   - mysql -u root -e 'CREATE DATABASE IF NOT EXISTS test;'
 
