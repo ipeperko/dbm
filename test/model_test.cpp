@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(model_test_add_remove_items)
     BOOST_TEST((res = m.find("third") != m.end()));
     BOOST_TEST((res = m.find("not_there") == m.end()));
     BOOST_TEST(m.find("third")->key().get() == "third");
-    
+
     m.erase("second");
     BOOST_TEST(m.items().size() == 2);
     BOOST_TEST(m.items().at(1).key().get() == "third");

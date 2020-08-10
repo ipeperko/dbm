@@ -1,9 +1,24 @@
-language: generic
-
+sudo: required
 dist: bionic
+os: linux
+
+language: cpp
+
+env:
+  global:
+    - BOOST_VERSION=1_72_0
+    - BOOST_DOT_VER=1.72.0
 
 before_install:
-  - sudo apt-get -y install libmysqlclient-dev libsqlite3-dev libboost-test-dev libboost-filesystem-dev
+  - wget -O boost_${BOOST_VERSION}.tar.gz https://dl.bintray.com/boostorg/release/${BOOST_DOT_VER}/source/boost_${BOOST_VERSION}.tar.gz && tar -xzf boost_${BOOST_VERSION}.tar.gz
+  #- sudo apt-get -y install libmysqlclient-dev libsqlite3-dev libboost-test-dev libboost-filesystem-dev
+  - cd boost_${BOOST_VERSION}
+  - ./bootstrap.sh --without-libraries=graph,locale,regex,serialization,wave,mpi > build.log 2>&1 || (cat build.log && exit 1)
+  - sudo ./b2 link=static -j2 install > build.log 2>&1 || (cat build.log && exit 1)
+  - cd ./tools/build
+  - ./bootstrap.sh
+  - sudo ./b2 install > build.log 2>&1 || (cat build.log && exit 1)
+  - sudo apt-get -y install libmysqlclient-dev libsqlite3-dev
   - mysql -u root -e 'CREATE DATABASE IF NOT EXISTS test;'
 
 services:
