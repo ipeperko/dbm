@@ -3,7 +3,7 @@ language: generic
 dist: focal
 
 before_install:
-  - sudo apt-get -y install libmysqlclient-dev libsqlite3-dev libboost-test-dev libboost-filesystem-dev
+  - sudo apt-get -y install mysql-server libmysqlclient-dev libsqlite3-dev libboost-test-dev libboost-filesystem-dev
 
 services:
   - mysql
