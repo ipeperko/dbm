@@ -10,16 +10,11 @@ env:
     - BOOST_DOT_VER=1.72.0
 
 before_install:
-  #  Boost instalation
-  - PROJECT_DIR=${PWD}
-  - echo "Bosst instalation"
   - wget -O boost_${BOOST_VERSION}.tar.gz https://dl.bintray.com/boostorg/release/${BOOST_DOT_VER}/source/boost_${BOOST_VERSION}.tar.gz && tar -xzf boost_${BOOST_VERSION}.tar.gz
   - cd boost_${BOOST_VERSION}
-#  - ./bootstrap.sh --without-libraries=graph,locale,regex,serialization,wave,mpi > build.log 2>&1 || (cat build.log && exit 1)
   - ./bootstrap.sh --with-libraries=test > build.log 2>&1 || (cat build.log && exit 1)
   - sudo ./b2 install > build.log 2>&1 || (cat build.log && exit 1)
   - sudo ldconfig
-  # Boost install end
   - sudo apt-get -y install libmysqlclient-dev libsqlite3-dev
   - mysql -u root -e 'CREATE DATABASE IF NOT EXISTS test;'
 
@@ -28,51 +23,51 @@ services:
 
 matrix:
   include:
-#    - env: CXX=g++-9 CC=gcc-9
-#      addons:
-#        apt:
-#          packages:
-#            - g++-9
+    - env: CXX=g++-9 CC=gcc-9
+      addons:
+        apt:
+          packages:
+            - g++-9
+          sources:
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
     - env: CXX=g++-8 CC=gcc-8
       addons:
         apt:
           packages:
             - g++-8
-#    - env: CXX=g++-7 CC=gcc-7
-#      addons:
-#        apt:
-#          packages:
-#            - g++-7
-#    - env: CXX=clang++-9 CC=clang-9
-#      addons:
-#        apt:
-#          packages:
-#            - clang-9
-#            - libc++-9-dev
-#            - libc++abi-9-dev
-#          sources:
-#            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main'
-#              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-#    - env: CXX=clang++-8 CC=clang-8
-#      addons:
-#        apt:
-#          packages:
-#            - clang-8
-#            - libc++-8-dev
-#            - libc++abi-8-dev
-#    - env: CXX=clang++-7 CC=clang-7
-#      addons:
-#        apt:
-#          packages:
-#            - clang-7
-#            - libc++-7-dev
-#            - libc++abi-7-dev
+    - env: CXX=g++-7 CC=gcc-7
+      addons:
+        apt:
+          packages:
+            - g++-7
+    - env: CXX=clang++-9 CC=clang-9
+      addons:
+        apt:
+          packages:
+            - clang-9
+            - libc++-9-dev
+            - libc++abi-9-dev
+          sources:
+            - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-9 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+    - env: CXX=clang++-8 CC=clang-8
+      addons:
+        apt:
+          packages:
+            - clang-8
+            - libc++-8-dev
+            - libc++abi-8-dev
+    - env: CXX=clang++-7 CC=clang-7
+      addons:
+        apt:
+          packages:
+            - clang-7
+            - libc++-7-dev
+            - libc++abi-7-dev
 
 
 script:
   - cd $TRAVIS_BUILD_DIR
-  - pwd
-  - ls
   - if [[ "$CXX" == clang* ]]; then export CXXFLAGS="-stdlib=libc++"; fi
   - mkdir build && cd build
   - cmake -DDBM_BUILD_TESTS=ON ..
