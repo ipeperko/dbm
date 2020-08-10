@@ -40,7 +40,7 @@ matrix:
         apt:
           packages:
             - g++-7
-    - env: CXX=clang++-9 CC=clang-9
+    - env: CXX=clang++-10 CC=clang-10
       addons:
         apt:
           packages:
