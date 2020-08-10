@@ -50,6 +50,20 @@ matrix:
           sources:
             - sourceline: 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
               key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+    - env: CXX=clang++-8 CC=clang-8
+      addons:
+        apt:
+          packages:
+            - clang-8
+            - libc++-8-dev
+            - libc++abi-8-dev
+    - env: CXX=clang++-7 CC=clang-7
+      addons:
+        apt:
+          packages:
+            - clang-7
+            - libc++-7-dev
+            - libc++abi-7-dev
 
 
 script:
