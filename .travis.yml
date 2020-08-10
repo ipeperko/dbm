@@ -1,9 +1,9 @@
 language: generic
 
-dist: focal
+dist: bionic
 
 before_install:
-  - sudo apt-get -y install mysql-server libmysqlclient-dev libsqlite3-dev libboost-test-dev libboost-filesystem-dev
+  - sudo apt-get -y install libmysqlclient-dev libsqlite3-dev libboost-test-dev libboost-filesystem-dev
   - mysql -u root -e 'CREATE DATABASE IF NOT EXISTS test;'
 
 services:
@@ -11,16 +11,16 @@ services:
 
 matrix:
   include:
-    - env: CXX=g++-9 CC=gcc-9
-      addons:
-        apt:
-          packages:
-            - g++-9
-#    - env: CXX=g++-8 CC=gcc-8
+#    - env: CXX=g++-9 CC=gcc-9
 #      addons:
 #        apt:
 #          packages:
-#            - g++-8
+#            - g++-9
+    - env: CXX=g++-8 CC=gcc-8
+      addons:
+        apt:
+          packages:
+            - g++-8
 #    - env: CXX=g++-7 CC=gcc-7
 #      addons:
 #        apt:
