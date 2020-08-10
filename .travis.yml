@@ -15,8 +15,9 @@ before_install:
   - echo "Bosst instalation"
   - wget -O boost_${BOOST_VERSION}.tar.gz https://dl.bintray.com/boostorg/release/${BOOST_DOT_VER}/source/boost_${BOOST_VERSION}.tar.gz && tar -xzf boost_${BOOST_VERSION}.tar.gz
   - cd boost_${BOOST_VERSION}
-  - ./bootstrap.sh --without-libraries=graph,locale,regex,serialization,wave,mpi > build.log 2>&1 || (cat build.log && exit 1)
-  - sudo ./b2 -j2 install > build.log 2>&1 || (cat build.log && exit 1)
+#  - ./bootstrap.sh --without-libraries=graph,locale,regex,serialization,wave,mpi > build.log 2>&1 || (cat build.log && exit 1)
+  - ./bootstrap.sh --with-libraries=test > build.log 2>&1 || (cat build.log && exit 1)
+  - sudo ./b2 install > build.log 2>&1 || (cat build.log && exit 1)
   - sudo ldconfig
   # Boost install end
   - sudo apt-get -y install libmysqlclient-dev libsqlite3-dev
