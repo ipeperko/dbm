@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(db_config)
         BOOST_FAIL("mysql username not defined");
     }
     if (mysql_password.empty()) {
-        BOOST_FAIL("mysql password not defined");
+        BOOST_TEST_MESSAGE("mysql password not defined - using blank password");
     }
 }
 #endif
