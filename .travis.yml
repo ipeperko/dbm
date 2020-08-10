@@ -11,8 +11,8 @@ env:
 
 before_install:
   #  Boost instalation
+  - PROJECT_DIR=${PWD}
   - echo "Bosst instalation"
-  - pwd
   - wget -O boost_${BOOST_VERSION}.tar.gz https://dl.bintray.com/boostorg/release/${BOOST_DOT_VER}/source/boost_${BOOST_VERSION}.tar.gz && tar -xzf boost_${BOOST_VERSION}.tar.gz
   - cd boost_${BOOST_VERSION}
   - ./bootstrap.sh --without-libraries=graph,locale,regex,serialization,wave,mpi > build.log 2>&1 || (cat build.log && exit 1)
@@ -73,7 +73,7 @@ matrix:
 
 
 script:
-  - cd
+  - cd ${PROJECT_DIR}
   - pwd
   - ls
   - if [[ "$CXX" == clang* ]]; then export CXXFLAGS="-stdlib=libc++"; fi
