@@ -194,7 +194,7 @@ Alternatively you can retrieve data from database and pass separate rows to mode
 ```c++
 sql_rows rows = session.select("SELECT * FROM test_table");
 for (const sql_row& row : rows) {
-    m.read_record(row);         // import data to model
+    m << row;         // import data to model
 }
 ```
 
