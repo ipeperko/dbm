@@ -214,6 +214,12 @@ public:
         return *this;
     }
 
+    model& operator<<(const kind::sql_row& row)
+    {
+        read_record(row);
+        return *this;
+    }
+
 private:
     std::string table_;
     item_array items_;
