@@ -2,7 +2,6 @@
 
 [![Build Status](https://travis-ci.org/ipeperko/dbm.svg?branch=master)](https://travis-ci.org/ipeperko/dbm)
 
-
 ![dbm](docs/dbm_diagram_2.png)
 
 Simple database table models with serialization support written in C++. 
