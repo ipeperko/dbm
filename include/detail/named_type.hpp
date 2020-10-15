@@ -22,9 +22,6 @@ struct printable : nt_crtp<T, printable>
 {
     using object_type = typename nt_crtp<T, printable>::object_type;
 
-    //
-    // std::ostream printing
-    //
     void print(std::ostream& os) const
     {
         os << this->val().get();
@@ -35,29 +32,6 @@ struct printable : nt_crtp<T, printable>
         object.print(os);
         return os;
     }
-
-    //
-    // Qt printing
-    //
-#ifdef QT_CORE_LIB
-    void print(QDebug os) const
-    {
-        using value_type = typename object_type::value_type;
-
-        if constexpr (std::is_same_v<std::string, value_type>) {
-            os << this->val().get().c_str();
-        }
-        else {
-            os << this->val().get();
-        }
-    }
-
-    friend QDebug operator<<(QDebug os, const object_type& object)
-    {
-        object.print(os);
-        return os;
-    }
-#endif // QT_CORE_LIB
 };
 
 // Hashing named type
@@ -67,9 +41,13 @@ struct hashable : nt_crtp<T, hashable>
     static constexpr bool is_hashable = true;
 };
 
+// Named type base
+struct named_type_base
+{};
+
 // Named type
 template<typename T, typename Parameter, template<typename> class... Skills>
-class named_type : public Skills<named_type<T, Parameter, Skills...>>...
+class named_type : protected named_type_base, public Skills<named_type<T, Parameter, Skills...>>...
 {
 public:
     using value_type = T;
