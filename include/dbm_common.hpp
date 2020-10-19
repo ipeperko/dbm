@@ -20,9 +20,23 @@ namespace dbm {
 // Exception
 // ----------------------------------------------------------
 
-namespace config {
-extern void set_custom_exception(std::function<void(std::string const&)> except_fn);
-extern std::function<void(std::string const&)>& get_custom_exception();
+namespace config
+{
+
+namespace detail
+{
+inline std::function<void(std::string const&)> custom_except_fn;
+}
+
+inline void set_custom_exception(std::function<void(std::string const&)> except_fn)
+{
+    detail::custom_except_fn = std::move(except_fn);
+}
+
+inline std::function<void(std::string const&)>& get_custom_exception()
+{
+    return detail::custom_except_fn;
+}
 }
 
 template <typename ExceptionType = std::domain_error>
@@ -158,8 +172,8 @@ private:
     std::stringbuf sb_;
 };
 
-extern std::string b64_encode(void const*, size_t len);
-extern std::string b64_decode(std::string_view s);
+//extern std::string b64_encode(void const*, size_t len);
+//extern std::string b64_decode(std::string_view s);
 
 } // namespace utils
 } // namespace dbm

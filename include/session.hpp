@@ -56,6 +56,33 @@ protected:
     std::string mstatement;
 };
 
+inline session::session(const session& oth)
+    : mstatement(oth.mstatement)
+{
+}
+
+inline session::session(session&& oth) noexcept
+    : mstatement(std::move(oth.mstatement))
+{
+}
+
+inline session& session::operator=(const session& oth)
+{
+    if (this != &oth) {
+        mstatement = oth.mstatement;
+    }
+    return *this;
+}
+
+inline session& session::operator=(session&& oth) noexcept
+{
+    if (this != &oth) {
+        mstatement = std::move(oth.mstatement);
+    }
+    return *this;
+}
+
+
 class session::transaction
 {
 public:
@@ -82,22 +109,25 @@ public:
 
 
 private:
-    void perform(bool do_commit)
-    {
-        if (!executed_) {
-            if (do_commit) {
-                db_.transaction_commit();
-            }
-            else {
-                db_.transaction_rollback();
-            }
-            executed_ = true;
-        }
-    }
+
+    void perform(bool do_commit);
 
     dbm::session& db_;
     bool executed_ {false};
 };
+
+inline void session::transaction::perform(bool do_commit)
+{
+    if (!executed_) {
+        if (do_commit) {
+            db_.transaction_commit();
+        }
+        else {
+            db_.transaction_rollback();
+        }
+        executed_ = true;
+    }
+}
 
 }// namespace dbm
 

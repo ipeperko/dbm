@@ -1,11 +1,12 @@
 #ifndef DBM_MODEL_HPP
 #define DBM_MODEL_HPP
 
-#include "session.hpp"
 #include "model_item.hpp"
 #include <vector>
 
 namespace dbm {
+
+class session;
 
 namespace detail {
 template<typename>
@@ -172,15 +173,9 @@ public:
 
     void delete_record(session& s);
 
-    void create_table(session& s, bool if_not_exists=true)
-    {
-        s.create_table(*this, if_not_exists);
-    }
+    void create_table(session& s, bool if_not_exists=true);
 
-    void drop_table(session& s, bool if_exists=true)
-    {
-        s.drop_table(*this, if_exists);
-    }
+    void drop_table(session& s, bool if_exists=true);
 
     void serialize(serializer& ser)
     {
@@ -230,8 +225,6 @@ private:
 };
 
 }// namespace dbm
-
-#include "serializer.ipp"
 
 #endif//DBM_MODEL_HPP
 

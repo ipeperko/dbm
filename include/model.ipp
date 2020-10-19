@@ -1,14 +1,15 @@
-#include "model.hpp"
+#ifndef DBM_MODEL_IPP
+#define DBM_MODEL_IPP
 
 namespace dbm {
 
-void model::write_record(session& s)
+inline void model::write_record(session& s)
 {
     auto q = s.write_model_query(*this);
     s.query(q);
 }
 
-void model::read_record(session& s, const std::string& extra_condition)
+inline void model::read_record(session& s, const std::string& extra_condition)
 {
     auto q = s.read_model_query(*this, extra_condition);
     auto rows = s.select(q);
@@ -21,7 +22,7 @@ void model::read_record(session& s, const std::string& extra_condition)
     read_record(row);
 }
 
-void model::read_record(const kind::sql_row& row)
+inline void model::read_record(const kind::sql_row& row)
 {
     if (row.size() != row.field_names()->size()) {
         throw_exception<std::domain_error>("Row size error"); // TODO: Do we really need this?
@@ -43,11 +44,22 @@ void model::read_record(const kind::sql_row& row)
     }
 }
 
-void model::delete_record(session& s)
+inline void model::delete_record(session& s)
 {
     auto q = s.delete_model_query(*this);
     s.query(q);
 }
 
+inline void model::create_table(session& s, bool if_not_exists)
+{
+    s.create_table(*this, if_not_exists);
 }
 
+inline void model::drop_table(session& s, bool if_exists)
+{
+    s.drop_table(*this, if_exists);
+}
+
+}
+
+#endif //DBM_MODEL_IPP

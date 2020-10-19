@@ -2,6 +2,8 @@
 
 #include "../../../include/drivers/mysql/mysql_session.hpp"
 #include "detail/model_query_helper.hpp"
+#include "../../../include/model.hpp"
+#include "../../../include/session.ipp"
 
 #ifdef __WIN32
 #include <mysql.h>
