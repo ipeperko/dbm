@@ -21,7 +21,7 @@ inline kind::sql_rows session::select(const std::vector<std::string>& what, cons
     int i = 0;
     for (auto it = what.begin(); it != what.end(); it++, i++) {
         statement += *it;
-        if (i < (int)what.size() - 1) {
+        if (i < static_cast<int>(what.size()) - 1) {
             statement += ", ";
         }
     }
