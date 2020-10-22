@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(dbm VERSION 0.0.11 DESCRIPTION "Database table models with serialization " LANGUAGES CXX)
+project(dbm VERSION 0.0.12 DESCRIPTION "Database table models with serialization " LANGUAGES CXX)
 
 option(DBM_BUILD_TESTS "Build dbm tests" OFF)
 
@@ -9,7 +9,7 @@ if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DNDEBUG)
 endif()
 
-configure_file(dbm.hpp.in include/dbm.hpp)
+configure_file(dbm_config.hpp.in include/dbm_config.hpp)
 
 include_directories(PUBLIC include)
 
