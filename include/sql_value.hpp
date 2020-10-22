@@ -32,6 +32,7 @@ public:
         , len_(oth.len_)
     {
         oth.value_ = nullptr;
+        oth.len_ = 0;
     }
 
     sql_value(const char* v, size_t len)
