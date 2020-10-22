@@ -2,6 +2,7 @@
 #include "../../../include/drivers/sqlite/sqlite_session.hpp"
 #include "detail/model_query_helper.hpp"
 #include "../../../include/model.hpp"
+#include "../../../include/model.ipp"
 #include "../../../include/session.ipp"
 #include <cstring>
 #include <sqlite3.h>
