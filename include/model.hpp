@@ -2,6 +2,7 @@
 #define DBM_MODEL_HPP
 
 #include "model_item.hpp"
+#include "model_item.ipp"
 #include <vector>
 
 namespace dbm {
