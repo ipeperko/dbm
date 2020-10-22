@@ -117,7 +117,13 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const sql_value& v)
     {
-        os << (v.null() ? "NULL" : v.get());
+        if (v.null()) {
+            os << "NULL";
+        }
+        else if (v.len_) {
+            os << v.get();
+        }
+
         return os;
     }
 
