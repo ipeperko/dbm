@@ -3,6 +3,78 @@
 
 namespace dbm {
 
+class session::transaction
+{
+public:
+    explicit transaction(session& db)
+        : db_(db)
+    {
+        db_.transaction_begin();
+    }
+
+    ~transaction()
+    {
+        perform(false);
+    }
+
+    void commit()
+    {
+        perform(true);
+    }
+
+    void rollback()
+    {
+        perform(false);
+    }
+
+
+private:
+
+    void perform(bool do_commit);
+
+    dbm::session& db_;
+    bool executed_ {false};
+};
+
+inline void session::transaction::perform(bool do_commit)
+{
+    if (!executed_) {
+        if (do_commit) {
+            db_.transaction_commit();
+        }
+        else {
+            db_.transaction_rollback();
+        }
+        executed_ = true;
+    }
+}
+
+inline session::session(const session& oth)
+    : mstatement(oth.mstatement)
+{
+}
+
+inline session::session(session&& oth) noexcept
+    : mstatement(std::move(oth.mstatement))
+{
+}
+
+inline session& session::operator=(const session& oth)
+{
+    if (this != &oth) {
+        mstatement = oth.mstatement;
+    }
+    return *this;
+}
+
+inline session& session::operator=(session&& oth) noexcept
+{
+    if (this != &oth) {
+        mstatement = std::move(oth.mstatement);
+    }
+    return *this;
+}
+
 inline void session::query(const std::string& statement)
 {
     mstatement = statement;
