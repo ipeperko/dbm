@@ -1,6 +1,10 @@
 #ifndef DBM_CONTAINER_IMPL_IPP
 #define DBM_CONTAINER_IMPL_IPP
 
+#ifdef DBM_EXPERIMENTAL_CHARCONV
+#include <charconv>
+#endif
+
 namespace dbm::detail {
 
 template<typename T, template<typename> class ContType, container_conf conf>
@@ -23,7 +27,7 @@ std::string container_impl<T, ContType, conf>::to_string() const
 template<typename T, template<typename> class ContType, container_conf conf>
 void container_impl<T, ContType, conf>::from_string(std::string_view v)
 {
-    auto on_error = [this](const char* msg) {
+    auto on_error_exception = [this](const char* msg) {
         is_null_ = true;
         defined_ = false;
         throw_exception<std::runtime_error>(msg);
@@ -31,14 +35,12 @@ void container_impl<T, ContType, conf>::from_string(std::string_view v)
 
     auto validate = [&](const unreferenced_type& val) {
         if (validator_ && !validator_(val)) {
-            on_error("From string validator failed");
+            on_error_exception("From string validator failed");
         }
     };
 
-    unreferenced_type tmp_val;
-
     if constexpr (std::is_same_v<T, std::string>) {
-        tmp_val = v;
+        std::string tmp_val {v};
         validate(tmp_val);
         val_ = std::move(tmp_val);
         is_null_ = false;
@@ -53,13 +55,31 @@ void container_impl<T, ContType, conf>::from_string(std::string_view v)
         defined_ = true;
     }
 #endif
+#ifdef DBM_EXPERIMENTAL_CHARCONV
+    else if constexpr (std::is_same_v<T, int> || std::is_same_v<T, long> || std::is_same_v<T, short>) {
+        unreferenced_type tmp_val;
+        auto res = std::from_chars(v.data(), v.data() + v.length(), tmp_val);
+
+        if (res.ec != std::errc()) {
+            on_error_exception("Container from_string failed");
+        }
+
+        validate(tmp_val);
+        val_ = std::move(tmp_val);
+        is_null_ = false;
+        defined_ = true;
+    }
+//    else if constexpr (std::is_same_v<T, double>) {
+//        double d;
+//        auto res = std::from_chars(v.data(), v.data() + v.length(), d);
+//    }
+#endif
     else {
+        unreferenced_type tmp_val;
         utils::istream_extbuf is(const_cast<char*>(&v[0]), v.length());
         is >> tmp_val;
         if (is.fail()) {
-            is_null_ = true;
-            defined_ = false;
-            throw_exception<std::domain_error>("Container from_string failed");
+            on_error_exception("Container from_string failed");
         }
         else {
             validate(tmp_val);
