@@ -80,6 +80,7 @@ namespace dbm {
 
 /**
  * Make container of type T with local storage
+ *
  * @param validator function
  * @return container unique pointer
  */
@@ -92,6 +93,7 @@ local(std::function<bool(const T&)> validator = nullptr)
 
 /**
  * Make container of type T with local storage
+ *
  * @param val value reference
  * @param validator function
  * @return container unique pointer
@@ -106,11 +108,12 @@ local(const T& val, std::function<bool(const T&)> validator = nullptr)
 
     return std::make_unique<detail::container_impl<T, detail::cont_value_local, conf>>(
         val,
-        validator);
+            validator);
 }
 
 /**
  * Make container of type T with local storage
+ *
  * @param val value reference
  * @param validator function
  * @return container unique pointer
@@ -125,11 +128,12 @@ local(T&& val, std::function<bool(const T&)> validator = nullptr)
 
     return std::make_unique<detail::container_impl<T, detail::cont_value_local, conf>>(
         std::forward<T>(val),
-        validator);
+            validator);
 }
 
 /**
  * Make container of type T with binding
+ *
  * @param value reference of type T
  * @param validator object or nullptr
  * @param value null parameter
@@ -140,7 +144,7 @@ template<typename T, detail::container_conf conf = 0, class Validator = std::nul
 container_ptr binding(T& ref, Validator&& validator = nullptr, bool null = false, bool defined = true)
 {
     return std::make_unique<detail::container_impl<T, detail::cont_value_binding, conf>>(
-            detail::cont_value_binding<T>(ref), validator, null, defined);
+        detail::cont_value_binding<T>(ref), validator, null, defined);
 }
 
 }// namespace dbm
