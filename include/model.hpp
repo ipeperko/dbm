@@ -29,16 +29,9 @@ public:
 
     model(model&&) = default;
 
-    explicit model(std::string table)
-        : table_(std::move(table))
-    {
-    }
+    explicit model(std::string table);
 
-    model(std::string table, init_list l)
-        : table_(std::move(table))
-        , items_(l)
-    {
-    }
+    model(std::string table, init_list l);
 
     model& operator=(const model&) = default;
 
