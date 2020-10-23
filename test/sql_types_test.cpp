@@ -16,6 +16,7 @@ BOOST_AUTO_TEST_CASE(sql_value_int_test)
     };
 
     // Null
+    BOOST_TEST(value);
     BOOST_TEST(!value.null());
 
     // To int
@@ -46,6 +47,7 @@ BOOST_AUTO_TEST_CASE(sql_value_string_test)
     dbm::kind::sql_value value("hello", strlen("hello"));
 
     // Null
+    BOOST_TEST(value);
     BOOST_TEST(!value.null());
 
     // To int
@@ -70,6 +72,7 @@ BOOST_AUTO_TEST_CASE(sql_value_null_test)
     dbm::kind::sql_value value(nullptr, 0);
 
     // Null
+    BOOST_TEST(!value);
     BOOST_TEST(value.null());
 
     // To int

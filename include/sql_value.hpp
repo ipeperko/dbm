@@ -39,6 +39,8 @@ public:
 
     bool operator==(const sql_value& oth) const;
 
+    explicit operator bool() const;
+
     bool null() const;
 
     size_t length() const;
@@ -103,6 +105,11 @@ DBM_INLINE sql_value& sql_value::operator=(sql_value&& oth) noexcept
 DBM_INLINE bool sql_value::operator==(const sql_value& oth) const
 {
     return (value_ == oth.value_ && len_ == oth.len_); // values are equal if both points to same location
+}
+
+DBM_INLINE sql_value::operator bool() const
+{
+    return value_ != nullptr;
 }
 
 DBM_INLINE bool sql_value::null() const
