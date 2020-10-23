@@ -1,8 +1,6 @@
 #ifndef DBM_SQL_ROWS_DUMP_HPP
 #define DBM_SQL_ROWS_DUMP_HPP
 
-#include "sql_rows.hpp"
-
 namespace dbm::kind {
 
 /**

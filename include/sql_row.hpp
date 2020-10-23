@@ -1,8 +1,6 @@
 #ifndef DBM_SQL_ROW_HPP
 #define DBM_SQL_ROW_HPP
 
-#include "sql_value.hpp"
-
 namespace dbm::kind {
 
 /**
