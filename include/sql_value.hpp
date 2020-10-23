@@ -31,6 +31,8 @@ public:
 
     sql_value(const char* v, size_t len);
 
+    virtual ~sql_value() = default;
+
     sql_value& operator=(const sql_value&) = default;
 
     sql_value& operator=(sql_value&& oth) noexcept;

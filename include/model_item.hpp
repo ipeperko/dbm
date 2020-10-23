@@ -8,7 +8,6 @@ namespace dbm {
 class model_item
 {
 public:
-
     model_item();
 
     model_item(const model_item& oth);
@@ -17,6 +16,8 @@ public:
 
     template<typename... Args>
     model_item(Args&&... args);
+
+    virtual ~model_item() = default;
 
     model_item& operator=(const model_item& oth);
 

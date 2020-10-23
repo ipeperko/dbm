@@ -21,55 +21,73 @@ public:
 
     container() = default;
 
-    container(bool null, bool defined)
-        : is_null_(null)
-        , defined_(defined)
-    {}
+    container(bool null, bool defined);
 
     virtual ~container() = default;
 
     virtual container_ptr clone() = 0;
 
-    void set_null(bool null)
-    {
-        is_null_ = null;
-    }
+    void set_null(bool null);
 
-    bool is_null() const
-    {
-        return is_null_;
-    }
+    bool is_null() const;
 
-    void set_defined(bool defined)
-    {
-        defined_ = defined;
-    }
+    void set_defined(bool defined);
 
-    bool is_defined() const
-    {
-        return defined_;
-    }
+    bool is_defined() const;
 
     virtual kind::variant get() const = 0;
 
     template<typename T>
-    T get() const
-    {
-        kind::variant v = get();
-        return std::get<T>(v);
-    }
+    T get() const;
 
     virtual void set(kind::variant& v) = 0;
+
     virtual void set(kind::variant&& v) = 0;
+
     virtual std::string to_string() const = 0;
+
     virtual void from_string(std::string_view v) = 0;
+
     virtual void serialize(serializer& s, std::string_view tag) = 0;
+
     virtual bool deserialize(deserializer& s, std::string_view tag) = 0;
 
 protected:
     bool is_null_ {true};
     bool defined_ {false};
 };
+
+DBM_INLINE container::container(bool null, bool defined)
+    : is_null_(null)
+    , defined_(defined)
+{}
+
+DBM_INLINE void container::set_null(bool null)
+{
+    is_null_ = null;
+}
+
+DBM_INLINE bool container::is_null() const
+{
+    return is_null_;
+}
+
+DBM_INLINE void container::set_defined(bool defined)
+{
+    defined_ = defined;
+}
+
+DBM_INLINE bool container::is_defined() const
+{
+    return defined_;
+}
+
+template<typename T>
+T container::get() const
+{
+    kind::variant v = get();
+    return std::get<T>(v);
+}
 
 } // namespace dbm
 

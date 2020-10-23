@@ -12,11 +12,11 @@ class sql_rows : public std::vector<sql_row>
 public:
     sql_rows() = default;
 
-    virtual ~sql_rows() = default;
-
     sql_rows(const sql_rows& oth);
 
     sql_rows(sql_rows&& oth) noexcept;
+
+    virtual ~sql_rows() = default;
 
     sql_rows& operator=(const sql_rows& oth);
 
