@@ -21,55 +21,73 @@ public:
 
     container() = default;
 
-    container(bool null, bool defined)
-        : is_null_(null)
-        , defined_(defined)
-    {}
+    container(bool null, bool defined);
 
     virtual ~container() = default;
 
     virtual container_ptr clone() = 0;
 
-    void set_null(bool null)
-    {
-        is_null_ = null;
-    }
+    void set_null(bool null);
 
-    bool is_null() const
-    {
-        return is_null_;
-    }
+    bool is_null() const;
 
-    void set_defined(bool defined)
-    {
-        defined_ = defined;
-    }
+    void set_defined(bool defined);
 
-    bool is_defined() const
-    {
-        return defined_;
-    }
+    bool is_defined() const;
 
     virtual kind::variant get() const = 0;
 
     template<typename T>
-    T get() const
-    {
-        kind::variant v = get();
-        return std::get<T>(v);
-    }
+    T get() const;
 
     virtual void set(kind::variant& v) = 0;
+
     virtual void set(kind::variant&& v) = 0;
+
     virtual std::string to_string() const = 0;
+
     virtual void from_string(std::string_view v) = 0;
+
     virtual void serialize(serializer& s, std::string_view tag) = 0;
+
     virtual bool deserialize(deserializer& s, std::string_view tag) = 0;
 
 protected:
     bool is_null_ {true};
     bool defined_ {false};
 };
+
+DBM_INLINE container::container(bool null, bool defined)
+    : is_null_(null)
+    , defined_(defined)
+{}
+
+DBM_INLINE void container::set_null(bool null)
+{
+    is_null_ = null;
+}
+
+DBM_INLINE bool container::is_null() const
+{
+    return is_null_;
+}
+
+DBM_INLINE void container::set_defined(bool defined)
+{
+    defined_ = defined;
+}
+
+DBM_INLINE bool container::is_defined() const
+{
+    return defined_;
+}
+
+template<typename T>
+T container::get() const
+{
+    kind::variant v = get();
+    return std::get<T>(v);
+}
 
 } // namespace dbm
 
@@ -80,6 +98,7 @@ namespace dbm {
 
 /**
  * Make container of type T with local storage
+ *
  * @param validator function
  * @return container unique pointer
  */
@@ -92,6 +111,7 @@ local(std::function<bool(const T&)> validator = nullptr)
 
 /**
  * Make container of type T with local storage
+ *
  * @param val value reference
  * @param validator function
  * @return container unique pointer
@@ -106,11 +126,12 @@ local(const T& val, std::function<bool(const T&)> validator = nullptr)
 
     return std::make_unique<detail::container_impl<T, detail::cont_value_local, conf>>(
         val,
-        validator);
+            validator);
 }
 
 /**
  * Make container of type T with local storage
+ *
  * @param val value reference
  * @param validator function
  * @return container unique pointer
@@ -125,11 +146,12 @@ local(T&& val, std::function<bool(const T&)> validator = nullptr)
 
     return std::make_unique<detail::container_impl<T, detail::cont_value_local, conf>>(
         std::forward<T>(val),
-        validator);
+            validator);
 }
 
 /**
  * Make container of type T with binding
+ *
  * @param value reference of type T
  * @param validator object or nullptr
  * @param value null parameter
@@ -140,7 +162,7 @@ template<typename T, detail::container_conf conf = 0, class Validator = std::nul
 container_ptr binding(T& ref, Validator&& validator = nullptr, bool null = false, bool defined = true)
 {
     return std::make_unique<detail::container_impl<T, detail::cont_value_binding, conf>>(
-            detail::cont_value_binding<T>(ref), validator, null, defined);
+        detail::cont_value_binding<T>(ref), validator, null, defined);
 }
 
 }// namespace dbm

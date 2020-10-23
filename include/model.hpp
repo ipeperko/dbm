@@ -2,6 +2,7 @@
 #define DBM_MODEL_HPP
 
 #include "model_item.hpp"
+#include "model_item.ipp"
 #include <vector>
 
 namespace dbm {
@@ -28,16 +29,9 @@ public:
 
     model(model&&) = default;
 
-    explicit model(std::string table)
-        : table_(std::move(table))
-    {
-    }
+    explicit model(std::string table);
 
-    model(std::string table, init_list l)
-        : table_(std::move(table))
-        , items_(l)
-    {
-    }
+    model(std::string table, init_list l);
 
     model& operator=(const model&) = default;
 
@@ -45,101 +39,41 @@ public:
 
     virtual ~model() = default;
 
-    const std::string& table_name() const
-    {
-        return table_;
-    }
+    const std::string& table_name() const;
 
-    void set_table_name(std::string name)
-    {
-        table_ = std::move(name);
-    }
+    void set_table_name(std::string name);
 
-    void set_sql_duplicates_update(bool t)
-    {
-        update_duplicates_ = t;
-    }
+    void set_sql_duplicates_update(bool t);
 
-    void set_sql_ignore_insert(bool t)
-    {
-        ignore_insert_ = t;
-    }
+    void set_sql_ignore_insert(bool t);
 
-    model_item& at(const kind::key& key)
-    {
-        auto it = find(key);
-        if (it == end()) {
-            throw_exception<std::out_of_range>("Item not found '" + key.get() + "'");
-        }
-        return *it;
-    }
+    model_item& at(const kind::key& key);
 
-    model_item const& at(const kind::key& key) const
-    {
-        auto it = find(key);
-        if (it == end()) {
-            throw_exception<std::out_of_range>("Item not found '" + key.get() + "'");
-        }
-        return *it;
-    }
+    model_item const& at(const kind::key& key) const;
 
-    model_item& at(std::string_view key)
-    {
-        auto it = find(key);
-        if (it == end()) {
-            throw_exception<std::out_of_range>("Item not found '" + std::string(key) + "'");
-        }
-        return *it;
-    }
+    model_item& at(std::string_view key);
 
-    model_item const& at(std::string_view key) const
-    {
-        auto it = find(key);
-        if (it == end()) {
-            throw_exception<std::out_of_range>("Item not found '" + std::string(key) + "'");
-        }
-        return *it;
-    }
+    model_item const& at(std::string_view key) const;
 
-    iterator find(const kind::key& key)
-    {
-        return std::find_if(begin(), end(), [&](const model_item& item) {
-            return item.key() == key;
-        });
-    }
+    iterator find(const kind::key& key);
 
-    const_iterator find(const kind::key& key) const
-    {
-        return std::find_if(begin(), end(), [&](const model_item& item) {
-            return item.key() == key;
-        });
-    }
+    const_iterator find(const kind::key& key) const;
 
-    iterator find(std::string_view key)
-    {
-        return std::find_if(begin(), end(), [&](const model_item& item) {
-            return item.key().get() == key;
-        });
-    }
+    iterator find(std::string_view key);
 
-    const_iterator find(std::string_view key) const
-    {
-        return std::find_if(begin(), end(), [&](const model_item& item) {
-            return item.key().get() == key;
-        });
-    }
+    const_iterator find(std::string_view key) const;
 
-    auto& items() { return items_; }
+    item_array& items();
 
-    auto const& items() const { return items_; }
+    item_array const& items() const;
 
-    iterator begin() { return items_.begin(); }
+    iterator begin();
 
-    const_iterator begin() const { return items_.begin(); }
+    const_iterator begin() const;
 
-    iterator end() { return items_.end(); }
+    iterator end();
 
-    const_iterator end() const { return items_.end(); }
+    const_iterator end() const;
 
     template <typename ... Args>
     model_item& emplace_back(Args&&... args)
@@ -147,23 +81,9 @@ public:
         return items_.emplace_back(std::forward<Args>(args)...);
     }
 
-    void erase(const kind::key& key)
-    {
-        auto it = find(key);
-        if (it == end()) {
-            throw_exception<std::out_of_range>("Cannot erase - item '" + key.get() + "' does not exist");
-        }
-        items_.erase(it);
-    }
+    void erase(const kind::key& key);
 
-    void erase(std::string_view key)
-    {
-        auto it = find(key);
-        if (it == end()) {
-            throw_exception<std::out_of_range>("Cannot erase - item '" + std::string(key) + "' does not exist");
-        }
-        items_.erase(it);
-    }
+    void erase(std::string_view key);
 
     void write_record(session& s);
 
@@ -177,43 +97,17 @@ public:
 
     void drop_table(session& s, bool if_exists=true);
 
-    void serialize(serializer& ser)
-    {
-        for (auto& it : items_) {
-            it.serialize(ser);
-        }
-    }
+    void serialize(serializer& ser);
 
-    void deserialize(deserializer& ser)
-    {
-        for (auto& it : items_) {
-            it.deserialize(ser);
-        }
-    }
+    void deserialize(deserializer& ser);
 
-    model& operator>>(serializer& ser)
-    {
-        serialize(ser);
-        return *this;
-    }
+    model& operator>>(serializer& ser);
 
-    model& operator>>(serializer&& ser)
-    {
-        serialize(ser);
-        return *this;
-    }
+    model& operator>>(serializer&& ser);
 
-    model& operator>>(session& s)
-    {
-        write_record(s);
-        return *this;
-    }
+    model& operator>>(session& s);
 
-    model& operator<<(const kind::sql_row& row)
-    {
-        read_record(row);
-        return *this;
-    }
+    model& operator<<(const kind::sql_row& row);
 
 private:
     std::string table_;

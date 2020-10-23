@@ -8,6 +8,9 @@
 #include <variant>
 #include <vector>
 
+#define DBM_INLINE inline
+#define DBM_EXPORT
+
 #ifdef NDEBUG
 #include <ostream>
 #else

@@ -1,6 +1,7 @@
 #ifndef DBM_DBM_HPP
 #define DBM_DBM_HPP
 
+#include "dbm_config.hpp"
 #include "dbm_common.hpp"
 #include "sql_types.hpp"
 #include "model.hpp"
@@ -8,10 +9,6 @@
 #include "model.ipp"
 #include "session.ipp"
 #include "serializer.ipp"
-
-#define DBM_VERSION_MAJOR @dbm_VERSION_MAJOR@
-#define DBM_VERSION_MINOR @dbm_VERSION_MINOR@
-#define DBM_VERSION_PATCH @dbm_VERSION_PATCH@
 
 namespace dbm {
 
@@ -33,6 +30,11 @@ using sql_row = kind::sql_row;
 using sql_rows = kind::sql_rows;
 using sql_rows_dump = kind::sql_rows_dump;
 
+/*!
+ * Get library version string
+ *
+ * @return version string
+ */
 inline std::string version()
 {
     return std::to_string(DBM_VERSION_MAJOR) + "." + std::to_string(DBM_VERSION_MINOR) + "." + std::to_string(DBM_VERSION_PATCH);
