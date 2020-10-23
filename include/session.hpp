@@ -56,6 +56,25 @@ protected:
     std::string mstatement;
 };
 
+class session::transaction
+{
+public:
+    explicit transaction(session& db);
+
+    virtual ~transaction();
+
+    void commit();
+
+    void rollback();
+
+private:
+    void perform(bool do_commit);
+
+    dbm::session& db_;
+    bool executed_ {false};
+};
+
+
 }// namespace dbm
 
 #endif//DBM_SESSION_HPP
