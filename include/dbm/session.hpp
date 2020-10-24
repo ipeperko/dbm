@@ -1,8 +1,8 @@
 #ifndef DBM_SESSION_HPP
 #define DBM_SESSION_HPP
 
-#include "dbm_common.hpp"
-#include "sql_types.hpp"
+#include <dbm/dbm_common.hpp>
+#include <dbm/sql_types.hpp>
 
 namespace dbm {
 

@@ -1,7 +1,7 @@
 #ifndef DBM_MODEL_ITEM_HPP
 #define DBM_MODEL_ITEM_HPP
 
-#include "container.hpp"
+#include <dbm/container.hpp>
 
 namespace dbm {
 

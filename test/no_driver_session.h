@@ -1,7 +1,7 @@
 #ifndef DBM_NO_DRIVER_SESSION_H
 #define DBM_NO_DRIVER_SESSION_H
 
-#include "session.hpp"
+#include "dbm/session.hpp"
 
 namespace dbm {
 

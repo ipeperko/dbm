@@ -1,7 +1,9 @@
 #ifndef DBM_COMMON_HPP
 #define DBM_COMMON_HPP
 
-#include "detail/named_type.hpp"
+#include <dbm/dbm_config.hpp>
+#include <dbm/dbm_export.hpp>
+#include <dbm/detail/named_type.hpp>
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -9,7 +11,6 @@
 #include <vector>
 
 #define DBM_INLINE inline
-#define DBM_EXPORT
 
 #ifdef NDEBUG
 #include <ostream>

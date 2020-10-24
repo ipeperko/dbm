@@ -1,9 +1,10 @@
 #ifdef DBM_SQLITE3
-#include "../../../include/drivers/sqlite/sqlite_session.hpp"
-#include "detail/model_query_helper.hpp"
-#include "../../../include/model.hpp"
-#include "../../../include/model.ipp"
-#include "../../../include/session.ipp"
+
+#include <dbm/drivers/sqlite/sqlite_session.hpp>
+#include <dbm/model.hpp>
+#include <dbm/model.ipp>
+#include <dbm/session.ipp>
+#include <dbm/detail/model_query_helper.hpp>
 #include <cstring>
 #include <sqlite3.h>
 

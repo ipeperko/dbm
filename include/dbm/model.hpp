@@ -1,8 +1,8 @@
 #ifndef DBM_MODEL_HPP
 #define DBM_MODEL_HPP
 
-#include "model_item.hpp"
-#include "model_item.ipp"
+#include <dbm/model_item.hpp>
+#include <dbm/model_item.ipp>
 #include <vector>
 
 namespace dbm {

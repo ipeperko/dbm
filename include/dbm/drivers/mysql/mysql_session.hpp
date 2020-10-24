@@ -1,7 +1,7 @@
 #ifndef DBM_MYSQL_SESSION_HPP
 #define DBM_MYSQL_SESSION_HPP
 
-#include "../../session.hpp"
+#include <dbm/session.hpp>
 
 namespace dbm {
 

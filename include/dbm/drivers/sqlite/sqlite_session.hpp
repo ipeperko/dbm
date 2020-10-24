@@ -1,7 +1,7 @@
 #ifndef DBM_SQLITE_SESSION_HPP
 #define DBM_SQLITE_SESSION_HPP
 
-#include "../../session.hpp"
+#include <dbm/session.hpp>
 
 struct sqlite3;
 

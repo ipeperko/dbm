@@ -1,7 +1,7 @@
 #ifndef DBM_SERIALIZER_HPP
 #define DBM_SERIALIZER_HPP
 
-#include "dbm_common.hpp"
+#include <dbm/dbm_common.hpp>
 
 namespace dbm {
 

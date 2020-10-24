@@ -1,7 +1,7 @@
 #ifndef DBM_MODEL_QUERY_HELPER_HPP
 #define DBM_MODEL_QUERY_HELPER_HPP
 
-#include "model.hpp"
+#include <dbm/model.hpp>
 
 namespace dbm::detail {
 
