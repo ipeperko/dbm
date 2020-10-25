@@ -1,6 +1,7 @@
 #ifndef DBM_XML_HPP
 #define DBM_XML_HPP
 
+#include <dbm/dbm_common.hpp>
 #include <vector>
 #include <list>
 #include <sstream>
@@ -53,17 +54,17 @@ public:
     static constexpr const char* stdXMLDeclaration = R"(<?xml version="1.0" encoding="utf-8"?>)";
 
     // Constructors
-    node() = default;
+    DBM_EXPORT node() = default;
 
-    node(string_view tag, string_view value = "");
+    DBM_EXPORT node(string_view tag, string_view value = "");
 
-    node(const node& oth);
+    DBM_EXPORT node(const node& oth);
 
-    node(node&& oth);
+    DBM_EXPORT node(node&& oth);
 
 #if __cplusplus >= 201402L
     template<typename T, typename = std::enable_if_t<std::is_floating_point<T>::value or std::is_integral<T>::value>>
-    node(const std::string& tag, T&& val)
+    DBM_EXPORT node(const std::string& tag, T&& val)
         : tag_(tag)
         , parent_{nullptr}
     {
@@ -74,24 +75,24 @@ public:
 #endif
 
     // Deconstructor
-    ~node();
+    DBM_EXPORT ~node();
 
     // Assignments
-    node& operator=(const node& oth);
+    DBM_EXPORT node& operator=(const node& oth);
 
-    node& operator=(node&& oth);
+    DBM_EXPORT node& operator=(node&& oth);
 
     // Cleanup
-    void cleanup();
+    DBM_EXPORT void cleanup();
 
     // Adding elements
-    node& add(string_view name, string_view param);
+    DBM_EXPORT node& add(string_view name, string_view param);
 
-    node& add(string_view name = "");
+    DBM_EXPORT node& add(string_view name = "");
 
-    node& add(const node& oth);
+    DBM_EXPORT node& add(const node& oth);
 
-    node& add(node&& oth);
+    DBM_EXPORT node& add(node&& oth);
 
     template<typename T>
     node& add(string_view name, T val)
@@ -104,20 +105,20 @@ public:
         return n;
     }
 
-    node& add(string_view name, std::nullptr_t);
+    DBM_EXPORT node& add(string_view name, std::nullptr_t);
 
     // Get/set tag, value, attriute access
-    std::string& tag();
+    DBM_EXPORT std::string& tag();
 
-    const std::string& tag() const;
+    DBM_EXPORT const std::string& tag() const;
 
-    void set_tag(string_view str);
+    DBM_EXPORT void set_tag(string_view str);
 
-    std::string& value();
+    DBM_EXPORT std::string& value();
 
-    const std::string& value() const;
+    DBM_EXPORT const std::string& value() const;
 
-    void set_value(string_view str);
+    DBM_EXPORT void set_value(string_view str);
 
     template<typename T>
     typename std::enable_if_t<not utils::is_string_type<T>::value, void>
@@ -140,23 +141,23 @@ public:
         }
     }
 
-    attribute_map& attributes();
+    DBM_EXPORT attribute_map& attributes();
 
-    const attribute_map& attributes() const;
+    DBM_EXPORT const attribute_map& attributes() const;
 
     // Find by tag
-    iterator find(string_view tag);
+    DBM_EXPORT iterator find(string_view tag);
 
-    const_iterator find(string_view tag) const;
+    DBM_EXPORT const_iterator find(string_view tag) const;
 
-    node* find_node_recursive(string_view tag);
+    DBM_EXPORT node* find_node_recursive(string_view tag);
 
-    node const* find_node_recursive(string_view tag) const;
+    DBM_EXPORT node const* find_node_recursive(string_view tag) const;
 
     // Find multiple items with same tag name
-    std::vector<iterator> find_nodes(string_view key);
+    DBM_EXPORT std::vector<iterator> find_nodes(string_view key);
 
-    std::vector<const_iterator> find_nodes(string_view key) const;
+    DBM_EXPORT std::vector<const_iterator> find_nodes(string_view key) const;
 
     // Value getters
 
@@ -223,49 +224,49 @@ public:
     }
 
     // Element access
-    node& at(size_t idx);
+    DBM_EXPORT node& at(size_t idx);
 
-    const node& at(size_t idx) const;
+    DBM_EXPORT const node& at(size_t idx) const;
 
-    node& front();
+    DBM_EXPORT node& front();
 
-    const node& front() const;
+    DBM_EXPORT const node& front() const;
 
-    node& back();
+    DBM_EXPORT node& back();
 
-    const node& back() const;
+    DBM_EXPORT const node& back() const;
 
     // Iterators
-    iterator begin();
+    DBM_EXPORT iterator begin();
 
-    const_iterator begin() const;
+    DBM_EXPORT const_iterator begin() const;
 
-    iterator end();
+    DBM_EXPORT iterator end();
 
-    const_iterator end() const;
+    DBM_EXPORT const_iterator end() const;
 
     // Children, parent etc
-    Items& items();
+    DBM_EXPORT Items& items();
 
-    const Items& items() const;
+    DBM_EXPORT const Items& items() const;
 
-    node* parent();
+    DBM_EXPORT node* parent();
 
-    const node* parent() const;
+    DBM_EXPORT const node* parent() const;
 
-    bool is_root() const;
+    DBM_EXPORT bool is_root() const;
 
-    int level() const;
+    DBM_EXPORT int level() const;
 
     // Parser
-    static node parse(string_view data);
+    DBM_EXPORT static node parse(string_view data);
 
-    static node parse(std::istream& is);
+    DBM_EXPORT static node parse(std::istream& is);
 
     // Serialize
-    std::string to_string(unsigned ident = 0) const;
+    DBM_EXPORT std::string to_string(unsigned ident = 0) const;
 
-    std::string to_string(bool declr, unsigned ident) const;
+    DBM_EXPORT std::string to_string(bool declr, unsigned ident) const;
 
 protected:
     std::string to_string_helper(bool declr, int level, unsigned ident) const;

@@ -1,9 +1,9 @@
 #ifndef DBM_XML_SERIALIZER_HPP
 #define DBM_XML_SERIALIZER_HPP
 
-#include "serializer.hpp"
-#include "xml.hpp"
-#include "dbm_common.hpp"
+#include <dbm/serializer.hpp>
+#include <dbm/xml.hpp>
+#include <dbm/dbm_common.hpp>
 
 namespace dbm::xml {
 

@@ -1,7 +1,9 @@
 #ifndef DBM_COMMON_HPP
 #define DBM_COMMON_HPP
 
-#include "detail/named_type.hpp"
+#include <dbm/dbm_config.hpp>
+#include <dbm/dbm_export.hpp>
+#include <dbm/detail/named_type.hpp>
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -9,7 +11,6 @@
 #include <vector>
 
 #define DBM_INLINE inline
-#define DBM_EXPORT
 
 #ifdef NDEBUG
 #include <ostream>
@@ -31,19 +32,19 @@ namespace detail
 inline std::function<void(std::string const&)> custom_except_fn;
 }
 
-inline void set_custom_exception(std::function<void(std::string const&)> except_fn)
+DBM_EXPORT inline void set_custom_exception(std::function<void(std::string const&)> except_fn)
 {
     detail::custom_except_fn = std::move(except_fn);
 }
 
-inline std::function<void(std::string const&)>& get_custom_exception()
+DBM_EXPORT inline std::function<void(std::string const&)>& get_custom_exception()
 {
     return detail::custom_except_fn;
 }
 }
 
 template <typename ExceptionType = std::domain_error>
-[[noreturn]] void throw_exception(std::string const& what)
+[[noreturn]] DBM_EXPORT void throw_exception(std::string const& what)
 {
     if (auto& fn = config::get_custom_exception()) {
         fn(what); // should not return
@@ -162,7 +163,7 @@ bool arithmetic_convert(T& dest, const kind::variant& var)
     }
 }
 
-class istream_extbuf : public std::istream
+class DBM_EXPORT istream_extbuf : public std::istream
 {
 public:
     istream_extbuf(char* s, size_t n)
@@ -174,9 +175,6 @@ public:
 private:
     std::stringbuf sb_;
 };
-
-//extern std::string b64_encode(void const*, size_t len);
-//extern std::string b64_decode(std::string_view s);
 
 } // namespace utils
 } // namespace dbm

@@ -1,14 +1,14 @@
 #ifndef DBM_SESSION_HPP
 #define DBM_SESSION_HPP
 
-#include "dbm_common.hpp"
-#include "sql_types.hpp"
+#include <dbm/dbm_common.hpp>
+#include <dbm/sql_types.hpp>
 
 namespace dbm {
 
 class model;
 
-class session
+class DBM_EXPORT session
 {
 public:
     class transaction;
@@ -56,7 +56,7 @@ protected:
     std::string mstatement;
 };
 
-class session::transaction
+class DBM_EXPORT session::transaction
 {
 public:
     explicit transaction(session& db);

@@ -1,7 +1,7 @@
 #ifndef DBM_DBM_QT_HPP
 #define DBM_DBM_QT_HPP
 
-#include "dbm.hpp"
+#include <dbm/dbm.hpp>
 #include <QDebug>
 
 template<typename Kind, typename = typename std::enable_if_t<std::is_base_of_v<dbm::kind::detail::named_type_base, Kind>>>

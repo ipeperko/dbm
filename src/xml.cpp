@@ -1,5 +1,5 @@
-#include "xml.hpp"
-#include "dbm_common.hpp"
+#include <dbm/xml.hpp>
+#include <dbm/dbm_common.hpp>
 
 namespace dbm::xml {
 

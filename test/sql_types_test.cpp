@@ -1,4 +1,4 @@
-#include "dbm.hpp"
+#include "dbm/dbm.hpp"
 #include <boost/test/unit_test.hpp>
 #include <iomanip>
 

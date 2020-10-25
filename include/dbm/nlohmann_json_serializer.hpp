@@ -2,7 +2,7 @@
 #define DBM_NLOHMANN_JSON_SERIALIZER_HPP
 
 #include "json.hpp"
-#include "serializer.hpp"
+#include <dbm/serializer.hpp>
 
 namespace nlohmann {
 

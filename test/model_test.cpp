@@ -1,12 +1,12 @@
-#include "dbm.hpp"
+#include "dbm/dbm.hpp"
 #ifdef DBM_MYSQL
-#include "drivers/mysql/mysql_session.hpp"
+#include "dbm/drivers/mysql/mysql_session.hpp"
 #endif
 #ifdef DBM_SQLITE3
-#include "drivers/sqlite/sqlite_session.hpp"
+#include "dbm/drivers/sqlite/sqlite_session.hpp"
 #endif
-#include "nlohmann_json_serializer.hpp"
-#include "xml_serializer.hpp"
+#include "dbm/nlohmann_json_serializer.hpp"
+#include "dbm/xml_serializer.hpp"
 
 #include <boost/test/unit_test.hpp>
 #include <iomanip>

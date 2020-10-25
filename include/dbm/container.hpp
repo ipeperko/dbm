@@ -1,8 +1,8 @@
 #ifndef DBM_CONTAINER_HPP
 #define DBM_CONTAINER_HPP
 
-#include "dbm_common.hpp"
-#include "serializer.hpp"
+#include <dbm/dbm_common.hpp>
+#include <dbm/serializer.hpp>
 #include <memory>
 
 namespace dbm {
@@ -91,8 +91,8 @@ T container::get() const
 
 } // namespace dbm
 
-#include "detail/container_impl.hpp"
-#include "detail/container_impl.ipp"
+#include <dbm/detail/container_impl.hpp>
+#include <dbm/detail/container_impl.ipp>
 
 namespace dbm {
 

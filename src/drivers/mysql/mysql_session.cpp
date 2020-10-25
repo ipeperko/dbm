@@ -1,10 +1,10 @@
 #ifdef DBM_MYSQL
 
-#include "../../../include/drivers/mysql/mysql_session.hpp"
-#include "detail/model_query_helper.hpp"
-#include "../../../include/model.hpp"
-#include "../../../include/model.ipp"
-#include "../../../include/session.ipp"
+#include <dbm/drivers/mysql/mysql_session.hpp>
+#include <dbm/model.hpp>
+#include <dbm/model.ipp>
+#include <dbm/session.ipp>
+#include <dbm/detail/model_query_helper.hpp>
 
 #ifdef __WIN32
 #include <mysql.h>

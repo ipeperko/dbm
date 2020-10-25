@@ -1,14 +1,13 @@
 #ifndef DBM_DBM_HPP
 #define DBM_DBM_HPP
 
-#include "dbm_config.hpp"
-#include "dbm_common.hpp"
-#include "sql_types.hpp"
-#include "model.hpp"
-#include "session.hpp"
-#include "model.ipp"
-#include "session.ipp"
-#include "serializer.ipp"
+#include <dbm/dbm_common.hpp>
+#include <dbm/sql_types.hpp>
+#include <dbm/model.hpp>
+#include <dbm/session.hpp>
+#include <dbm/model.ipp>
+#include <dbm/session.ipp>
+#include <dbm/serializer.ipp>
 
 namespace dbm {
 
@@ -35,7 +34,7 @@ using sql_rows_dump = kind::sql_rows_dump;
  *
  * @return version string
  */
-inline std::string version()
+DBM_EXPORT inline std::string version()
 {
     return std::to_string(DBM_VERSION_MAJOR) + "." + std::to_string(DBM_VERSION_MINOR) + "." + std::to_string(DBM_VERSION_PATCH);
 }

@@ -1,6 +1,6 @@
-#include "dbm.hpp"
+#include "dbm/dbm.hpp"
+#include "dbm/xml_serializer.hpp"
 #include "no_driver_session.h"
-#include "xml_serializer.hpp"
 #include <iomanip>
 
 #define BOOST_TEST_MODULE dbm_test_module
