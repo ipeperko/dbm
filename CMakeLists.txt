@@ -59,7 +59,10 @@ target_include_directories(dbm_static PUBLIC
 # Compile shared library
 add_library(dbm SHARED ${SOURCES})
 target_link_libraries(dbm ${LIBS})
-set_target_properties(dbm PROPERTIES VERSION ${PROJECT_VERSION})
+set_target_properties(dbm PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    CXX_VISIBILITY_PRESET hidden
+    )
 target_include_directories(dbm PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/exports>

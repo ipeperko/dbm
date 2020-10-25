@@ -8,7 +8,7 @@ namespace dbm {
 
 class model;
 
-class session
+class DBM_EXPORT session
 {
 public:
     class transaction;
@@ -56,7 +56,7 @@ protected:
     std::string mstatement;
 };
 
-class session::transaction
+class DBM_EXPORT session::transaction
 {
 public:
     explicit transaction(session& db);

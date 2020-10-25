@@ -34,7 +34,7 @@ using sql_rows_dump = kind::sql_rows_dump;
  *
  * @return version string
  */
-inline std::string version()
+DBM_EXPORT inline std::string version()
 {
     return std::to_string(DBM_VERSION_MAJOR) + "." + std::to_string(DBM_VERSION_MINOR) + "." + std::to_string(DBM_VERSION_PATCH);
 }

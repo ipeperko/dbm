@@ -7,7 +7,7 @@ struct sqlite3;
 
 namespace dbm {
 
-class sqlite_session : public session
+class DBM_EXPORT sqlite_session : public session
 {
 public:
     sqlite_session();
@@ -40,9 +40,9 @@ private:
     kind::sql_rows select_rows(const std::string& statement) override;
     void free_table();
 
-    std::string db_name_;// database file name
-    sqlite3* db3{nullptr};
-    char** azResult{nullptr};
+    std::string db_name_;       // database file name
+    sqlite3* db3{nullptr};      // database handle
+    char** azResult{nullptr};   // results of the query
 };
 
 }// namespace dbm
