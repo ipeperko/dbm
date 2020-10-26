@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(dbm VERSION 0.0.14 DESCRIPTION "Database table models with serialization " LANGUAGES CXX)
+project(dbm VERSION 0.0.15 DESCRIPTION "Database table models with serialization " LANGUAGES CXX)
 
 option(DBM_BUILD_TESTS "Build dbm tests" OFF)
 
@@ -78,8 +78,52 @@ generate_export_header(dbm
 # Install
 # --------------------------------------------------------------------------------
 
-install(TARGETS dbm dbm_static DESTINATION lib)
-install(DIRECTORY include/dbm ${PROJECT_BINARY_DIR}/exports/dbm DESTINATION include)
+add_library(dbm::dbm ALIAS dbm)
+
+install(TARGETS dbm EXPORT dbm-targets DESTINATION
+    LIBRARY  DESTINATION lib
+    ARCHIVE  DESTINATION lib
+    RUNTIME  DESTINATION bin
+    INCLUDES DESTINATION include
+    )
+
+install(
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/dbm ${PROJECT_BINARY_DIR}/exports/dbm
+    DESTINATION include
+)
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/dbm/dbm-config-version.cmake"
+    VERSION ${dbm_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+export(EXPORT dbm-targets
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/dbm/dbm-targets.cmake"
+    NAMESPACE dbm::
+    )
+
+configure_file(cmake/dbm-config.cmake
+    "${CMAKE_CURRENT_BINARY_DIR}/dbm/dbm-config.cmake"
+    COPYONLY
+    )
+
+set(ConfigPackageLocation lib/cmake/dbm)
+
+install(
+    EXPORT      dbm-targets
+    FILE        dbm-targets.cmake
+    NAMESPACE   dbm::
+    DESTINATION ${ConfigPackageLocation}
+)
+
+install(
+    FILES
+    cmake/dbm-config.cmake
+    "${CMAKE_CURRENT_BINARY_DIR}/dbm/dbm-config-version.cmake"
+    DESTINATION ${ConfigPackageLocation}
+)
 
 # --------------------------------------------------------------------------------
 # Test
