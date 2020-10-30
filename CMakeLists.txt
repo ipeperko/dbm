@@ -14,12 +14,6 @@ if (NOT CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DNDEBUG)
 endif()
 
-# Sources
-set(SOURCES
-    src/xml.cpp
-    src/drivers/mysql/mysql_session.cpp
-    src/drivers/sqlite/sqlite_session.cpp)
-
 # Libraries
 set (LIBS)
 
@@ -46,10 +40,33 @@ endif()
 # Config header file
 configure_file(dbm_config.hpp.in exports/dbm/dbm_config.hpp)
 
+# Sources
+set(SOURCES
+    src/xml.cpp
+    src/drivers/mysql/mysql_session.cpp
+    src/drivers/sqlite/sqlite_session.cpp
+    )
+
+# Objects
+add_library(DBM_OBJECTS
+    OBJECT
+    ${SOURCES}
+    )
+set_target_properties(DBM_OBJECTS
+    PROPERTIES
+    POSITION_INDEPENDENT_CODE 1
+    )
+
 # Compile static library
-add_library(dbm_static STATIC ${SOURCES})
+add_library(dbm_static
+    STATIC
+    $<TARGET_OBJECTS:DBM_OBJECTS>
+    )
 target_link_libraries(dbm_static ${LIBS})
-set_target_properties(dbm_static PROPERTIES OUTPUT_NAME dbm)
+set_target_properties(dbm_static
+    PROPERTIES
+    OUTPUT_NAME dbm
+    )
 target_include_directories(dbm_static PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/exports>
@@ -57,9 +74,13 @@ target_include_directories(dbm_static PUBLIC
     )
 
 # Compile shared library
-add_library(dbm SHARED ${SOURCES})
+add_library(dbm
+    SHARED
+    $<TARGET_OBJECTS:DBM_OBJECTS>
+    )
 target_link_libraries(dbm ${LIBS})
-set_target_properties(dbm PROPERTIES
+set_target_properties(dbm
+    PROPERTIES
     VERSION ${PROJECT_VERSION}
     CXX_VISIBILITY_PRESET hidden
     )
