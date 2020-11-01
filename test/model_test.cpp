@@ -173,36 +173,49 @@ dbm::model get_test_model()
             dbm::key("id"),
             dbm::tag("tag_id"),
             dbm::primary(true),
-            dbm::dbtype("INTEGER NOT NULL" + autoincr_str) },
+            //dbm::dbtype("INTEGER NOT NULL" + autoincr_str),
+            dbm::not_null(true),
+            dbm::auto_increment(true)
+          },
           { dbm::binding(data_fields.name),
             dbm::key("text_not_null"),
             dbm::tag("tag_text_not_null"),
-            dbm::dbtype("TEXT NOT NULL") },
+            //dbm::dbtype("TEXT NOT NULL"),
+            dbm::not_null(true)
+          },
           { dbm::local<std::string>(),
             dbm::key("text_with_null"),
             dbm::tag("tag_text_with_null"),
             dbm::required(true),
-            dbm::dbtype("TEXT DEFAULT NULL") },
+            //dbm::dbtype("TEXT DEFAULT NULL")
+          },
           { dbm::binding(data_fields.int_not_null),
             dbm::key("int_not_null"),
             dbm::tag("tag_int_not_null"),
-            dbm::dbtype("INTEGER NOT NULL") },
+            //dbm::dbtype("INTEGER NOT NULL"),
+            dbm::not_null(true)
+          },
           { dbm::local<int>(),
             dbm::key("int_with_null"),
             dbm::tag("tag_int_with_null"),
-            dbm::dbtype("INTEGER DEFAULT NULL") },
+            //dbm::dbtype("INTEGER DEFAULT NULL")
+          },
           { dbm::local<bool>(),
             dbm::key("tiny_int_not_null"),
             dbm::tag("tag_tiny_int_not_null"),
-            dbm::dbtype("TINYINT NOT NULL") },
+            //dbm::dbtype("TINYINT NOT NULL"),
+            dbm::not_null(true)
+          },
           { dbm::local<bool>(),
             dbm::key("tiny_int_with_null"),
             dbm::tag("tag_tiny_int_with_null"),
-            dbm::dbtype("TINYINT DEFAULT NULL") },
+            //dbm::dbtype("TINYINT DEFAULT NULL"),
+          },
           { dbm::local<std::string>(),
             dbm::key("timestamp"),
             dbm::tag("timestamp_tag"),
-            dbm::dbtype("TIMESTAMP" + ts) } }
+            dbm::dbtype("TIMESTAMP" + ts)
+          } }
     };
 
 #ifdef DBM_MYSQL
@@ -210,7 +223,8 @@ dbm::model get_test_model()
         m.emplace_back(dbm::local<time_t>(),
                        dbm::key("UNIX_TIMESTAMP(timestamp)"),
                        dbm::tag("unixtime_tag"),
-                       dbm::direction::read_only);
+                       dbm::direction::read_only,
+                       dbm::create(false));
     }
 #endif
 #ifdef DBM_SQLITE3
@@ -218,7 +232,8 @@ dbm::model get_test_model()
         m.emplace_back(dbm::local<time_t>(),
                        dbm::key("strftime('%s',timestamp)"),
                        dbm::tag("unixtime_tag"),
-                       dbm::direction::read_only);
+                       dbm::direction::read_only,
+                       dbm::create(false));
     }
 #endif
 

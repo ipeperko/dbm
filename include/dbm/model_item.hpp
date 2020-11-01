@@ -6,19 +6,25 @@
 
 namespace dbm {
 
+namespace detail {
+class model_item_conf_helper;
+}
+
 class model_item
 {
+    friend class detail::model_item_conf_helper;
 public:
 
     enum conf_flags : unsigned
     {
         db_readable             = 0,
         db_writable             = 1,
-        db_pkey                 = 2,
-        db_not_null             = 3,
-        db_autoincrement        = 4,
-        s_required              = 5,
-        s_taggable              = 6,
+        db_creatable = 2,
+        db_pkey                 = 3,
+        db_not_null             = 4,
+        db_autoincrement        = 5,
+        s_required              = 6,
+        s_taggable              = 7,
         conf_flags_num_items    = s_taggable + 1
     };
 
@@ -43,19 +49,9 @@ public:
 
     const container& get_container() const;
 
-    constexpr bool is_primary() const;
-
-    constexpr bool is_required() const;
-
-    constexpr bool is_taggable() const;
-
     bool is_null() const;
 
     bool is_defined() const;
-
-    constexpr bool is_writable() const;
-
-    constexpr bool is_readable() const;
 
     const kind::dbtype& dbtype() const;
 
@@ -70,6 +66,12 @@ public:
     void set(const kind::dbtype& v);
 
     void set(const kind::taggable& v);
+
+    void set(const kind::not_null& v);
+
+    void set(const kind::auto_increment& v);
+
+    void set(const kind::create& v);
 
     void set(kind::direction v);
 
@@ -92,6 +94,8 @@ public:
 
     void deserialize(deserializer& s);
 
+    detail::model_item_conf_helper conf() const;
+
 private:
 
     void set(const model_item& oth)
@@ -110,12 +114,86 @@ private:
 
     void make_default_container();
 
+    static constexpr unsigned conf_default =
+        (1u << conf_flags::db_readable) |
+        (1u << conf_flags::db_writable) |
+        (1u << conf_flags::db_creatable) |
+        (1u << conf_flags::s_taggable);
+
     kind::key key_{""};
     kind::tag tag_{""};
-    std::bitset<conf_flags_num_items> conf_ {(1u << db_readable) | (1u << db_writable) | (1u << s_taggable)};
+    std::bitset<conf_flags_num_items> conf_ {conf_default};
     kind::dbtype dbtype_ {""};
     container_ptr cont_;
 };
+
+namespace detail {
+
+/*!
+ * Helper class for model item configuration bits reading
+ *
+ */
+class model_item_conf_helper
+{
+    model_item const& item_;
+
+    constexpr auto& cnf()
+    {
+        return item_.conf_;
+    }
+
+    constexpr auto const& cnf() const
+    {
+        return item_.conf_;
+    }
+
+public:
+    explicit model_item_conf_helper(model_item const& item)
+        : item_(item)
+    {}
+
+    constexpr bool readable() const
+    {
+        return cnf()[model_item::db_readable];
+    }
+
+    constexpr bool writable() const
+    {
+        return cnf()[model_item::db_writable];
+    }
+
+    constexpr bool creatable() const
+    {
+        return cnf()[model_item::db_creatable];
+    }
+
+    constexpr bool primary() const
+    {
+        return cnf()[model_item::db_pkey];
+    }
+
+    constexpr bool not_null() const
+    {
+        return cnf()[model_item::db_not_null];
+    }
+
+    constexpr bool auto_increment() const
+    {
+        return cnf()[model_item::db_autoincrement];
+    }
+
+    constexpr bool required() const
+    {
+        return cnf()[model_item::s_required];
+    }
+
+    constexpr bool taggable() const
+    {
+        return cnf()[model_item::s_taggable];
+    }
+};
+
+} // namespace detail
 
 template<typename... Args>
 model_item::model_item(Args&&... args)

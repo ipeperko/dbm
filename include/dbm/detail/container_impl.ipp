@@ -225,11 +225,18 @@ bool container_impl<T, ContType, conf>::deserialize(deserializer& s, std::string
             // do not change anything
             return false;
         case deserializer::error:
+            [[fallthrough]];
         default:
             is_null_ = true;
             defined_ = false;
             throw_exception<std::domain_error>("Deserialize failed - tag " + std::string(tag));
     }
+}
+
+template<typename T, template<typename> class ContType, container_conf conf>
+std::string container_impl<T, ContType, conf>::type_to_string(const detail::model_query_helper_base* qh) const
+{
+    return qh->value_type_string<unreferenced_type>();
 }
 
 } // namespace dbm

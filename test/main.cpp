@@ -345,31 +345,31 @@ BOOST_AUTO_TEST_CASE(item_test)
 
     // Primary key
     mitem_int.set(dbm::primary(true));
-    BOOST_TEST(mitem_int.is_primary());
+    BOOST_TEST(mitem_int.conf().primary());
     mitem_int.set(dbm::primary(false));
-    BOOST_TEST(!mitem_int.is_primary());
+    BOOST_TEST(!mitem_int.conf().primary());
 
     // Required flag
     mitem_int.set(dbm::required(true));
-    BOOST_TEST(mitem_int.is_required());
+    BOOST_TEST(mitem_int.conf().required());
     mitem_int.set(dbm::required(false));
-    BOOST_TEST(!mitem_int.is_required());
+    BOOST_TEST(!mitem_int.conf().required());
 
     // Taggable flag
     mitem_int.set(dbm::taggable (true));
-    BOOST_TEST(mitem_int.is_taggable());
+    BOOST_TEST(mitem_int.conf().taggable());
     mitem_int.set(dbm::taggable (false));
-    BOOST_TEST(!mitem_int.is_taggable());
+    BOOST_TEST(!mitem_int.conf().taggable());
 
     // Item copy
-    mitem_int.set(dbm::primary(!mitem_int.is_primary()));
-    mitem_int.set(dbm::required(!mitem_int.is_required()));
-    mitem_int.set(dbm::taggable(!mitem_int.is_taggable()));
+    mitem_int.set(dbm::primary(!mitem_int.conf().primary()));
+    mitem_int.set(dbm::required(!mitem_int.conf().required()));
+    mitem_int.set(dbm::taggable(!mitem_int.conf().taggable()));
     dbm::model_item mitem_int_copy(mitem_int);
     BOOST_TEST(mitem_int.value<int>() == mitem_int_copy.value<int>());
-    BOOST_TEST(mitem_int.is_primary() == mitem_int_copy.is_primary());
-    BOOST_TEST(mitem_int.is_required() == mitem_int_copy.is_required());
-    BOOST_TEST(mitem_int.is_taggable() == mitem_int_copy.is_taggable());
+    BOOST_TEST(mitem_int.conf().primary() == mitem_int_copy.conf().primary());
+    BOOST_TEST(mitem_int.conf().required() == mitem_int_copy.conf().required());
+    BOOST_TEST(mitem_int.conf().taggable() == mitem_int_copy.conf().taggable());
 
     // Item move
     dbm::model_item mitem_int_move(std::move(mitem_int));

@@ -11,8 +11,107 @@ struct param_session_type_mysql
 struct param_session_type_sqlite
 {};
 
+class model_query_helper_base
+{
+public:
+
+    enum class session_type
+    {
+        unknown,
+        MySQL,
+        SQLite
+    };
+
+    model_query_helper_base() = delete;
+
+    explicit model_query_helper_base(session_type t)
+        : type_(t)
+    {}
+
+    template <typename UnknownType=void>
+    void is_unknown_type() const
+    {
+        static_assert(! std::is_same_v<UnknownType, UnknownType>, "Unsupported data type");
+    }
+
+    template<typename T>
+    std::string value_type_string() const
+    {
+        if (type_ == session_type::MySQL) {
+            if constexpr (std::is_same_v<T, bool>) {
+                return "BOOL";
+            }
+            else if constexpr (std::is_same_v<T, int>) {
+                return "INT";
+            }
+            else if constexpr (std::is_same_v<T, unsigned int>) {
+                return "INT UNSIGNED";
+            }
+            else if constexpr (std::is_same_v<T, short>) {
+                return "SMALLINT";
+            }
+            else if constexpr (std::is_same_v<T, unsigned short>) {
+                return "SMALLINT UNSIGNED";
+            }
+            else if constexpr (std::is_same_v<T, long>) {
+                return "BIGINT";
+            }
+            else if constexpr (std::is_same_v<T, unsigned long>) {
+                return "BIGINT UNSIGNED";
+            }
+            else if constexpr (std::is_same_v<T, double>) {
+                return "DOUBLE";
+            }
+            else if constexpr (std::is_same_v<T, std::string>) {
+                return "TEXT";
+            }
+            else {
+                model_query_helper_base::is_unknown_type();
+            }
+        }
+        else if (type_ == session_type::SQLite) {
+            if constexpr (std::is_same_v<T, bool>) {
+                return "INTEGER";
+            }
+            else if constexpr (std::is_same_v<T, int>) {
+                return "INTEGER";
+            }
+            else if constexpr (std::is_same_v<T, unsigned int>) {
+                return "INTEGER";
+            }
+            else if constexpr (std::is_same_v<T, short>) {
+                return "INTEGER";
+            }
+            else if constexpr (std::is_same_v<T, unsigned short>) {
+                return "INTEGER";
+            }
+            else if constexpr (std::is_same_v<T, long>) {
+                return "INTEGER";
+            }
+            else if constexpr (std::is_same_v<T, unsigned long>) {
+                return "INTEGER";
+            }
+            else if constexpr (std::is_same_v<T, double>) {
+                return "REAL";
+            }
+            else if constexpr (std::is_same_v<T, std::string>) {
+                return "TEXT";
+            }
+            else {
+                model_query_helper_base::is_unknown_type();
+            }
+        }
+
+        // Shouldn't be here - just to disable compiler warning
+        return "";
+    }
+
+protected:
+    session_type type_ {session_type::unknown};
+};
+
 template<class SessionType>
-class model_query_helper
+class model_query_helper : public model_query_helper_base
 {
     static constexpr bool is_SQlite()
     {
@@ -24,13 +123,27 @@ class model_query_helper
         return std::is_same_v<SessionType, param_session_type_mysql>;
     }
 
+    static constexpr session_type session_type_trace()
+    {
+        if constexpr (std::is_same_v<SessionType, param_session_type_mysql>) {
+            return session_type::MySQL;
+        }
+        else if constexpr (std::is_same_v<SessionType, param_session_type_sqlite>) {
+            return session_type::SQLite;
+        }
+        else {
+            return session_type::unknown;
+        }
+    }
+
     const model& model_;
 
 public:
     static_assert(is_MySql() || is_SQlite(), "Unsupported session type");
 
     explicit model_query_helper(const model& m)
-        : model_(m)
+        : model_query_helper_base(session_type_trace())
+        , model_(m)
     {
     }
 
@@ -43,6 +156,21 @@ public:
     [[nodiscard]] std::string create_table_query(bool if_not_exists) const;
 
     [[nodiscard]] std::string drop_table_query(bool if_exists) const;
+
+    [[nodiscard]] constexpr std::string_view not_null_string() const
+    {
+        return " NOT NULL";
+    }
+
+    [[nodiscard]] constexpr std::string_view auto_increment_string() const
+    {
+        if constexpr (is_SQlite()) {
+            return "";
+        }
+        if constexpr (is_MySql()) {
+            return " AUTO_INCREMENT";
+        }
+    }
 };
 
 template<class SessionType>
@@ -54,7 +182,7 @@ std::string model_query_helper<SessionType>::write_query() const
 
     for (const auto& it : model_.items()) {
 
-        if (!it.is_writable()) {
+        if (!it.conf().writable()) {
             continue;
         }
 
@@ -64,7 +192,7 @@ std::string model_query_helper<SessionType>::write_query() const
                 keys += ",";
                 values += ",";
             }
-            if (i_duplicate && !it.is_primary()) {
+            if (i_duplicate && !it.conf().primary()) {
                 duplicate_keys += ",";
             }
 
@@ -76,7 +204,7 @@ std::string model_query_helper<SessionType>::write_query() const
                 values += "'" + it.to_string() + "'";
             }
 
-            if (!it.is_primary()) {
+            if (!it.conf().primary()) {
                 duplicate_keys += it.key().get() + "=VALUES(" + it.key().get() + ")";
                 i_duplicate++;
             }
@@ -84,7 +212,7 @@ std::string model_query_helper<SessionType>::write_query() const
             ++i;
         }
         else {
-            if (it.is_required()) {
+            if (it.conf().required()) {
                 throw_exception<std::domain_error>("Item is required " + it.key().get());
             }
         }
@@ -128,7 +256,7 @@ std::string model_query_helper<SessionType>::read_query(const std::string& extra
     // keys
     int n = 0;
     for (const auto& it : model_.items_) {
-        if (it.is_readable()) {
+        if (it.conf().readable()) {
             if (n) {
                 what += ",";
             }
@@ -144,7 +272,7 @@ std::string model_query_helper<SessionType>::read_query(const std::string& extra
     n = 0;
     for (const auto& it : model_.items_) {
         // TODO: write only direction
-        if (!it.is_primary()) {
+        if (!it.conf().primary()) {
             continue;
         }
         if (!it.is_defined()) {
@@ -175,7 +303,7 @@ std::string model_query_helper<SessionType>::delete_query() const
     int n = 0;
     for (const auto& it : model_.items_) {
 
-        if (!it.is_primary()) {
+        if (!it.conf().primary()) {
             continue;
         }
         if (!it.is_defined()) {
@@ -208,18 +336,35 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
 
     for (const auto& it : model_.items()) {
 
-        if (it.is_primary()) {
-            if (!primary_keys.empty()) {
-                primary_keys += ", ";
-            }
-            primary_keys += it.key().get();
-        }
+        if (it.conf().creatable()) {
 
-        if (!it.dbtype().get().empty()) {
+            if (it.conf().primary()) {
+                if (!primary_keys.empty()) {
+                    primary_keys += ", ";
+                }
+                primary_keys += it.key().get();
+            }
+
             if (!keys.empty()) {
                 keys += ", ";
             }
-            keys += it.key().get() + " " + it.dbtype().get();
+
+            keys += it.key().get() + " ";
+
+            if (!it.dbtype().get().empty()) {
+                keys += it.dbtype().get();
+            }
+            else {
+                keys += it.get_container().type_to_string(this);
+
+                if (it.conf().not_null()) {
+                    keys += not_null_string().data();
+                }
+
+                if (it.conf().auto_increment()) {
+                    keys += auto_increment_string().data();
+                }
+            }
         }
     }
 

@@ -44,21 +44,6 @@ DBM_INLINE const container& model_item::get_container() const
     return *cont_;
 }
 
-DBM_INLINE constexpr bool model_item::is_primary() const
-{
-    return conf_[conf_flags::db_pkey];
-}
-
-DBM_INLINE constexpr bool model_item::is_required() const
-{
-    return conf_[conf_flags::s_required];
-}
-
-DBM_INLINE constexpr bool model_item::is_taggable() const
-{
-    return conf_[conf_flags::s_taggable];
-}
-
 DBM_INLINE bool model_item::is_null() const
 {
     return !cont_ || cont_->is_null();
@@ -72,16 +57,6 @@ DBM_INLINE bool model_item::is_defined() const
 DBM_INLINE const kind::dbtype& model_item::dbtype() const
 {
     return dbtype_;
-}
-
-DBM_INLINE constexpr bool model_item::is_writable() const
-{
-    return conf_[conf_flags::db_writable];
-}
-
-DBM_INLINE constexpr bool model_item::is_readable() const
-{
-    return conf_[conf_flags::db_readable];
 }
 
 DBM_INLINE void model_item::set(const kind::key& v)
@@ -112,6 +87,21 @@ DBM_INLINE void model_item::set(const kind::dbtype& v)
 DBM_INLINE void model_item::set(const kind::taggable& v)
 {
     conf_[conf_flags::s_taggable] = v.get();
+}
+
+DBM_INLINE void model_item::set(const kind::not_null& v)
+{
+    conf_[conf_flags::db_not_null] = v.get();
+}
+
+DBM_INLINE void model_item::set(const kind::auto_increment& v)
+{
+    conf_[conf_flags::db_autoincrement] = v.get();
+}
+
+DBM_INLINE void model_item::set(const kind::create& v)
+{
+    conf_[conf_flags::db_creatable] = v.get();
 }
 
 DBM_INLINE void model_item::set(kind::direction v)
@@ -174,14 +164,14 @@ DBM_INLINE void model_item::from_string(std::string_view v)
 
 DBM_INLINE void model_item::serialize(serializer& s)
 {
-    if (!is_taggable()) {
+    if (!conf().taggable()) {
         return;
     }
 
     std::string_view sv = !tag_.empty() ? tag_.get() : key_.get();
 
     if (!is_defined()) {
-        if (is_required()) {
+        if (conf().required()) {
             throw::std::domain_error("Serializing failed - item '" + std::string(sv) + "' is required but not defined" );
         }
         return;
@@ -207,6 +197,11 @@ DBM_INLINE void model_item::deserialize(deserializer& s)
 DBM_INLINE void model_item::make_default_container()
 {
     cont_ = local<std::string>();
+}
+
+DBM_INLINE detail::model_item_conf_helper model_item::conf() const
+{
+    return detail::model_item_conf_helper(*this);
 }
 
 }
