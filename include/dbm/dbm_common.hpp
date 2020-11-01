@@ -101,11 +101,12 @@ typedef detail::named_type<std::string, detail::parameter_dbtype, detail::printa
 typedef detail::named_type<bool, detail::parameter_null, detail::printable> null;
 typedef detail::named_type<bool, detail::parameter_taggable, detail::printable> taggable;
 
-enum class direction
+enum class direction : unsigned
 {
-    bidirectional,
+    disabled,
     read_only,
     write_only,
+    bidirectional,
 };
 
 #ifdef DBM_EXPERIMENTAL_BLOB

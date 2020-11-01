@@ -29,11 +29,11 @@ public:
 
     void set_null(bool null);
 
-    bool is_null() const;
+    constexpr bool is_null() const;
 
     void set_defined(bool defined);
 
-    bool is_defined() const;
+    constexpr bool is_defined() const;
 
     virtual kind::variant get() const = 0;
 
@@ -67,7 +67,7 @@ DBM_INLINE void container::set_null(bool null)
     is_null_ = null;
 }
 
-DBM_INLINE bool container::is_null() const
+DBM_INLINE constexpr bool container::is_null() const
 {
     return is_null_;
 }
@@ -77,7 +77,7 @@ DBM_INLINE void container::set_defined(bool defined)
     defined_ = defined;
 }
 
-DBM_INLINE bool container::is_defined() const
+DBM_INLINE constexpr bool container::is_defined() const
 {
     return defined_;
 }

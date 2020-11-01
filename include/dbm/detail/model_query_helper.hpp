@@ -54,7 +54,7 @@ std::string model_query_helper<SessionType>::write_query() const
 
     for (const auto& it : model_.items()) {
 
-        if (it.direction() == kind::direction::read_only) {
+        if (!it.is_writable()) {
             continue;
         }
 
@@ -128,7 +128,7 @@ std::string model_query_helper<SessionType>::read_query(const std::string& extra
     // keys
     int n = 0;
     for (const auto& it : model_.items_) {
-        if (it.direction() != kind::direction::write_only) {
+        if (it.is_readable()) {
             if (n) {
                 what += ",";
             }

@@ -11,11 +11,8 @@ DBM_INLINE model_item::model_item()
 DBM_INLINE model_item::model_item(const model_item& oth)
     : key_(oth.key_)
     , tag_(oth.tag_)
-    , primary_(oth.primary_)
-    , required_(oth.required_)
+    , conf_(oth.conf_)
     , dbtype_(oth.dbtype_)
-    , taggable_(oth.taggable_)
-    , direction_(oth.direction_)
     , cont_(oth.cont_->clone())
 {
 }
@@ -25,22 +22,19 @@ DBM_INLINE model_item& model_item::operator=(const model_item& oth)
     if (this != &oth) {
         key_ = oth.key_;
         tag_ = oth.tag_;
-        primary_ = oth.primary_;
-        required_ = oth.required_;
+        conf_ = oth.conf_;
         dbtype_ = oth.dbtype_;
-        taggable_ = oth.taggable_;
-        direction_ = oth.direction_;
         cont_ = oth.cont_->clone();
     }
     return *this;
 }
 
-DBM_INLINE const kind::key& model_item::key() const
+DBM_INLINE constexpr const kind::key& model_item::key() const
 {
     return key_;
 }
 
-DBM_INLINE const kind::tag& model_item::tag() const
+DBM_INLINE constexpr const kind::tag& model_item::tag() const
 {
     return tag_;
 }
@@ -50,19 +44,19 @@ DBM_INLINE const container& model_item::get_container() const
     return *cont_;
 }
 
-DBM_INLINE bool model_item::is_primary() const
+DBM_INLINE constexpr bool model_item::is_primary() const
 {
-    return primary_.get();
+    return conf_[conf_flags::db_pkey];
 }
 
-DBM_INLINE bool model_item::is_required() const
+DBM_INLINE constexpr bool model_item::is_required() const
 {
-    return required_.get();
+    return conf_[conf_flags::s_required];
 }
 
-DBM_INLINE bool model_item::is_taggable() const
+DBM_INLINE constexpr bool model_item::is_taggable() const
 {
-    return taggable_.get();
+    return conf_[conf_flags::s_taggable];
 }
 
 DBM_INLINE bool model_item::is_null() const
@@ -80,9 +74,14 @@ DBM_INLINE const kind::dbtype& model_item::dbtype() const
     return dbtype_;
 }
 
-DBM_INLINE kind::direction model_item::direction() const
+DBM_INLINE constexpr bool model_item::is_writable() const
 {
-    return direction_;
+    return conf_[conf_flags::db_writable];
+}
+
+DBM_INLINE constexpr bool model_item::is_readable() const
+{
+    return conf_[conf_flags::db_readable];
 }
 
 DBM_INLINE void model_item::set(const kind::key& v)
@@ -97,12 +96,12 @@ DBM_INLINE void model_item::set(const kind::tag& v)
 
 DBM_INLINE void model_item::set(const kind::primary& v)
 {
-    primary_ = v;
+    conf_[conf_flags::db_pkey] = v.get();
 }
 
 DBM_INLINE void model_item::set(const kind::required& v)
 {
-    required_ = v;
+    conf_[conf_flags::s_required] = v.get();
 }
 
 DBM_INLINE void model_item::set(const kind::dbtype& v)
@@ -112,12 +111,28 @@ DBM_INLINE void model_item::set(const kind::dbtype& v)
 
 DBM_INLINE void model_item::set(const kind::taggable& v)
 {
-    taggable_ = v;
+    conf_[conf_flags::s_taggable] = v.get();
 }
 
 DBM_INLINE void model_item::set(kind::direction v)
 {
-    direction_ = v;
+    switch (v) {
+        case kind::direction::bidirectional:
+            conf_[conf_flags::db_writable] = true;
+            conf_[conf_flags::db_readable] = true;
+            break;
+        case kind::direction::write_only:
+            conf_[conf_flags::db_writable] = true;
+            conf_[conf_flags::db_readable] = false;
+            break;
+        case kind::direction::read_only:
+            conf_[conf_flags::db_writable] = false;
+            conf_[conf_flags::db_readable] = true;
+            break;
+        default:
+            conf_[conf_flags::db_writable] = false;
+            conf_[conf_flags::db_readable] = false;
+    }
 }
 
 DBM_INLINE void model_item::set(container_ptr&& v)

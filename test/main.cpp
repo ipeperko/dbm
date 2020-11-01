@@ -343,6 +343,24 @@ BOOST_AUTO_TEST_CASE(item_test)
     BOOST_TEST(mitem_int.value<int>() == 1234);
     BOOST_TEST(mitem_int.to_string() == "1234");
 
+    // Primary key
+    mitem_int.set(dbm::primary(true));
+    BOOST_TEST(mitem_int.is_primary());
+    mitem_int.set(dbm::primary(false));
+    BOOST_TEST(!mitem_int.is_primary());
+
+    // Required flag
+    mitem_int.set(dbm::required(true));
+    BOOST_TEST(mitem_int.is_required());
+    mitem_int.set(dbm::required(false));
+    BOOST_TEST(!mitem_int.is_required());
+
+    // Taggable flag
+    mitem_int.set(dbm::taggable (true));
+    BOOST_TEST(mitem_int.is_taggable());
+    mitem_int.set(dbm::taggable (false));
+    BOOST_TEST(!mitem_int.is_taggable());
+
     // Item copy
     mitem_int.set(dbm::primary(!mitem_int.is_primary()));
     mitem_int.set(dbm::required(!mitem_int.is_required()));

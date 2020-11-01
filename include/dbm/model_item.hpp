@@ -2,22 +2,24 @@
 #define DBM_MODEL_ITEM_HPP
 
 #include <dbm/container.hpp>
+#include <bitset>
 
 namespace dbm {
 
 class model_item
 {
 public:
-    using conf_t = uint32_t;
 
-    enum class conf_mask : unsigned
+    enum conf_flags : unsigned
     {
-        db_read        = 0x1,
-        db_write       = 0x2,
-        db_pkey         = 0x4,
-        db_not_null     = 0x8,
-        s_required      = 0x10,
-        s_taggable      = 0x20
+        db_readable             = 0,
+        db_writable             = 1,
+        db_pkey                 = 2,
+        db_not_null             = 3,
+        db_autoincrement        = 4,
+        s_required              = 5,
+        s_taggable              = 6,
+        conf_flags_num_items    = s_taggable + 1
     };
 
     model_item();
@@ -35,25 +37,27 @@ public:
 
     model_item& operator=(model_item&& oth) = default;
 
-    const kind::key& key() const;
+    constexpr const kind::key& key() const;
 
-    const kind::tag& tag() const;
+    constexpr const kind::tag& tag() const;
 
     const container& get_container() const;
 
-    bool is_primary() const;
+    constexpr bool is_primary() const;
 
-    bool is_required() const;
+    constexpr bool is_required() const;
 
-    bool is_taggable() const;
+    constexpr bool is_taggable() const;
 
     bool is_null() const;
 
     bool is_defined() const;
 
-    const kind::dbtype& dbtype() const;
+    constexpr bool is_writable() const;
 
-    kind::direction direction() const;
+    constexpr bool is_readable() const;
+
+    const kind::dbtype& dbtype() const;
 
     void set(const kind::key& v);
 
@@ -108,11 +112,8 @@ private:
 
     kind::key key_{""};
     kind::tag tag_{""};
-    kind::primary primary_{false};
-    kind::required required_{false};
+    std::bitset<conf_flags_num_items> conf_ {(1u << db_readable) | (1u << db_writable) | (1u << s_taggable)};
     kind::dbtype dbtype_ {""};
-    kind::taggable taggable_ {true};
-    kind::direction direction_{kind::direction::bidirectional};
     container_ptr cont_;
 };
 
