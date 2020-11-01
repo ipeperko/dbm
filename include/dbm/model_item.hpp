@@ -8,6 +8,18 @@ namespace dbm {
 class model_item
 {
 public:
+    using conf_t = uint32_t;
+
+    enum class conf_mask : unsigned
+    {
+        db_read        = 0x1,
+        db_write       = 0x2,
+        db_pkey         = 0x4,
+        db_not_null     = 0x8,
+        s_required      = 0x10,
+        s_taggable      = 0x20
+    };
+
     model_item();
 
     model_item(const model_item& oth);

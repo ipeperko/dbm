@@ -15,7 +15,8 @@ target_link_libraries(${BINARY}
     )
 
 target_include_directories(${BINARY}
-    PRIVATE
+    PUBLIC
+    ${DBM_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/nlohmann>
     )
 

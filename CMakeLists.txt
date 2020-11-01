@@ -56,6 +56,14 @@ set_target_properties(DBM_OBJECTS
     PROPERTIES
     POSITION_INDEPENDENT_CODE 1
     )
+set(DBM_INCLUDE_DIRS
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/exports>
+    $<INSTALL_INTERFACE:include>
+    )
+target_include_directories(DBM_OBJECTS PUBLIC
+    ${DBM_INCLUDE_DIRS}
+    )
 
 # Compile static library
 add_library(dbm_static
@@ -66,11 +74,6 @@ target_link_libraries(dbm_static ${LIBS})
 set_target_properties(dbm_static
     PROPERTIES
     OUTPUT_NAME dbm
-    )
-target_include_directories(dbm_static PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/exports>
-    $<INSTALL_INTERFACE:include>
     )
 
 # Compile shared library
@@ -83,11 +86,6 @@ set_target_properties(dbm
     PROPERTIES
     VERSION ${PROJECT_VERSION}
     CXX_VISIBILITY_PRESET hidden
-    )
-target_include_directories(dbm PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/exports>
-    $<INSTALL_INTERFACE:include>
     )
 
 # Create export header file
@@ -111,14 +109,14 @@ install(TARGETS dbm EXPORT dbm-targets DESTINATION
 install(
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/dbm ${PROJECT_BINARY_DIR}/exports/dbm
     DESTINATION include
-)
+    )
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/dbm/dbm-config-version.cmake"
     VERSION ${dbm_VERSION}
     COMPATIBILITY AnyNewerVersion
-)
+    )
 
 export(EXPORT dbm-targets
     FILE "${CMAKE_CURRENT_BINARY_DIR}/dbm/dbm-targets.cmake"
@@ -137,14 +135,14 @@ install(
     FILE        dbm-targets.cmake
     NAMESPACE   dbm::
     DESTINATION ${ConfigPackageLocation}
-)
+    )
 
 install(
     FILES
     cmake/dbm-config.cmake
     "${CMAKE_CURRENT_BINARY_DIR}/dbm/dbm-config-version.cmake"
     DESTINATION ${ConfigPackageLocation}
-)
+    )
 
 # --------------------------------------------------------------------------------
 # Test
