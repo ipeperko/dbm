@@ -10,6 +10,9 @@ namespace detail {
 class model_item_conf_helper;
 }
 
+/*!
+ * Model item class
+ */
 class model_item
 {
     friend class detail::model_item_conf_helper;
@@ -132,19 +135,30 @@ namespace detail {
 /*!
  * Helper class for model item configuration bits reading
  *
+ * The main reason for this class is to avoid confusion between
+ * value state 'is_null' and configuration flag 'not_null'.
+ *
  */
 class model_item_conf_helper
 {
     model_item const& item_;
 
-    constexpr auto& cnf()
+    constexpr auto const& cnf() const
     {
         return item_.conf_;
     }
 
-    constexpr auto const& cnf() const
+    /*!
+     * Get flag value
+     *
+     * Note that this method should be private as we don't perform bounds checking!
+     *
+     * @param pos flag position
+     * @return flag state
+     */
+    constexpr bool get(std::size_t pos) const
     {
-        return item_.conf_;
+        return cnf()[pos];
     }
 
 public:
@@ -154,42 +168,42 @@ public:
 
     constexpr bool readable() const
     {
-        return cnf()[model_item::db_readable];
+        return get(model_item::db_readable);
     }
 
     constexpr bool writable() const
     {
-        return cnf()[model_item::db_writable];
+        return get(model_item::db_writable);
     }
 
     constexpr bool creatable() const
     {
-        return cnf()[model_item::db_creatable];
+        return get(model_item::db_creatable);
     }
 
     constexpr bool primary() const
     {
-        return cnf()[model_item::db_pkey];
+        return get(model_item::db_pkey);
     }
 
     constexpr bool not_null() const
     {
-        return cnf()[model_item::db_not_null];
+        return get(model_item::db_not_null);
     }
 
     constexpr bool auto_increment() const
     {
-        return cnf()[model_item::db_autoincrement];
+        return get(model_item::db_autoincrement);
     }
 
     constexpr bool required() const
     {
-        return cnf()[model_item::s_required];
+        return get(model_item::s_required);
     }
 
     constexpr bool taggable() const
     {
-        return cnf()[model_item::s_taggable];
+        return get(model_item::s_taggable);
     }
 };
 

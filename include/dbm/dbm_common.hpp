@@ -131,6 +131,36 @@ using variant = std::variant<std::nullptr_t,
 #endif
                              >;
 
+enum class data_type : std::size_t
+{
+    Nullptr = 0,
+    Bool,
+    Int,
+    Short,
+    Long,
+    Double,
+    String,
+    Char_ptr,
+    String_view,
+#ifdef DBM_EXPERIMENTAL_BLOB
+    Blob,
+#endif
+    undefined = std::variant_npos,
+};
+
+static_assert(std::is_same_v<std::nullptr_t , std::variant_alternative_t< static_cast<std::size_t>(data_type::Nullptr), variant>>, "Invalid data type");
+static_assert(std::is_same_v<bool, std::variant_alternative_t< static_cast<std::size_t>(data_type::Bool), variant>>, "Invalid data type");
+static_assert(std::is_same_v<int, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int), variant>>, "Invalid data type");
+static_assert(std::is_same_v<short, std::variant_alternative_t< static_cast<std::size_t>(data_type::Short), variant>>, "Invalid data type");
+static_assert(std::is_same_v<long, std::variant_alternative_t< static_cast<std::size_t>(data_type::Long), variant>>, "Invalid data type");
+static_assert(std::is_same_v<double, std::variant_alternative_t< static_cast<std::size_t>(data_type::Double), variant>>, "Invalid data type");
+static_assert(std::is_same_v<std::string, std::variant_alternative_t< static_cast<std::size_t>(data_type::String), variant>>, "Invalid data type");
+static_assert(std::is_same_v<char const*, std::variant_alternative_t< static_cast<std::size_t>(data_type::Char_ptr), variant>>, "Invalid data type");
+static_assert(std::is_same_v<std::string_view, std::variant_alternative_t< static_cast<std::size_t>(data_type::String_view), variant>>, "Invalid data type");
+#ifdef DBM_EXPERIMENTAL_BLOB
+static_assert(std::is_same_v<blob, std::variant_alternative_t< static_cast<std::size_t>(data_type::Blob), variant>>, "Invalid data type");
+#endif
+
 namespace detail {
 
 inline constexpr std::size_t variant_size = std::variant_size_v<variant>;
