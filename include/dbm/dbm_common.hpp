@@ -166,7 +166,7 @@ namespace detail {
 inline constexpr std::size_t variant_size = std::variant_size_v<variant>;
 
 template<std::size_t idx, typename T>
-std::size_t variant_index_search()
+constexpr std::size_t variant_index_search()
 {
     if constexpr (idx >= variant_size) {
         return std::variant_npos;
@@ -180,7 +180,7 @@ std::size_t variant_index_search()
 }
 
 template<typename T>
-std::size_t variant_index()
+constexpr std::size_t variant_index()
 {
     return variant_index_search<0, T>();
 }

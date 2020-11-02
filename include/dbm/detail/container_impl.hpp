@@ -37,7 +37,10 @@ public:
     using validator_fn = std::function<bool(const unreferenced_type&)>;
     static constexpr bool is_reference_storage = std::is_same_v<ContType<T>, cont_value_binding<T>>;
 
-    static_assert(not std::is_same_v<unreferenced_type, const char*> && not std::is_same_v<unreferenced_type, std::string_view>);
+    static_assert(kind::detail::variant_index<unreferenced_type>() != std::variant_npos,
+                  "Container invalid type");
+    static_assert(not std::is_same_v<unreferenced_type, const char*> && not std::is_same_v<unreferenced_type, std::string_view>,
+                  "Container invalid string type");
 
     container_impl()
         : container()
