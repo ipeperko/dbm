@@ -91,6 +91,152 @@ BOOST_AUTO_TEST_CASE(model_test_replace_container)
     m.at("test").set(dbm::binding(val));
 }
 
+BOOST_AUTO_TEST_CASE(model_item_swap)
+{
+    double vald = 3.14;
+
+    dbm::model_item m1(dbm::key("key_1"),
+                       dbm::tag("tag_1"),
+                       dbm::dbtype("INTEGER"),
+                       dbm::local<int>(42),
+                       dbm::taggable(true),
+                       dbm::direction::bidirectional,
+                       dbm::create(true),
+                       dbm::primary(true),
+                       dbm::auto_increment(true),
+                       dbm::not_null(true)
+                       );
+
+    dbm::model_item m2(dbm::key("key_2"),
+                       dbm::tag("tag_2"),
+                       dbm::dbtype(""),
+                       dbm::binding(vald),
+                       dbm::taggable(false),
+                       dbm::direction::disabled,
+                       dbm::create(false),
+                       dbm::primary(false),
+                       dbm::auto_increment(false),
+                       dbm::not_null(false)
+                       );
+
+    std::swap(m1, m2);
+
+    BOOST_TEST(m1.key().get() == "key_2");
+    BOOST_TEST(m2.key().get() == "key_1");
+    BOOST_TEST(m1.tag().get() == "tag_2");
+    BOOST_TEST(m2.tag().get() == "tag_1");
+    BOOST_TEST(m1.dbtype().get() == "");
+    BOOST_TEST(m2.dbtype().get() == "INTEGER");
+    BOOST_TEST(m1.value<double>() == 3.14);
+    BOOST_TEST(m2.value<int>() == 42);
+    BOOST_TEST(m1.conf().taggable() == false);
+    BOOST_TEST(m2.conf().taggable());
+    BOOST_TEST(m1.conf().writable() == false);
+    BOOST_TEST(m2.conf().writable());
+    BOOST_TEST(m1.conf().readable() == false);
+    BOOST_TEST(m2.conf().readable());
+    BOOST_TEST(m1.conf().creatable() == false);
+    BOOST_TEST(m2.conf().creatable());
+    BOOST_TEST(m1.conf().primary() == false);
+    BOOST_TEST(m2.conf().primary());
+    BOOST_TEST(m1.conf().auto_increment() == false);
+    BOOST_TEST(m2.conf().auto_increment());
+    BOOST_TEST(m1.conf().not_null() == false);
+    BOOST_TEST(m2.conf().not_null());
+}
+
+BOOST_AUTO_TEST_CASE(model_swap)
+{
+    double vald = 3.14;
+
+    dbm::model model1("table_1", {
+        {
+            dbm::key("m1_key1"),
+            dbm::tag("m1_tag1"),
+            dbm::dbtype("INTEGER"),
+            dbm::local<int>(42),
+            dbm::taggable(true),
+            dbm::direction::bidirectional,
+            dbm::create(true),
+            dbm::primary(true),
+            dbm::auto_increment(true),
+            dbm::not_null(true)
+        },
+        {
+            dbm::key("m1_key2"),
+            dbm::tag("m1_tag2"),
+            dbm::dbtype("REAL"),
+            dbm::local<double>(666.666),
+            dbm::taggable(true),
+            dbm::direction::bidirectional,
+            dbm::create(true),
+            dbm::primary(true),
+            dbm::auto_increment(true),
+            dbm::not_null(true)
+        }
+    });
+
+    dbm::model model2("table_2", {
+        {
+            dbm::key("m2_key1"),
+            dbm::tag("m2_tag1"),
+            dbm::dbtype(""),
+            dbm::binding<double>(vald),
+            dbm::taggable(false),
+            dbm::direction::disabled,
+            dbm::create(false),
+            dbm::primary(false),
+            dbm::auto_increment(false),
+            dbm::not_null(false)
+        }
+    });
+
+    std::swap(model1, model2);
+
+    BOOST_TEST(model1.table_name() == "table_2");
+    BOOST_TEST(model2.table_name() == "table_1");
+    BOOST_TEST(model1.items().size() == 1);
+    BOOST_TEST(model2.items().size() == 2);
+
+    auto const& m1 = model1.items().at(0);
+    auto const& m2 = model2.items().at(0);
+    auto const& m3 = model2.items().at(1);
+
+    BOOST_TEST(m1.key().get() == "m2_key1");
+    BOOST_TEST(m2.key().get() == "m1_key1");
+    BOOST_TEST(m3.key().get() == "m1_key2");
+    BOOST_TEST(m1.tag().get() == "m2_tag1");
+    BOOST_TEST(m2.tag().get() == "m1_tag1");
+    BOOST_TEST(m3.tag().get() == "m1_tag2");
+    BOOST_TEST(m1.dbtype().get() == "");
+    BOOST_TEST(m2.dbtype().get() == "INTEGER");
+    BOOST_TEST(m3.dbtype().get() == "REAL");
+    BOOST_TEST(m1.value<double>() == 3.14);
+    BOOST_TEST(m2.value<int>() == 42);
+    BOOST_TEST(m3.value<double>() == 666.666);
+    BOOST_TEST(m1.conf().taggable() == false);
+    BOOST_TEST(m2.conf().taggable());
+    BOOST_TEST(m3.conf().taggable());
+    BOOST_TEST(m1.conf().writable() == false);
+    BOOST_TEST(m2.conf().writable());
+    BOOST_TEST(m3.conf().writable());
+    BOOST_TEST(m1.conf().readable() == false);
+    BOOST_TEST(m2.conf().readable());
+    BOOST_TEST(m3.conf().readable());
+    BOOST_TEST(m1.conf().creatable() == false);
+    BOOST_TEST(m2.conf().creatable());
+    BOOST_TEST(m3.conf().creatable());
+    BOOST_TEST(m1.conf().primary() == false);
+    BOOST_TEST(m2.conf().primary());
+    BOOST_TEST(m3.conf().primary());
+    BOOST_TEST(m1.conf().auto_increment() == false);
+    BOOST_TEST(m2.conf().auto_increment());
+    BOOST_TEST(m3.conf().auto_increment());
+    BOOST_TEST(m1.conf().not_null() == false);
+    BOOST_TEST(m2.conf().not_null());
+    BOOST_TEST(m3.conf().not_null());
+}
+
 BOOST_AUTO_TEST_CASE(model_test_serialization)
 {
     dbm::model model("tbl", {
