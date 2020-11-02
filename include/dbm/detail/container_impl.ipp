@@ -233,12 +233,6 @@ bool container_impl<T, ContType, conf>::deserialize(deserializer& s, std::string
     }
 }
 
-template<typename T, template<typename> class ContType, container_conf conf>
-std::string container_impl<T, ContType, conf>::type_to_string(const detail::model_query_helper_base* qh) const
-{
-    return qh->value_type_string<unreferenced_type>();
-}
-
 } // namespace dbm
 
 #endif

@@ -106,7 +106,10 @@ public:
 
     bool deserialize(deserializer& s, std::string_view tag) override;
 
-    std::string type_to_string(const detail::model_query_helper_base* qh) const override;
+    kind::data_type type() const override
+    {
+        return static_cast<kind::data_type>(kind::detail::variant_index<unreferenced_type>());
+    }
 
 private:
     value_type val_;

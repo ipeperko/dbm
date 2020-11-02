@@ -4,12 +4,10 @@
 #include <dbm/dbm_common.hpp>
 #include <dbm/sql_types.hpp>
 #include <dbm/model.hpp>
-#include <dbm/detail/model_query_helper.hpp>
 #include <dbm/session.hpp>
 #include <dbm/model.ipp>
 #include <dbm/session.ipp>
 #include <dbm/serializer.ipp>
-#include <dbm/detail/container_impl.ipp>
 
 namespace dbm {
 

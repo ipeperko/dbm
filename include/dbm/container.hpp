@@ -56,7 +56,7 @@ public:
 
     virtual bool deserialize(deserializer& s, std::string_view tag) = 0;
 
-    virtual std::string type_to_string(const detail::model_query_helper_base* qh) const = 0;
+    virtual kind::data_type type() const = 0;
 
 protected:
     bool is_null_ {true};
@@ -98,6 +98,7 @@ T container::get() const
 } // namespace dbm
 
 #include <dbm/detail/container_impl.hpp>
+#include <dbm/detail/container_impl.ipp>
 
 namespace dbm {
 

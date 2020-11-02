@@ -133,15 +133,15 @@ using variant = std::variant<std::nullptr_t,
 
 enum class data_type : std::size_t
 {
-    Nullptr = 0,
+    Nullptr = 0,    /* Exists only to pass null */
     Bool,
     Int,
     Short,
     Long,
     Double,
     String,
-    Char_ptr,
-    String_view,
+    Char_ptr,       /* Exists only to construct string values */
+    String_view,    /* Exists only to construct string values */
 #ifdef DBM_EXPERIMENTAL_BLOB
     Blob,
 #endif
