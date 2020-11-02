@@ -34,7 +34,7 @@ try
     
     model m("test_table",
             {
-                { key("id"),    local<int>(1),                  primary(true)   },
+                { key("id"),    local<int>(1),    primary(true),    not_null(true),    auto_incremenet(true)   },
                 { key("name"),  binding(name, name_validator)                   },
                 { key("score"), binding(score)                                  }
             });
@@ -89,9 +89,11 @@ m.set_table_name("my_table");
 // adding items
 m.emplace_back();
 m.emplace_back(key("id"));
-m.emplace_back( /* add parameters in any order except null and defined should be placed after container */  
-        key("name"), tag("Name"), taggable(true), primary(true), required(false), 
-        local<int>(), null(true), defined(true)); 
+m.emplace_back( /* add parameters in any order */  
+        key("name"), tag("Name"), taggable(true), 
+        direction::bidirectional, primary(true), required(false),
+        nut_null(false), auto_increment(false) 
+        local<int>()); 
 
 // accessing items through key name 
 auto& item3 = m.at("name");     // same as m.at(key("id"))
@@ -117,10 +119,11 @@ key | | Database column name
 tag | | Optional tag for serialization. If not defined it will be serialized with same name as 'key'.
 primary | false | Defines if database column is primary key.
 taggable | true | Defines if item will be serialized.
-defined | false | Defines if value has been set. If 'defined' is false it won't be written to db or serializer.
-null | true | Defines if value is null.
 required | false | Defines if value 'defined' should always be true. Otherwise exception is thrown.
 direction | bidirectional | Item configuration for database write/read (bidirectional, read_only, write_only)
+not_null | false | Field not null condition (only relevant for table creation - has nothing to do with container state null).
+auto_increment | false | Field auto increment feature (only relevant for table creation).
+create | true | Determines if table will be created (only relevant for table creation). 
 local | | Value container with local storage of any supported type.
 binding | | Value container with binding.
 
@@ -146,7 +149,7 @@ m.item("name").set(binding(name));          // replace with new binding containe
 ##### Binding enums
 
 Binding enums is not directly supported. 
-One soulution is to use c style cast with std::underlying_type_t.
+One solution is to use c style cast with std::underlying_type_t.
 
 ```c++
 enum class MyEnum : int { one=1, two, three };
@@ -158,6 +161,10 @@ cont->set(static_cast<std::underlying_type_t<MyEnum>>(MyEnum::two));
 ```
 
 ##### Parameters 'null' and 'defined'
+
+Parameter 'defined' determines if value has been set. If false it won't be written to db or serializer.
+
+Parameter 'null' determines if value is null.
 
 Storage type        | null      | defined 
 ----                | ----      | ---- 
@@ -171,11 +178,13 @@ From string failed          | null      | not defined
 
 ```c++
 local<int>();                               // null, not defined
+local<int>(container::init_null::null);     // null, defined
 local<int>(1);                              // not null, defined
 binding<int>(my_int);                       // not null, defined
-binding<int>(my_int, nullptr, true, false); // null, not defined (arguments : reference, validator, null, defined)
-local<int>()->set(null(false));             // not null
-local<int>()->set(defined(true));           // defined
+binding<int>(my_int, nullptr, container::init_null::null, container::init_defined::not_defined); 
+                                            // null, not defined (arguments : reference, validator, null, defined)
+local<int>()->set_null(false);              // not null
+local<int>()->set_defined(true);            // defined
 ```
 
 ##### Validators
@@ -240,10 +249,9 @@ config::set_custom_exception(nullptr); // library default exceptions
 
 ### Todo
 
+- value default 
 - blob support
-- sql aliases
 - timestamp to unix time conversion
 - sql joins
-- table creation from models 
 - Postgres
 

@@ -15,9 +15,11 @@ using key = kind::key;
 using tag = kind::tag;
 using primary = kind::primary;
 using required = kind::required;
-using dbtype = kind::dbtype;
-using null = kind::null;
 using taggable = kind::taggable;
+using dbtype = kind::dbtype;
+using not_null = kind::not_null;
+using auto_increment = kind::auto_increment;
+using create = kind::create;
 using direction = kind::direction;
 
 #ifdef DBM_EXPERIMENTAL_BLOB

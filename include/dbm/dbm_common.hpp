@@ -87,25 +87,30 @@ namespace detail {
 struct parameter_key;
 struct parameter_tag;
 struct parameter_primary;
-struct parameter_reqired;
-struct parameter_dbtype;
-struct parameter_null;
+struct parameter_required;
 struct parameter_taggable;
+struct parameter_not_null;
+struct parameter_auto_increment;
+struct parameter_create;
+struct parameter_dbtype;
 } // namespace detail
 
 typedef detail::named_type<std::string, detail::parameter_key, detail::printable, detail::hashable> key;
 typedef detail::named_type<std::string, detail::parameter_tag, detail::printable> tag;
-typedef detail::named_type<bool, detail::parameter_primary, detail::printable> primary;
-typedef detail::named_type<bool, detail::parameter_reqired, detail::printable> required;
+typedef detail::named_type<bool, detail::parameter_primary, detail::printable, detail::operator_bool> primary;
+typedef detail::named_type<bool, detail::parameter_required, detail::printable, detail::operator_bool> required;
+typedef detail::named_type<bool, detail::parameter_taggable, detail::printable, detail::operator_bool> taggable;
+typedef detail::named_type<bool, detail::parameter_not_null, detail::printable, detail::operator_bool> not_null;
+typedef detail::named_type<bool, detail::parameter_auto_increment, detail::printable, detail::operator_bool> auto_increment;
+typedef detail::named_type<bool, detail::parameter_create, detail::printable, detail::operator_bool> create;
 typedef detail::named_type<std::string, detail::parameter_dbtype, detail::printable> dbtype;
-typedef detail::named_type<bool, detail::parameter_null, detail::printable> null;
-typedef detail::named_type<bool, detail::parameter_taggable, detail::printable> taggable;
 
-enum class direction
+enum class direction : unsigned
 {
-    bidirectional,
+    disabled,
     read_only,
     write_only,
+    bidirectional,
 };
 
 #ifdef DBM_EXPERIMENTAL_BLOB
@@ -125,6 +130,62 @@ using variant = std::variant<std::nullptr_t,
                              , kind::blob
 #endif
                              >;
+
+enum class data_type : std::size_t
+{
+    Nullptr = 0,    /* Exists only to pass null */
+    Bool,
+    Int,
+    Short,
+    Long,
+    Double,
+    String,
+    Char_ptr,       /* Exists only to construct string values */
+    String_view,    /* Exists only to construct string values */
+#ifdef DBM_EXPERIMENTAL_BLOB
+    Blob,
+#endif
+    undefined = std::variant_npos,
+};
+
+static_assert(std::is_same_v<std::nullptr_t , std::variant_alternative_t< static_cast<std::size_t>(data_type::Nullptr), variant>>, "Invalid data type");
+static_assert(std::is_same_v<bool, std::variant_alternative_t< static_cast<std::size_t>(data_type::Bool), variant>>, "Invalid data type");
+static_assert(std::is_same_v<int, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int), variant>>, "Invalid data type");
+static_assert(std::is_same_v<short, std::variant_alternative_t< static_cast<std::size_t>(data_type::Short), variant>>, "Invalid data type");
+static_assert(std::is_same_v<long, std::variant_alternative_t< static_cast<std::size_t>(data_type::Long), variant>>, "Invalid data type");
+static_assert(std::is_same_v<double, std::variant_alternative_t< static_cast<std::size_t>(data_type::Double), variant>>, "Invalid data type");
+static_assert(std::is_same_v<std::string, std::variant_alternative_t< static_cast<std::size_t>(data_type::String), variant>>, "Invalid data type");
+static_assert(std::is_same_v<char const*, std::variant_alternative_t< static_cast<std::size_t>(data_type::Char_ptr), variant>>, "Invalid data type");
+static_assert(std::is_same_v<std::string_view, std::variant_alternative_t< static_cast<std::size_t>(data_type::String_view), variant>>, "Invalid data type");
+#ifdef DBM_EXPERIMENTAL_BLOB
+static_assert(std::is_same_v<blob, std::variant_alternative_t< static_cast<std::size_t>(data_type::Blob), variant>>, "Invalid data type");
+#endif
+
+namespace detail {
+
+inline constexpr std::size_t variant_size = std::variant_size_v<variant>;
+
+template<std::size_t idx, typename T>
+constexpr std::size_t variant_index_search()
+{
+    if constexpr (idx >= variant_size) {
+        return std::variant_npos;
+    }
+    else if constexpr (std::is_same_v<T, std::variant_alternative_t<idx, variant>>) {
+        return idx;
+    }
+    else {
+        return variant_index_search<idx + 1, T>();
+    }
+}
+
+template<typename T>
+constexpr std::size_t variant_index()
+{
+    return variant_index_search<0, T>();
+}
+
+} // namespace detail
 
 } // namespace kind
 

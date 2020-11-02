@@ -225,6 +225,7 @@ bool container_impl<T, ContType, conf>::deserialize(deserializer& s, std::string
             // do not change anything
             return false;
         case deserializer::error:
+            [[fallthrough]];
         default:
             is_null_ = true;
             defined_ = false;

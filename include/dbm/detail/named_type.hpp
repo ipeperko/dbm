@@ -34,6 +34,15 @@ struct printable : nt_crtp<T, printable>
     }
 };
 
+template<typename T>
+struct operator_bool : nt_crtp<T, operator_bool>
+{
+    explicit operator bool() const
+    {
+        return this->val().get();
+    }
+};
+
 // Hashing named type
 template<typename T>
 struct hashable : nt_crtp<T, hashable>
