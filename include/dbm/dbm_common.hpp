@@ -97,12 +97,12 @@ struct parameter_dbtype;
 
 typedef detail::named_type<std::string, detail::parameter_key, detail::printable, detail::hashable> key;
 typedef detail::named_type<std::string, detail::parameter_tag, detail::printable> tag;
-typedef detail::named_type<bool, detail::parameter_primary, detail::printable> primary;
-typedef detail::named_type<bool, detail::parameter_required, detail::printable> required;
-typedef detail::named_type<bool, detail::parameter_taggable, detail::printable> taggable;
-typedef detail::named_type<bool, detail::parameter_not_null, detail::printable> not_null;
-typedef detail::named_type<bool, detail::parameter_auto_increment, detail::printable> auto_increment;
-typedef detail::named_type<bool, detail::parameter_create, detail::printable> create;
+typedef detail::named_type<bool, detail::parameter_primary, detail::printable, detail::operator_bool> primary;
+typedef detail::named_type<bool, detail::parameter_required, detail::printable, detail::operator_bool> required;
+typedef detail::named_type<bool, detail::parameter_taggable, detail::printable, detail::operator_bool> taggable;
+typedef detail::named_type<bool, detail::parameter_not_null, detail::printable, detail::operator_bool> not_null;
+typedef detail::named_type<bool, detail::parameter_auto_increment, detail::printable, detail::operator_bool> auto_increment;
+typedef detail::named_type<bool, detail::parameter_create, detail::printable, detail::operator_bool> create;
 typedef detail::named_type<std::string, detail::parameter_dbtype, detail::printable> dbtype;
 
 enum class direction : unsigned

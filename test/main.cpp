@@ -42,6 +42,29 @@ BOOST_AUTO_TEST_CASE(narrow_cast_test)
     BOOST_REQUIRE_THROW(dbm::utils::narrow_cast<short>(v2), std::exception);
 }
 
+BOOST_AUTO_TEST_CASE(named_type_operator_bool)
+{
+    struct param;
+    typedef dbm::kind::detail::named_type<bool,
+                                          param,
+                                          dbm::kind::detail::printable,
+                                          dbm::kind::detail::operator_bool> mybool;
+
+    mybool v(true);
+    BOOST_TEST(v.get());
+    BOOST_TEST(v);
+
+    bool b1(v);
+    BOOST_TEST(b1);
+
+    v = mybool(false);
+    BOOST_TEST(!v.get());
+    BOOST_TEST(!v);
+
+    bool b2(v);
+    BOOST_TEST(!b2);
+}
+
 BOOST_AUTO_TEST_CASE(key_test)
 {
     dbm::key key1("key1");
