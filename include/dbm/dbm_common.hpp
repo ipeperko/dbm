@@ -131,6 +131,32 @@ using variant = std::variant<std::nullptr_t,
 #endif
                              >;
 
+namespace detail {
+
+inline constexpr std::size_t variant_size = std::variant_size_v<variant>;
+
+template<std::size_t idx, typename T>
+std::size_t variant_index_search()
+{
+    if constexpr (idx >= variant_size) {
+        return std::variant_npos;
+    }
+    else if constexpr (std::is_same_v<T, std::variant_alternative_t<idx, variant>>) {
+        return idx;
+    }
+    else {
+        return variant_index_search<idx + 1, T>();
+    }
+}
+
+template<typename T>
+std::size_t variant_index()
+{
+    return variant_index_search<0, T>();
+}
+
+} // namespace detail
+
 } // namespace kind
 
 // ----------------------------------------------------------
