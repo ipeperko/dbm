@@ -178,10 +178,10 @@ From string failed          | null      | not defined
 
 ```c++
 local<int>();                               // null, not defined
-local<int>(container::init_null::null);     // null, defined
+local<int>(init_null::null);                // null, defined
 local<int>(1);                              // not null, defined
 binding<int>(my_int);                       // not null, defined
-binding<int>(my_int, nullptr, container::init_null::null, container::init_defined::not_defined); 
+binding<int>(my_int, nullptr, init_null::null, init_defined::not_defined); 
                                             // null, not defined (arguments : reference, validator, null, defined)
 local<int>()->set_null(false);              // not null
 local<int>()->set_defined(true);            // defined
