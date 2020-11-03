@@ -76,6 +76,8 @@ public:
 
     void set(const kind::create& v);
 
+    void set(const kind::defaultc& v);
+
     void set(kind::direction v);
 
     void set(container_ptr&& v);
@@ -127,6 +129,7 @@ private:
     kind::tag tag_{""};
     std::bitset<conf_flags_num_items> conf_ {conf_default};
     kind::dbtype dbtype_ {""};
+    kind::defaultc defaultc_;
     container_ptr cont_;
 };
 
@@ -204,6 +207,11 @@ public:
     constexpr bool taggable() const
     {
         return get(model_item::s_taggable);
+    }
+
+    const kind::defaultc& default_constraint() const
+    {
+        return item_.defaultc_;
     }
 };
 

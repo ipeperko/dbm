@@ -104,7 +104,8 @@ BOOST_AUTO_TEST_CASE(model_item_swap)
                        dbm::create(true),
                        dbm::primary(true),
                        dbm::auto_increment(true),
-                       dbm::not_null(true)
+                       dbm::not_null(true),
+                       dbm::defaultc(std::nullopt)
                        );
 
     dbm::model_item m2(dbm::key("key_2"),
@@ -116,7 +117,8 @@ BOOST_AUTO_TEST_CASE(model_item_swap)
                        dbm::create(false),
                        dbm::primary(false),
                        dbm::auto_increment(false),
-                       dbm::not_null(false)
+                       dbm::not_null(false),
+                       dbm::defaultc(nullptr)
                        );
 
     std::swap(m1, m2);

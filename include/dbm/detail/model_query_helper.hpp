@@ -340,6 +340,7 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
 
         if (it.conf().creatable()) {
 
+            // Primary key
             if (it.conf().primary()) {
                 if (!primary_keys.empty()) {
                     primary_keys += ", ";
@@ -347,22 +348,37 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
                 primary_keys += it.key().get();
             }
 
+            // Key name
             if (!keys.empty()) {
                 keys += ", ";
             }
-
             keys += it.key().get() + " ";
 
+            // Data type
             if (!it.dbtype().get().empty()) {
+                // Custom type
                 keys += it.dbtype().get();
             }
             else {
+                // Standard type
                 keys += value_type_string(it.get_container().type());
 
+                // Not null constraint
                 if (it.conf().not_null()) {
                     keys += not_null_string().data();
                 }
 
+                // Default constraint
+                if (it.conf().default_constraint().has_value()) {
+                    if (it.conf().default_constraint().is_null()) {
+                        keys += " DEFAULT NULL";
+                    }
+                    else {
+                        keys += " DEFAULT " + it.conf().default_constraint().string_value();
+                    }
+                }
+
+                // Auto increment constraint
                 if (it.conf().auto_increment()) {
                     keys += auto_increment_string().data();
                 }

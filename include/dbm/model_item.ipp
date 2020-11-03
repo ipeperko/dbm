@@ -13,6 +13,7 @@ DBM_INLINE model_item::model_item(const model_item& oth)
     , tag_(oth.tag_)
     , conf_(oth.conf_)
     , dbtype_(oth.dbtype_)
+    , defaultc_(oth.defaultc_)
     , cont_(oth.cont_->clone())
 {
 }
@@ -24,6 +25,7 @@ DBM_INLINE model_item& model_item::operator=(const model_item& oth)
         tag_ = oth.tag_;
         conf_ = oth.conf_;
         dbtype_ = oth.dbtype_;
+        defaultc_ = oth.defaultc_;
         cont_ = oth.cont_->clone();
     }
     return *this;
@@ -102,6 +104,11 @@ DBM_INLINE void model_item::set(const kind::auto_increment& v)
 DBM_INLINE void model_item::set(const kind::create& v)
 {
     conf_[conf_flags::db_creatable] = v.get();
+}
+
+DBM_INLINE void model_item::set(const kind::defaultc& v)
+{
+    defaultc_ = v;
 }
 
 DBM_INLINE void model_item::set(kind::direction v)

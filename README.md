@@ -247,11 +247,3 @@ config::set_custom_exception([](const std::string& msg) {
 config::set_custom_exception(nullptr); // library default exceptions
 ``` 
 
-### Todo
-
-- value default 
-- blob support
-- timestamp to unix time conversion
-- sql joins
-- Postgres
-
