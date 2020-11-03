@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(default_item_value_test)
     BOOST_TEST(! bnd->is_null());
     BOOST_TEST(bnd->is_defined());
 
-    auto bnd2 = dbm::binding(my_int, nullptr, dbm::container::init_null::null, dbm::container::init_defined::not_defined);
+    auto bnd2 = dbm::binding(my_int, nullptr, dbm::init_null::null, dbm::init_defined::not_defined);
     BOOST_TEST(bnd2->is_null());
     BOOST_TEST(! bnd2->is_defined());
 

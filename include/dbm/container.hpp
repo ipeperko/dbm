@@ -117,6 +117,9 @@ T container::get() const
 
 namespace dbm {
 
+using init_null = container::init_null;
+using init_defined = container::init_defined;
+
 /**
  * Make container of type T with local storage
  *
@@ -133,15 +136,15 @@ namespace dbm {
  */
 template<typename T, detail::container_conf conf = 0>
 container_ptr
-local(std::function<bool(const T&)> validator = nullptr, container::init_null init_null = container::init_null::defaults)
+local(std::function<bool(const T&)> validator = nullptr, init_null null = init_null::defaults)
 {
     auto c = std::make_unique<detail::container_impl<T, detail::cont_value_local, conf>>(validator);
 
-    if (init_null == container::init_null::null) {
+    if (null == init_null::null) {
         c->set_null(true);
         c->set_defined(true);
     }
-    else if (init_null == container::init_null::not_null) {
+    else if (null == init_null::not_null) {
         c->set_null(false);
         c->set_defined(true);
     }
@@ -208,22 +211,22 @@ local(T&& val, std::function<bool(const T&)> validator = nullptr)
  */
 template<typename T, detail::container_conf conf = 0, class Validator = std::nullptr_t>
 container_ptr binding(T& ref, Validator&& validator = nullptr,
-                      container::init_null null = container::init_null::not_null,
-                      container::init_defined defined = container::init_defined::defined)
+                      init_null null = init_null::not_null,
+                      init_defined defined = init_defined::defined)
 {
-    if (null == container::init_null::defaults) {
-        null = container::init_null::not_null;
+    if (null == init_null::defaults) {
+        null = init_null::not_null;
     }
 
-    if (defined == container::init_defined::defaults) {
-        defined = container::init_defined::defined;
+    if (defined == init_defined::defaults) {
+        defined = init_defined::defined;
     }
 
     return std::make_unique<detail::container_impl<T, detail::cont_value_binding, conf>>(
         detail::cont_value_binding<T>(ref),
         validator,
-        null == container::init_null::null,
-        defined == container::init_defined::defined);
+        null == init_null::null,
+        defined == init_defined::defined);
 }
 
 }// namespace dbm
