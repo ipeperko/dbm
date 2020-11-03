@@ -117,13 +117,14 @@ Type | Default | Description
 --- | --- | ---
 key | | Database column name
 tag | | Optional tag for serialization. If not defined it will be serialized with same name as 'key'.
-primary | false | Defines if database column is primary key.
-taggable | true | Defines if item will be serialized.
-required | false | Defines if value 'defined' should always be true. Otherwise exception is thrown.
-direction | bidirectional | Item configuration for database write/read (bidirectional, read_only, write_only)
-not_null | false | Field not null condition (only relevant for table creation - has nothing to do with container state null).
+primary | false | Field primary key constraint.
+taggable | true | Determines if Field will be serialized.
+required | false | Determines if value should be defined when writing to db or serializing. Otherwise exception is thrown.
+direction | bidirectional | Field configuration for database write/read (bidirectional, read_only, write_only)
+not_null | false | Field not null constraint (only relevant for table creation - has nothing to do with container state null).
+defaultc | std::nullopt | Field default constraint (only relevant for table creation). Possible values are std::nullopt (no default constraint), nullptr (default NULL), any valid expression 
 auto_increment | false | Field auto increment feature (only relevant for table creation).
-create | true | Determines if table will be created (only relevant for table creation). 
+create | true | Determines if field will be created (only relevant for table creation). 
 local | | Value container with local storage of any supported type.
 binding | | Value container with binding.
 
