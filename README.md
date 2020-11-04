@@ -221,8 +221,9 @@ sql_rows rows2 = data.restore();    // restore data
 ##### Create and drop table
 
 ```c++
-m.create_table(session);    // creates table if not exists
-m.drop_table(session);      // drops table if exists
+m.set_table_options("ENGINE=MEMORY");   // set table options (engine, collations...)
+m.create_table(session);                // creates table if not exists
+m.drop_table(session);                  // drops table if exists
 ```
 
 ### Thread safety

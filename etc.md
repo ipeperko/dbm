@@ -87,7 +87,6 @@ Some ideas how to deal with relations:
 
 ### To do
 
-- table engine
 - unsigned data types
 - indexes
 - binary, blob support

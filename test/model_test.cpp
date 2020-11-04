@@ -752,6 +752,8 @@ void test_model_with_timestamp()
 
 #ifdef DBM_MYSQL
     if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
+        m.set_table_options("ENGINE=MEMORY");
+
         item_read_unixtime = &m.emplace_back(dbm::local<time_t>(),
                        dbm::key("UNIX_TIMESTAMP(timestamp)"),
                        dbm::tag("unixtime"),

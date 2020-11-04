@@ -407,12 +407,18 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
         }
     }
 
+    // Primary keys
     if (!keys.empty()) {
         q += " (" + keys;
         if (!primary_keys.empty()) {
             q += ", PRIMARY KEY (" + primary_keys + ")";
         }
         q += ")";
+    }
+
+    // Table options
+    if (!model_.table_options().empty()) {
+        q += " " + model_.table_options();
     }
 
     return q;
