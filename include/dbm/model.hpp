@@ -47,6 +47,10 @@ public:
 
     void set_sql_ignore_insert(bool t);
 
+    std::string const& table_options() const;
+
+    void set_table_options(std::string opts);
+
     model_item& at(const kind::key& key);
 
     model_item const& at(const kind::key& key) const;
@@ -116,6 +120,7 @@ private:
     // Config
     bool update_duplicates_{true};
     bool ignore_insert_{false};
+    std::string table_opts_; // table options (engine, collations...)
 };
 
 }// namespace dbm

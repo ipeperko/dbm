@@ -117,13 +117,14 @@ Type | Default | Description
 --- | --- | ---
 key | | Database column name
 tag | | Optional tag for serialization. If not defined it will be serialized with same name as 'key'.
-primary | false | Defines if database column is primary key.
-taggable | true | Defines if item will be serialized.
-required | false | Defines if value 'defined' should always be true. Otherwise exception is thrown.
-direction | bidirectional | Item configuration for database write/read (bidirectional, read_only, write_only)
-not_null | false | Field not null condition (only relevant for table creation - has nothing to do with container state null).
+primary | false | Field primary key constraint.
+taggable | true | Determines if Field will be serialized.
+required | false | Determines if value should be defined when writing to db or serializing. Otherwise exception is thrown.
+direction | bidirectional | Field configuration for database write/read (bidirectional, read_only, write_only)
+not_null | false | Field not null constraint (only relevant for table creation - has nothing to do with container state null).
+defaultc | std::nullopt | Field default constraint (only relevant for table creation). Possible values are std::nullopt (no default constraint), nullptr (default NULL), any valid expression 
 auto_increment | false | Field auto increment feature (only relevant for table creation).
-create | true | Determines if table will be created (only relevant for table creation). 
+create | true | Determines if field will be created (only relevant for table creation). 
 local | | Value container with local storage of any supported type.
 binding | | Value container with binding.
 
@@ -178,10 +179,10 @@ From string failed          | null      | not defined
 
 ```c++
 local<int>();                               // null, not defined
-local<int>(container::init_null::null);     // null, defined
+local<int>(init_null::null);                // null, defined
 local<int>(1);                              // not null, defined
 binding<int>(my_int);                       // not null, defined
-binding<int>(my_int, nullptr, container::init_null::null, container::init_defined::not_defined); 
+binding<int>(my_int, nullptr, init_null::null, init_defined::not_defined); 
                                             // null, not defined (arguments : reference, validator, null, defined)
 local<int>()->set_null(false);              // not null
 local<int>()->set_defined(true);            // defined
@@ -217,6 +218,14 @@ sql_rows_dump data = rows;          // store data
 sql_rows rows2 = data.restore();    // restore data
 ```
 
+##### Create and drop table
+
+```c++
+m.set_table_options("ENGINE=MEMORY");   // set table options (engine, collations...)
+m.create_table(session);                // creates table if not exists
+m.drop_table(session);                  // drops table if exists
+```
+
 ### Thread safety
 
 dbm classes are not thread safe and should not be used concurrently. 
@@ -246,12 +255,4 @@ config::set_custom_exception([](const std::string& msg) {
 
 config::set_custom_exception(nullptr); // library default exceptions
 ``` 
-
-### Todo
-
-- value default 
-- blob support
-- timestamp to unix time conversion
-- sql joins
-- Postgres
 

@@ -16,11 +16,13 @@ using tag = kind::tag;
 using primary = kind::primary;
 using required = kind::required;
 using taggable = kind::taggable;
-using dbtype = kind::dbtype;
 using not_null = kind::not_null;
 using auto_increment = kind::auto_increment;
 using create = kind::create;
 using direction = kind::direction;
+using defaultc = kind::defaultc;
+using valquotes = kind::valquotes;
+using custom_data_type = kind::custom_data_type;
 
 #ifdef DBM_EXPERIMENTAL_BLOB
 using blob = kind::blob;

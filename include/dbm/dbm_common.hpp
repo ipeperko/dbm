@@ -3,6 +3,8 @@
 
 #include <dbm/dbm_config.hpp>
 #include <dbm/dbm_export.hpp>
+#include <dbm/detail/utils.hpp>
+#include <dbm/detail/default_constraint.hpp>
 #include <dbm/detail/named_type.hpp>
 #include <functional>
 #include <memory>
@@ -12,70 +14,7 @@
 
 #define DBM_INLINE inline
 
-#ifdef NDEBUG
-#include <ostream>
-#else
-#include <iostream>
-#endif
-
 namespace dbm {
-
-// ----------------------------------------------------------
-// Exception
-// ----------------------------------------------------------
-
-namespace config
-{
-
-namespace detail
-{
-inline std::function<void(std::string const&)> custom_except_fn;
-}
-
-DBM_EXPORT inline void set_custom_exception(std::function<void(std::string const&)> except_fn)
-{
-    detail::custom_except_fn = std::move(except_fn);
-}
-
-DBM_EXPORT inline std::function<void(std::string const&)>& get_custom_exception()
-{
-    return detail::custom_except_fn;
-}
-}
-
-template <typename ExceptionType = std::domain_error>
-[[noreturn]] DBM_EXPORT void throw_exception(std::string const& what)
-{
-    if (auto& fn = config::get_custom_exception()) {
-        fn(what); // should not return
-    }
-
-    throw ExceptionType(what); // if custom exception not exists or didn't throw
-}
-
-
-// ----------------------------------------------------------
-// Debug msg
-// ----------------------------------------------------------
-#ifdef NDEBUG
-#define DBM_LOG dbm::no_log()
-#define DBM_LOG_ERROR dbm::no_log()
-
-class no_log
-{
-public:
-    template<typename T>
-    no_log& operator<<(const T&)
-    {
-        return *this;
-    }
-};
-
-#else
-#define DBM_LOG std::cout
-#define DBM_LOG_ERROR std::cerr
-#endif
-
 
 // ----------------------------------------------------------
 // Type definitions
@@ -92,18 +31,21 @@ struct parameter_taggable;
 struct parameter_not_null;
 struct parameter_auto_increment;
 struct parameter_create;
+struct parameter_valquotes;
 struct parameter_dbtype;
 } // namespace detail
 
-typedef detail::named_type<std::string, detail::parameter_key, detail::printable, detail::hashable> key;
-typedef detail::named_type<std::string, detail::parameter_tag, detail::printable> tag;
-typedef detail::named_type<bool, detail::parameter_primary, detail::printable, detail::operator_bool> primary;
-typedef detail::named_type<bool, detail::parameter_required, detail::printable, detail::operator_bool> required;
-typedef detail::named_type<bool, detail::parameter_taggable, detail::printable, detail::operator_bool> taggable;
-typedef detail::named_type<bool, detail::parameter_not_null, detail::printable, detail::operator_bool> not_null;
-typedef detail::named_type<bool, detail::parameter_auto_increment, detail::printable, detail::operator_bool> auto_increment;
-typedef detail::named_type<bool, detail::parameter_create, detail::printable, detail::operator_bool> create;
-typedef detail::named_type<std::string, detail::parameter_dbtype, detail::printable> dbtype;
+using key = detail::named_type<std::string, detail::parameter_key, detail::printable, detail::hashable>;
+using tag = detail::named_type<std::string, detail::parameter_tag, detail::printable>;
+using primary = detail::named_type<bool, detail::parameter_primary, detail::printable, detail::operator_bool>;
+using required = detail::named_type<bool, detail::parameter_required, detail::printable, detail::operator_bool>;
+using taggable = detail::named_type<bool, detail::parameter_taggable, detail::printable, detail::operator_bool>;
+using not_null = detail::named_type<bool, detail::parameter_not_null, detail::printable, detail::operator_bool>;
+using auto_increment = detail::named_type<bool, detail::parameter_auto_increment, detail::printable, detail::operator_bool>;
+using create = detail::named_type<bool, detail::parameter_create, detail::printable, detail::operator_bool>;
+using valquotes = detail::named_type<bool, detail::parameter_valquotes, detail::printable, detail::operator_bool>;
+using defaultc = kind::detail::default_constraint;
+using custom_data_type = detail::named_type<std::string, detail::parameter_dbtype, detail::printable>;
 
 enum class direction : unsigned
 {
@@ -195,23 +137,6 @@ constexpr std::size_t variant_index()
 
 namespace utils {
 
-template<typename T>
-struct is_string_type : std::integral_constant<bool, std::is_constructible<std::string, T>::value>
-{
-};
-
-template<typename T1, typename T2>
-T1 narrow_cast(const T2& v2)
-{
-    T1 casted = static_cast<T1>(v2);
-    T2 casted_2 = static_cast<T2>(casted);
-    if (v2 != casted_2) {
-        throw_exception<std::domain_error>("narrow casting failed");
-    }
-
-    return casted;
-}
-
 template<typename Tcast, typename T>
 bool arithmetic_convert(T& dest, const kind::variant& var)
 {
@@ -223,19 +148,6 @@ bool arithmetic_convert(T& dest, const kind::variant& var)
         return false;
     }
 }
-
-class DBM_EXPORT istream_extbuf : public std::istream
-{
-public:
-    istream_extbuf(char* s, size_t n)
-        : std::istream(&sb_)
-    {
-        sb_.pubsetbuf(s, n);
-    }
-
-private:
-    std::stringbuf sb_;
-};
 
 } // namespace utils
 } // namespace dbm

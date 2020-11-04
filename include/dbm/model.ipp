@@ -34,6 +34,16 @@ DBM_INLINE void model::set_sql_ignore_insert(bool t)
     ignore_insert_ = t;
 }
 
+DBM_INLINE std::string const& model::table_options() const
+{
+    return table_opts_;
+}
+
+DBM_INLINE void model::set_table_options(std::string opts)
+{
+    table_opts_ = std::move(opts);
+}
+
 DBM_INLINE model_item& model::at(const kind::key& key)
 {
     auto it = find(key);

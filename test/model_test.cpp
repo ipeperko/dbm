@@ -97,26 +97,30 @@ BOOST_AUTO_TEST_CASE(model_item_swap)
 
     dbm::model_item m1(dbm::key("key_1"),
                        dbm::tag("tag_1"),
-                       dbm::dbtype("INTEGER"),
+                       dbm::custom_data_type("INTEGER"),
                        dbm::local<int>(42),
                        dbm::taggable(true),
                        dbm::direction::bidirectional,
                        dbm::create(true),
                        dbm::primary(true),
                        dbm::auto_increment(true),
-                       dbm::not_null(true)
+                       dbm::not_null(true),
+                       dbm::defaultc(std::nullopt),
+                       dbm::valquotes(true)
                        );
 
     dbm::model_item m2(dbm::key("key_2"),
                        dbm::tag("tag_2"),
-                       dbm::dbtype(""),
+                       dbm::custom_data_type(""),
                        dbm::binding(vald),
                        dbm::taggable(false),
                        dbm::direction::disabled,
                        dbm::create(false),
                        dbm::primary(false),
                        dbm::auto_increment(false),
-                       dbm::not_null(false)
+                       dbm::not_null(false),
+                       dbm::defaultc(nullptr),
+                       dbm::valquotes(false)
                        );
 
     std::swap(m1, m2);
@@ -125,8 +129,8 @@ BOOST_AUTO_TEST_CASE(model_item_swap)
     BOOST_TEST(m2.key().get() == "key_1");
     BOOST_TEST(m1.tag().get() == "tag_2");
     BOOST_TEST(m2.tag().get() == "tag_1");
-    BOOST_TEST(m1.dbtype().get() == "");
-    BOOST_TEST(m2.dbtype().get() == "INTEGER");
+    BOOST_TEST(m1.custom_data_type().get() == "");
+    BOOST_TEST(m2.custom_data_type().get() == "INTEGER");
     BOOST_TEST(m1.value<double>() == 3.14);
     BOOST_TEST(m2.value<int>() == 42);
     BOOST_TEST(m1.conf().taggable() == false);
@@ -143,6 +147,8 @@ BOOST_AUTO_TEST_CASE(model_item_swap)
     BOOST_TEST(m2.conf().auto_increment());
     BOOST_TEST(m1.conf().not_null() == false);
     BOOST_TEST(m2.conf().not_null());
+    BOOST_TEST(m1.conf().valquotes() == false);
+    BOOST_TEST(m2.conf().valquotes());
 }
 
 BOOST_AUTO_TEST_CASE(model_swap)
@@ -153,26 +159,28 @@ BOOST_AUTO_TEST_CASE(model_swap)
         {
             dbm::key("m1_key1"),
             dbm::tag("m1_tag1"),
-            dbm::dbtype("INTEGER"),
+            dbm::custom_data_type("INTEGER"),
             dbm::local<int>(42),
             dbm::taggable(true),
             dbm::direction::bidirectional,
             dbm::create(true),
             dbm::primary(true),
             dbm::auto_increment(true),
-            dbm::not_null(true)
+            dbm::not_null(true),
+            dbm::valquotes(true)
         },
         {
             dbm::key("m1_key2"),
             dbm::tag("m1_tag2"),
-            dbm::dbtype("REAL"),
+            dbm::custom_data_type("REAL"),
             dbm::local<double>(666.666),
             dbm::taggable(true),
             dbm::direction::bidirectional,
             dbm::create(true),
             dbm::primary(true),
             dbm::auto_increment(true),
-            dbm::not_null(true)
+            dbm::not_null(true),
+            dbm::valquotes(true)
         }
     });
 
@@ -180,14 +188,15 @@ BOOST_AUTO_TEST_CASE(model_swap)
         {
             dbm::key("m2_key1"),
             dbm::tag("m2_tag1"),
-            dbm::dbtype(""),
+            dbm::custom_data_type(""),
             dbm::binding<double>(vald),
             dbm::taggable(false),
             dbm::direction::disabled,
             dbm::create(false),
             dbm::primary(false),
             dbm::auto_increment(false),
-            dbm::not_null(false)
+            dbm::not_null(false),
+            dbm::valquotes(false)
         }
     });
 
@@ -208,9 +217,9 @@ BOOST_AUTO_TEST_CASE(model_swap)
     BOOST_TEST(m1.tag().get() == "m2_tag1");
     BOOST_TEST(m2.tag().get() == "m1_tag1");
     BOOST_TEST(m3.tag().get() == "m1_tag2");
-    BOOST_TEST(m1.dbtype().get() == "");
-    BOOST_TEST(m2.dbtype().get() == "INTEGER");
-    BOOST_TEST(m3.dbtype().get() == "REAL");
+    BOOST_TEST(m1.custom_data_type().get() == "");
+    BOOST_TEST(m2.custom_data_type().get() == "INTEGER");
+    BOOST_TEST(m3.custom_data_type().get() == "REAL");
     BOOST_TEST(m1.value<double>() == 3.14);
     BOOST_TEST(m2.value<int>() == 42);
     BOOST_TEST(m3.value<double>() == 666.666);
@@ -235,6 +244,9 @@ BOOST_AUTO_TEST_CASE(model_swap)
     BOOST_TEST(m1.conf().not_null() == false);
     BOOST_TEST(m2.conf().not_null());
     BOOST_TEST(m3.conf().not_null());
+    BOOST_TEST(m1.conf().valquotes() == false);
+    BOOST_TEST(m2.conf().valquotes());
+    BOOST_TEST(m3.conf().valquotes());
 }
 
 BOOST_AUTO_TEST_CASE(model_test_serialization)
@@ -339,7 +351,8 @@ dbm::model get_test_model()
             dbm::key("int_not_null"),
             dbm::tag("tag_int_not_null"),
             //dbm::dbtype("INTEGER NOT NULL"),
-            dbm::not_null(true)
+            dbm::not_null(true),
+            dbm::defaultc(0)
           },
           { dbm::local<int>(),
             dbm::key("int_with_null"),
@@ -349,8 +362,8 @@ dbm::model get_test_model()
           { dbm::local<bool>(),
             dbm::key("tiny_int_not_null"),
             dbm::tag("tag_tiny_int_not_null"),
-            //dbm::dbtype("TINYINT NOT NULL"),
-            dbm::not_null(true)
+            dbm::custom_data_type("TINYINT NOT NULL DEFAULT 1"),
+            //dbm::not_null(true)
           },
           { dbm::local<bool>(),
             dbm::key("tiny_int_with_null"),
@@ -360,7 +373,8 @@ dbm::model get_test_model()
           { dbm::local<std::string>(),
             dbm::key("timestamp"),
             dbm::tag("timestamp_tag"),
-            dbm::dbtype("TIMESTAMP" + ts)
+            dbm::custom_data_type("TIMESTAMP" + ts),
+            //dbm::valquotes(false)
           } }
     };
 
@@ -713,4 +727,114 @@ BOOST_AUTO_TEST_CASE(nlohmann_json_test)
     armed = false;
     BOOST_REQUIRE_NO_THROW(armed = j.at("armed").get<int>());
     BOOST_TEST(armed == true);
+}
+
+template<typename SessionType>
+void test_model_with_timestamp()
+{
+    dbm::model m {
+        "test_timestamp",
+        { { dbm::local<int>(1),
+            dbm::key("id"),
+            dbm::primary(true),
+            dbm::not_null(true),
+            dbm::auto_increment(true)
+          },
+          { dbm::local<std::string>(),
+            dbm::key("timestamp"),
+            dbm::custom_data_type("TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            dbm::direction::read_only,
+            dbm::valquotes(false)
+          } }
+    };
+
+    dbm::model_item* item_read_unixtime = nullptr;
+
+#ifdef DBM_MYSQL
+    if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
+        m.set_table_options("ENGINE=MEMORY");
+
+        item_read_unixtime = &m.emplace_back(dbm::local<time_t>(),
+                       dbm::key("UNIX_TIMESTAMP(timestamp)"),
+                       dbm::tag("unixtime"),
+                       dbm::direction::read_only,
+                       dbm::create(false));
+    }
+#endif
+
+#ifdef DBM_SQLITE3
+    if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
+        item_read_unixtime = &m.emplace_back(dbm::local<time_t>(),
+                       dbm::key("strftime('%s',timestamp)"),
+                       dbm::tag("unixtime"),
+                       dbm::direction::read_only,
+                       dbm::create(false));
+    }
+#endif
+
+    dbm::model_item* item_write_unixtime = &m.emplace_back(dbm::local<std::string>(),
+                      dbm::key("timestamp"),
+                      dbm::direction::write_only,
+                      dbm::valquotes(false), // quotes are disabled as we are writing functions
+                      dbm::create(false));
+
+    SessionType session;
+    const std::string db_name = dbm_test_db_name;
+    const std::string tbl_name = dbm_test_table_name;
+
+#ifdef DBM_MYSQL
+    if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
+        BOOST_TEST_MESSAGE("MySQL test_model_with_timestamp");
+        session.init(mysql_host, mysql_username, mysql_password, mysql_port, db_name);
+    }
+#endif
+#ifdef DBM_SQLITE3
+    if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
+        BOOST_TEST_MESSAGE("SQLite test_model_with_timestamp");
+        session.set_db_name(dbm_test_db_file_name);
+    }
+#endif
+
+    // Open session
+    session.open();
+
+    // Delete existing table if exists and create new one
+    m.drop_table(session);
+    m.create_table(session);
+
+    // Insert one record - timestamp will be current time
+    m >> session;
+
+    // Read record to get timestamp
+    session >> m;
+
+    //BOOST_TEST_MESSAGE("Read timestamp " + item_read_unixtime->to_string());
+
+    // Set timestamp functions
+#ifdef DBM_MYSQL
+    if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
+        item_write_unixtime->set_value("FROM_UNIXTIME(12345678)");
+    }
+#endif
+#ifdef DBM_SQLITE3
+    if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
+        item_write_unixtime->set_value("datetime(12345678, 'unixepoch')");
+    }
+#endif
+    m >> session;
+    item_write_unixtime->set_value("0");
+
+    // Raad value and validate
+    session >> m;
+    BOOST_TEST(item_read_unixtime->to_string() == "12345678");
+}
+
+BOOST_AUTO_TEST_CASE(model_with_timestamp)
+{
+#ifdef DBM_MYSQL
+    test_model_with_timestamp<dbm::mysql_session>();
+#endif
+#ifdef DBM_SQLITE3
+    test_model_with_timestamp<dbm::sqlite_session>();
+#endif
 }

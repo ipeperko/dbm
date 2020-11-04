@@ -180,7 +180,8 @@ DBM_INLINE
 std::string model_query_helper<SessionType>::write_query() const
 {
     std::string keys, values, duplicate_keys;
-    int i = 0, i_duplicate = 0;
+    int i = 0;
+    [[maybe_unused]] int i_duplicate = 0;
 
     for (const auto& it : model_.items()) {
 
@@ -190,27 +191,42 @@ std::string model_query_helper<SessionType>::write_query() const
 
         if (it.is_defined()) {
 
+            // Commas
             if (i) {
                 keys += ",";
                 values += ",";
             }
-            if (i_duplicate && !it.conf().primary()) {
-                duplicate_keys += ",";
-            }
 
+            // Key
             keys += it.key().get();
+
+            // Value
             if (it.is_null()) {
                 values += "NULL";
             }
             else {
-                values += "'" + it.to_string() + "'";
+                if (it.conf().valquotes()) {
+                    values += "'";
+                }
+                values += it.to_string();
+                if (it.conf().valquotes()) {
+                    values += "'";
+                }
             }
 
-            if (!it.conf().primary()) {
-                duplicate_keys += it.key().get() + "=VALUES(" + it.key().get() + ")";
-                i_duplicate++;
+            // Duplicate keys
+            if constexpr (is_MySql()) {
+                if (!it.conf().primary()) {
+                    if (i_duplicate) {
+                        duplicate_keys += ",";
+                    }
+
+                    duplicate_keys += it.key().get() + "=VALUES(" + it.key().get() + ")";
+                    ++i_duplicate;
+                }
             }
 
+            // Increment counter
             ++i;
         }
         else {
@@ -340,6 +356,7 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
 
         if (it.conf().creatable()) {
 
+            // Primary key
             if (it.conf().primary()) {
                 if (!primary_keys.empty()) {
                     primary_keys += ", ";
@@ -347,22 +364,42 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
                 primary_keys += it.key().get();
             }
 
+            // Key name
             if (!keys.empty()) {
                 keys += ", ";
             }
-
             keys += it.key().get() + " ";
 
-            if (!it.dbtype().get().empty()) {
-                keys += it.dbtype().get();
+            // Data type
+            if (!it.custom_data_type().get().empty()) {
+                // Custom type
+                keys += it.custom_data_type().get();
             }
             else {
+                // Standard type
                 keys += value_type_string(it.get_container().type());
 
+                // Not null constraint
                 if (it.conf().not_null()) {
                     keys += not_null_string().data();
                 }
 
+                // Default constraint
+                if (it.conf().default_constraint().has_value()) {
+                    if (it.conf().default_constraint().is_null()) {
+                        keys += " DEFAULT NULL";
+                    }
+                    else {
+                        if (it.get_container().type() == kind::data_type::String) {
+                            keys += " DEFAULT '" + it.conf().default_constraint().string_value() + "'";
+                        }
+                        else {
+                            keys += " DEFAULT " + it.conf().default_constraint().string_value();
+                        }
+                    }
+                }
+
+                // Auto increment constraint
                 if (it.conf().auto_increment()) {
                     keys += auto_increment_string().data();
                 }
@@ -370,12 +407,18 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
         }
     }
 
+    // Primary keys
     if (!keys.empty()) {
         q += " (" + keys;
         if (!primary_keys.empty()) {
             q += ", PRIMARY KEY (" + primary_keys + ")";
         }
         q += ")";
+    }
+
+    // Table options
+    if (!model_.table_options().empty()) {
+        q += " " + model_.table_options();
     }
 
     return q;

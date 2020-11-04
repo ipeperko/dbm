@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(default_item_value_test)
     BOOST_TEST(! bnd->is_null());
     BOOST_TEST(bnd->is_defined());
 
-    auto bnd2 = dbm::binding(my_int, nullptr, dbm::container::init_null::null, dbm::container::init_defined::not_defined);
+    auto bnd2 = dbm::binding(my_int, nullptr, dbm::init_null::null, dbm::init_defined::not_defined);
     BOOST_TEST(bnd2->is_null());
     BOOST_TEST(! bnd2->is_defined());
 
@@ -342,6 +342,117 @@ BOOST_AUTO_TEST_CASE(container_test_validator)
     BOOST_TEST(bind2->get<int>() == 5);
     BOOST_REQUIRE_THROW(bind2->set(20), std::exception);
     BOOST_TEST(bind2->is_null());
+}
+
+BOOST_AUTO_TEST_CASE(default_constraint_test)
+{
+    // Default constructor
+    {
+        dbm::defaultc dc;
+        BOOST_TEST(!dc.has_value());
+        BOOST_REQUIRE_THROW([[maybe_unused]] auto r = dc.is_null(), std::exception);
+        BOOST_REQUIRE_THROW([[maybe_unused]] auto r = dc.string_value(), std::exception);
+    }
+
+    // Constructor with nullopt
+    {
+        dbm::defaultc dc(std::nullopt);
+        BOOST_TEST(!dc.has_value());
+        BOOST_REQUIRE_THROW([[maybe_unused]] auto r = dc.is_null(), std::exception);
+        BOOST_REQUIRE_THROW([[maybe_unused]] auto r = dc.string_value(), std::exception);
+    }
+
+    // Constructor with nullptr
+    {
+        dbm::defaultc dc(nullptr);
+        BOOST_TEST(dc.has_value());
+        BOOST_TEST(dc.is_null());
+    }
+
+    // Constructor with std::string const reference
+    {
+        std::string c("INT");
+        dbm::defaultc dc(c);
+        BOOST_TEST(dc.has_value());
+        BOOST_TEST(!dc.is_null());
+        BOOST_TEST(dc.string_value() == "INT");
+    }
+
+    // Constructor with std::string rvalue reference
+    {
+        dbm::defaultc dc(std::string("INT"));
+        BOOST_TEST(dc.has_value());
+        BOOST_TEST(!dc.is_null());
+        BOOST_TEST(dc.string_value() == "INT");
+    }
+
+    // Constructor with const char*
+    {
+        const char* c = "INT";
+        dbm::defaultc dc(c);
+        BOOST_TEST(dc.has_value());
+        BOOST_TEST(!dc.is_null());
+        BOOST_TEST(dc.string_value() == "INT");
+    }
+
+    // Constructor with std::string_view
+    {
+        std::string_view c = "INT";
+        dbm::defaultc dc(c);
+        BOOST_TEST(dc.has_value());
+        BOOST_TEST(!dc.is_null());
+        BOOST_TEST(dc.string_value() == "INT");
+    }
+
+    // Constructor with int
+    {
+        int c = 42;
+        dbm::defaultc dc(c);
+        BOOST_TEST(dc.has_value());
+        BOOST_TEST(!dc.is_null());
+        BOOST_TEST(dc.string_value() == "42");
+    }
+
+    // Constructor with int rvalue
+    {
+        dbm::defaultc dc(0);
+        BOOST_TEST(dc.has_value());
+        BOOST_TEST(!dc.is_null());
+        BOOST_TEST(dc.string_value() == "0");
+    }
+
+    // Constructor with double
+    {
+        double c = 3.14;
+        dbm::defaultc dc(c);
+        BOOST_TEST(dc.has_value());
+        BOOST_TEST(!dc.is_null());
+        BOOST_TEST(std::stod(dc.string_value()) == 3.14, boost::test_tools::tolerance(0.01));
+    }
+
+    // Constructor with double rvalue
+    {
+        dbm::defaultc dc(3.14);
+        BOOST_TEST(dc.has_value());
+        BOOST_TEST(!dc.is_null());
+        BOOST_TEST(std::stod(dc.string_value()) == 3.14, boost::test_tools::tolerance(0.01));
+    }
+
+    // Constructor with boolean
+    {
+        dbm::defaultc dc(true);
+        BOOST_TEST(dc.has_value());
+        BOOST_TEST(!dc.is_null());
+        BOOST_TEST(dc.string_value() == "1");
+    }
+
+    // Constructor with boolean
+    {
+        dbm::defaultc dc(false);
+        BOOST_TEST(dc.has_value());
+        BOOST_TEST(!dc.is_null());
+        BOOST_TEST(dc.string_value() == "0");
+    }
 }
 
 BOOST_AUTO_TEST_CASE(item_test)
