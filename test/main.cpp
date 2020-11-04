@@ -350,16 +350,16 @@ BOOST_AUTO_TEST_CASE(default_constraint_test)
     {
         dbm::defaultc dc;
         BOOST_TEST(!dc.has_value());
-        BOOST_REQUIRE_THROW(dc.is_null(), std::exception);
-        BOOST_REQUIRE_THROW(dc.string_value(), std::exception);
+        BOOST_REQUIRE_THROW([[maybe_unused]] auto r = dc.is_null(), std::exception);
+        BOOST_REQUIRE_THROW([[maybe_unused]] auto r = dc.string_value(), std::exception);
     }
 
     // Constructor with nullopt
     {
         dbm::defaultc dc(std::nullopt);
         BOOST_TEST(!dc.has_value());
-        BOOST_REQUIRE_THROW(dc.is_null(), std::exception);
-        BOOST_REQUIRE_THROW(dc.string_value(), std::exception);
+        BOOST_REQUIRE_THROW([[maybe_unused]] auto r = dc.is_null(), std::exception);
+        BOOST_REQUIRE_THROW([[maybe_unused]] auto r = dc.string_value(), std::exception);
     }
 
     // Constructor with nullptr

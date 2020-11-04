@@ -218,6 +218,13 @@ sql_rows_dump data = rows;          // store data
 sql_rows rows2 = data.restore();    // restore data
 ```
 
+##### Create and drop table
+
+```c++
+m.create_table(session);    // creates table if not exists
+m.drop_table(session);      // drops table if exists
+```
+
 ### Thread safety
 
 dbm classes are not thread safe and should not be used concurrently. 

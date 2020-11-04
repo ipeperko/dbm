@@ -180,7 +180,8 @@ DBM_INLINE
 std::string model_query_helper<SessionType>::write_query() const
 {
     std::string keys, values, duplicate_keys;
-    int i = 0, i_duplicate = 0;
+    int i = 0;
+    [[maybe_unused]] int i_duplicate = 0;
 
     for (const auto& it : model_.items()) {
 
@@ -190,27 +191,42 @@ std::string model_query_helper<SessionType>::write_query() const
 
         if (it.is_defined()) {
 
+            // Commas
             if (i) {
                 keys += ",";
                 values += ",";
             }
-            if (i_duplicate && !it.conf().primary()) {
-                duplicate_keys += ",";
-            }
 
+            // Key
             keys += it.key().get();
+
+            // Value
             if (it.is_null()) {
                 values += "NULL";
             }
             else {
-                values += "'" + it.to_string() + "'";
+                if (it.conf().valquotes()) {
+                    values += "'";
+                }
+                values += it.to_string();
+                if (it.conf().valquotes()) {
+                    values += "'";
+                }
             }
 
-            if (!it.conf().primary()) {
-                duplicate_keys += it.key().get() + "=VALUES(" + it.key().get() + ")";
-                i_duplicate++;
+            // Duplicate keys
+            if constexpr (is_MySql()) {
+                if (!it.conf().primary()) {
+                    if (i_duplicate) {
+                        duplicate_keys += ",";
+                    }
+
+                    duplicate_keys += it.key().get() + "=VALUES(" + it.key().get() + ")";
+                    ++i_duplicate;
+                }
             }
 
+            // Increment counter
             ++i;
         }
         else {
@@ -374,7 +390,12 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
                         keys += " DEFAULT NULL";
                     }
                     else {
-                        keys += " DEFAULT " + it.conf().default_constraint().string_value();
+                        if (it.get_container().type() == kind::data_type::String) {
+                            keys += " DEFAULT '" + it.conf().default_constraint().string_value() + "'";
+                        }
+                        else {
+                            keys += " DEFAULT " + it.conf().default_constraint().string_value();
+                        }
                     }
                 }
 

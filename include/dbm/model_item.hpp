@@ -28,7 +28,8 @@ public:
         db_autoincrement        = 5,
         s_required              = 6,
         s_taggable              = 7,
-        conf_flags_num_items    = s_taggable + 1
+        w_quotes                = 8,
+        conf_flags_num_items    = w_quotes + 1
     };
 
     model_item();
@@ -62,23 +63,25 @@ public:
 
     void set(const kind::tag& v);
 
-    void set(const kind::primary& v);
+    void set(kind::primary v);
 
-    void set(const kind::required& v);
+    void set(kind::required v);
 
     void set(const kind::dbtype& v);
 
-    void set(const kind::taggable& v);
+    void set(kind::taggable v);
 
-    void set(const kind::not_null& v);
+    void set(kind::not_null v);
 
-    void set(const kind::auto_increment& v);
+    void set(kind::auto_increment v);
 
-    void set(const kind::create& v);
+    void set(kind::create v);
 
     void set(const kind::defaultc& v);
 
     void set(kind::direction v);
+
+    void set(kind::valquotes v);
 
     void set(container_ptr&& v);
 
@@ -123,7 +126,8 @@ private:
         (1u << conf_flags::db_readable) |
         (1u << conf_flags::db_writable) |
         (1u << conf_flags::db_creatable) |
-        (1u << conf_flags::s_taggable);
+        (1u << conf_flags::s_taggable) |
+        (1u << conf_flags::w_quotes);
 
     kind::key key_{""};
     kind::tag tag_{""};
@@ -207,6 +211,11 @@ public:
     constexpr bool taggable() const
     {
         return get(model_item::s_taggable);
+    }
+
+    constexpr bool valquotes() const
+    {
+        return get(model_item::w_quotes);
     }
 
     const kind::defaultc& default_constraint() const

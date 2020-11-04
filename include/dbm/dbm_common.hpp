@@ -31,6 +31,7 @@ struct parameter_taggable;
 struct parameter_not_null;
 struct parameter_auto_increment;
 struct parameter_create;
+struct parameter_valquotes;
 struct parameter_dbtype;
 } // namespace detail
 
@@ -42,6 +43,7 @@ using taggable = detail::named_type<bool, detail::parameter_taggable, detail::pr
 using not_null = detail::named_type<bool, detail::parameter_not_null, detail::printable, detail::operator_bool>;
 using auto_increment = detail::named_type<bool, detail::parameter_auto_increment, detail::printable, detail::operator_bool>;
 using create = detail::named_type<bool, detail::parameter_create, detail::printable, detail::operator_bool>;
+using valquotes = detail::named_type<bool, detail::parameter_valquotes, detail::printable, detail::operator_bool>;
 using defaultc = kind::detail::default_constraint;
 using dbtype = detail::named_type<std::string, detail::parameter_dbtype, detail::printable>;
 

@@ -21,6 +21,7 @@ using auto_increment = kind::auto_increment;
 using create = kind::create;
 using direction = kind::direction;
 using defaultc = kind::defaultc;
+using valquotes = kind::valquotes;
 using dbtype = kind::dbtype;
 
 #ifdef DBM_EXPERIMENTAL_BLOB

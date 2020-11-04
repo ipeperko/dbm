@@ -71,12 +71,12 @@ DBM_INLINE void model_item::set(const kind::tag& v)
     tag_ = v;
 }
 
-DBM_INLINE void model_item::set(const kind::primary& v)
+DBM_INLINE void model_item::set(kind::primary v)
 {
     conf_[conf_flags::db_pkey] = v.get();
 }
 
-DBM_INLINE void model_item::set(const kind::required& v)
+DBM_INLINE void model_item::set(kind::required v)
 {
     conf_[conf_flags::s_required] = v.get();
 }
@@ -86,22 +86,22 @@ DBM_INLINE void model_item::set(const kind::dbtype& v)
     dbtype_ = v;
 }
 
-DBM_INLINE void model_item::set(const kind::taggable& v)
+DBM_INLINE void model_item::set(kind::taggable v)
 {
     conf_[conf_flags::s_taggable] = v.get();
 }
 
-DBM_INLINE void model_item::set(const kind::not_null& v)
+DBM_INLINE void model_item::set(kind::not_null v)
 {
     conf_[conf_flags::db_not_null] = v.get();
 }
 
-DBM_INLINE void model_item::set(const kind::auto_increment& v)
+DBM_INLINE void model_item::set(kind::auto_increment v)
 {
     conf_[conf_flags::db_autoincrement] = v.get();
 }
 
-DBM_INLINE void model_item::set(const kind::create& v)
+DBM_INLINE void model_item::set(kind::create v)
 {
     conf_[conf_flags::db_creatable] = v.get();
 }
@@ -130,6 +130,11 @@ DBM_INLINE void model_item::set(kind::direction v)
             conf_[conf_flags::db_writable] = false;
             conf_[conf_flags::db_readable] = false;
     }
+}
+
+DBM_INLINE void model_item::set(kind::valquotes v)
+{
+    conf_[conf_flags::w_quotes] = v.get();
 }
 
 DBM_INLINE void model_item::set(container_ptr&& v)
