@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(model_item_swap)
 
     dbm::model_item m1(dbm::key("key_1"),
                        dbm::tag("tag_1"),
-                       dbm::dbtype("INTEGER"),
+                       dbm::custom_data_type("INTEGER"),
                        dbm::local<int>(42),
                        dbm::taggable(true),
                        dbm::direction::bidirectional,
@@ -105,12 +105,13 @@ BOOST_AUTO_TEST_CASE(model_item_swap)
                        dbm::primary(true),
                        dbm::auto_increment(true),
                        dbm::not_null(true),
-                       dbm::defaultc(std::nullopt)
+                       dbm::defaultc(std::nullopt),
+                       dbm::valquotes(true)
                        );
 
     dbm::model_item m2(dbm::key("key_2"),
                        dbm::tag("tag_2"),
-                       dbm::dbtype(""),
+                       dbm::custom_data_type(""),
                        dbm::binding(vald),
                        dbm::taggable(false),
                        dbm::direction::disabled,
@@ -118,7 +119,8 @@ BOOST_AUTO_TEST_CASE(model_item_swap)
                        dbm::primary(false),
                        dbm::auto_increment(false),
                        dbm::not_null(false),
-                       dbm::defaultc(nullptr)
+                       dbm::defaultc(nullptr),
+                       dbm::valquotes(false)
                        );
 
     std::swap(m1, m2);
@@ -127,8 +129,8 @@ BOOST_AUTO_TEST_CASE(model_item_swap)
     BOOST_TEST(m2.key().get() == "key_1");
     BOOST_TEST(m1.tag().get() == "tag_2");
     BOOST_TEST(m2.tag().get() == "tag_1");
-    BOOST_TEST(m1.dbtype().get() == "");
-    BOOST_TEST(m2.dbtype().get() == "INTEGER");
+    BOOST_TEST(m1.custom_data_type().get() == "");
+    BOOST_TEST(m2.custom_data_type().get() == "INTEGER");
     BOOST_TEST(m1.value<double>() == 3.14);
     BOOST_TEST(m2.value<int>() == 42);
     BOOST_TEST(m1.conf().taggable() == false);
@@ -145,6 +147,8 @@ BOOST_AUTO_TEST_CASE(model_item_swap)
     BOOST_TEST(m2.conf().auto_increment());
     BOOST_TEST(m1.conf().not_null() == false);
     BOOST_TEST(m2.conf().not_null());
+    BOOST_TEST(m1.conf().valquotes() == false);
+    BOOST_TEST(m2.conf().valquotes());
 }
 
 BOOST_AUTO_TEST_CASE(model_swap)
@@ -155,26 +159,28 @@ BOOST_AUTO_TEST_CASE(model_swap)
         {
             dbm::key("m1_key1"),
             dbm::tag("m1_tag1"),
-            dbm::dbtype("INTEGER"),
+            dbm::custom_data_type("INTEGER"),
             dbm::local<int>(42),
             dbm::taggable(true),
             dbm::direction::bidirectional,
             dbm::create(true),
             dbm::primary(true),
             dbm::auto_increment(true),
-            dbm::not_null(true)
+            dbm::not_null(true),
+            dbm::valquotes(true)
         },
         {
             dbm::key("m1_key2"),
             dbm::tag("m1_tag2"),
-            dbm::dbtype("REAL"),
+            dbm::custom_data_type("REAL"),
             dbm::local<double>(666.666),
             dbm::taggable(true),
             dbm::direction::bidirectional,
             dbm::create(true),
             dbm::primary(true),
             dbm::auto_increment(true),
-            dbm::not_null(true)
+            dbm::not_null(true),
+            dbm::valquotes(true)
         }
     });
 
@@ -182,14 +188,15 @@ BOOST_AUTO_TEST_CASE(model_swap)
         {
             dbm::key("m2_key1"),
             dbm::tag("m2_tag1"),
-            dbm::dbtype(""),
+            dbm::custom_data_type(""),
             dbm::binding<double>(vald),
             dbm::taggable(false),
             dbm::direction::disabled,
             dbm::create(false),
             dbm::primary(false),
             dbm::auto_increment(false),
-            dbm::not_null(false)
+            dbm::not_null(false),
+            dbm::valquotes(false)
         }
     });
 
@@ -210,9 +217,9 @@ BOOST_AUTO_TEST_CASE(model_swap)
     BOOST_TEST(m1.tag().get() == "m2_tag1");
     BOOST_TEST(m2.tag().get() == "m1_tag1");
     BOOST_TEST(m3.tag().get() == "m1_tag2");
-    BOOST_TEST(m1.dbtype().get() == "");
-    BOOST_TEST(m2.dbtype().get() == "INTEGER");
-    BOOST_TEST(m3.dbtype().get() == "REAL");
+    BOOST_TEST(m1.custom_data_type().get() == "");
+    BOOST_TEST(m2.custom_data_type().get() == "INTEGER");
+    BOOST_TEST(m3.custom_data_type().get() == "REAL");
     BOOST_TEST(m1.value<double>() == 3.14);
     BOOST_TEST(m2.value<int>() == 42);
     BOOST_TEST(m3.value<double>() == 666.666);
@@ -237,6 +244,9 @@ BOOST_AUTO_TEST_CASE(model_swap)
     BOOST_TEST(m1.conf().not_null() == false);
     BOOST_TEST(m2.conf().not_null());
     BOOST_TEST(m3.conf().not_null());
+    BOOST_TEST(m1.conf().valquotes() == false);
+    BOOST_TEST(m2.conf().valquotes());
+    BOOST_TEST(m3.conf().valquotes());
 }
 
 BOOST_AUTO_TEST_CASE(model_test_serialization)
@@ -352,7 +362,7 @@ dbm::model get_test_model()
           { dbm::local<bool>(),
             dbm::key("tiny_int_not_null"),
             dbm::tag("tag_tiny_int_not_null"),
-            dbm::dbtype("TINYINT NOT NULL DEFAULT 1"),
+            dbm::custom_data_type("TINYINT NOT NULL DEFAULT 1"),
             //dbm::not_null(true)
           },
           { dbm::local<bool>(),
@@ -363,7 +373,7 @@ dbm::model get_test_model()
           { dbm::local<std::string>(),
             dbm::key("timestamp"),
             dbm::tag("timestamp_tag"),
-            dbm::dbtype("TIMESTAMP" + ts),
+            dbm::custom_data_type("TIMESTAMP" + ts),
             //dbm::valquotes(false)
           } }
     };
@@ -732,7 +742,7 @@ void test_model_with_timestamp()
           },
           { dbm::local<std::string>(),
             dbm::key("timestamp"),
-            dbm::dbtype("TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            dbm::custom_data_type("TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"),
             dbm::direction::read_only,
             dbm::valquotes(false)
           } }

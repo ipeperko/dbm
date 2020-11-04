@@ -371,9 +371,9 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
             keys += it.key().get() + " ";
 
             // Data type
-            if (!it.dbtype().get().empty()) {
+            if (!it.custom_data_type().get().empty()) {
                 // Custom type
-                keys += it.dbtype().get();
+                keys += it.custom_data_type().get();
             }
             else {
                 // Standard type

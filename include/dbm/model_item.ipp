@@ -56,7 +56,7 @@ DBM_INLINE bool model_item::is_defined() const
     return cont_ && cont_->is_defined();
 }
 
-DBM_INLINE const kind::dbtype& model_item::dbtype() const
+DBM_INLINE const kind::custom_data_type& model_item::custom_data_type() const
 {
     return dbtype_;
 }
@@ -81,7 +81,7 @@ DBM_INLINE void model_item::set(kind::required v)
     conf_[conf_flags::s_required] = v.get();
 }
 
-DBM_INLINE void model_item::set(const kind::dbtype& v)
+DBM_INLINE void model_item::set(const kind::custom_data_type& v)
 {
     dbtype_ = v;
 }

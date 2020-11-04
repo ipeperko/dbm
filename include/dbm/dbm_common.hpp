@@ -45,7 +45,7 @@ using auto_increment = detail::named_type<bool, detail::parameter_auto_increment
 using create = detail::named_type<bool, detail::parameter_create, detail::printable, detail::operator_bool>;
 using valquotes = detail::named_type<bool, detail::parameter_valquotes, detail::printable, detail::operator_bool>;
 using defaultc = kind::detail::default_constraint;
-using dbtype = detail::named_type<std::string, detail::parameter_dbtype, detail::printable>;
+using custom_data_type = detail::named_type<std::string, detail::parameter_dbtype, detail::printable>;
 
 enum class direction : unsigned
 {

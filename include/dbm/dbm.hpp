@@ -22,7 +22,7 @@ using create = kind::create;
 using direction = kind::direction;
 using defaultc = kind::defaultc;
 using valquotes = kind::valquotes;
-using dbtype = kind::dbtype;
+using custom_data_type = kind::custom_data_type;
 
 #ifdef DBM_EXPERIMENTAL_BLOB
 using blob = kind::blob;

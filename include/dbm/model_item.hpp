@@ -57,7 +57,7 @@ public:
 
     bool is_defined() const;
 
-    const kind::dbtype& dbtype() const;
+    const kind::custom_data_type& custom_data_type() const;
 
     void set(const kind::key& v);
 
@@ -67,7 +67,7 @@ public:
 
     void set(kind::required v);
 
-    void set(const kind::dbtype& v);
+    void set(const kind::custom_data_type& v);
 
     void set(kind::taggable v);
 
@@ -132,7 +132,7 @@ private:
     kind::key key_{""};
     kind::tag tag_{""};
     std::bitset<conf_flags_num_items> conf_ {conf_default};
-    kind::dbtype dbtype_ {""};
+    kind::custom_data_type dbtype_ {""};
     kind::defaultc defaultc_;
     container_ptr cont_;
 };

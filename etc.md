@@ -1,6 +1,6 @@
 ### Timestamp
 
-MySQL conversion to unix time stamp example
+Conversion to unix time stamp example
 
 ```c++
 // Model
@@ -22,8 +22,6 @@ auto& unixtime_write = m.emplace_back(
         dbm::valquotes(false),      // value quotes while writing disabled as we are writing functions
         dbm::create(false)          // will not be created in database - exists only in model
         );
-
-// Writing
 ```
 
 MySQL specific unixtime read item
@@ -89,10 +87,9 @@ Some ideas how to deal with relations:
 
 ### To do
 
-- maybe rename dbm::dbtype to dbm::custom_data_type
-- docs: model create/drop table examples
-- indexes
 - table engine
-- blob support
+- unsigned data types
+- indexes
+- binary, blob support
 - portable timestamp to unix time conversion
 - Postgres
