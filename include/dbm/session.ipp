@@ -68,6 +68,11 @@ DBM_INLINE void session::query(const std::string& statement)
     mstatement = statement;
 }
 
+DBM_INLINE void session::query(const detail::query& q)
+{
+    query(q.get());
+}
+
 DBM_INLINE kind::sql_rows session::select(const std::string& statement)
 {
     return select_rows(statement);
