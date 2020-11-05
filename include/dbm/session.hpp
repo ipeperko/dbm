@@ -26,6 +26,7 @@ public:
     virtual void query(const std::string& statement);
     kind::sql_rows select(const std::string& statement);
     kind::sql_rows select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria="");
+    kind::sql_rows select(const detail::query& q);
 
     virtual std::string write_model_query(const model& m) const = 0;
     virtual std::string read_model_query(const model& m, const std::string& extra_condition="") const = 0;

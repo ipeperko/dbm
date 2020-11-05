@@ -636,6 +636,23 @@ BOOST_AUTO_TEST_CASE(item_test)
     BOOST_TEST(!mitem_int_move.is_null());
 }
 
+BOOST_AUTO_TEST_CASE(query_test)
+{
+    dbm::query q;
+    q << "SELECT * FROM whatever WHERE fancy=" << 1;
+
+    // Test move ctor
+    dbm::query q2(std::move(q));
+    BOOST_TEST(q.get() == "");
+    BOOST_TEST(q2.get() == "SELECT * FROM whatever WHERE fancy=1");
+
+    // Test move assign
+    dbm::query q3;
+    q3 = std::move(q2);
+    BOOST_TEST(q2.get() == "");
+    BOOST_TEST(q3.get() == "SELECT * FROM whatever WHERE fancy=1");
+}
+
 class CustomException : public std::exception
 {
     std::string e;
@@ -677,3 +694,4 @@ BOOST_AUTO_TEST_CASE(custom_exception)
 
     dbm::config::set_custom_exception(nullptr);
 }
+

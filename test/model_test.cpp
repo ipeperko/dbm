@@ -534,7 +534,9 @@ void test_model()
     {
         SessionType s2(session);
         s2.open();
-        auto rows = s2.select("SELECT * FROM " + tbl_name + " WHERE id=" + std::to_string(data_fields.id));
+        dbm::query q;
+        q << "SELECT * FROM " << tbl_name << " WHERE id=" << data_fields.id;
+        auto rows = s2.select(q);
         BOOST_TEST(rows.empty());
     }
 
@@ -566,7 +568,9 @@ void test_model()
     {
         SessionType s2(session);
         s2.open();
-        auto rows = s2.select("SELECT * FROM " + tbl_name + " WHERE id=" + std::to_string(data_fields.id));
+        dbm::query q;
+        q << "SELECT * FROM " << tbl_name << " WHERE id=" << data_fields.id;
+        auto rows = s2.select(q);
         BOOST_TEST(rows.empty());
     }
 
@@ -579,7 +583,9 @@ void test_model()
     {
         SessionType s2(session);
         s2.open();
-        auto rows = s2.select("SELECT * FROM " + tbl_name + " WHERE id=" + std::to_string(data_fields.id));
+        dbm::query q;
+        q << "SELECT * FROM " << tbl_name << " WHERE id=" << data_fields.id;
+        auto rows = s2.select(q);
         BOOST_TEST(rows.size() == 1);
     }
 

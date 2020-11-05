@@ -96,6 +96,11 @@ DBM_INLINE kind::sql_rows session::select(const std::vector<std::string>& what, 
     return select_rows(statement);
 }
 
+DBM_INLINE kind::sql_rows session::select(const detail::query& q)
+{
+    return select(q.get());
+}
+
 DBM_INLINE void session::create_database(const std::string& db_name, bool if_not_exists)
 {
     std::string q = "CREATE DATABASE ";
