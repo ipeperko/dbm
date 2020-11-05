@@ -41,6 +41,8 @@ public:
                   "Container invalid type");
     static_assert(not std::is_same_v<unreferenced_type, const char*> && not std::is_same_v<unreferenced_type, std::string_view>,
                   "Container invalid string type");
+    static_assert(not (std::is_same_v<unreferenced_type, kind::detail::timestamp2u_converter> && is_reference_storage),
+                  "timestamp2u_converter cannot be in reference container type");
 
     container_impl()
         : container()

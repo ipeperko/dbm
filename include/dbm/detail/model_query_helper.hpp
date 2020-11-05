@@ -29,7 +29,7 @@ public:
         : type_(t)
     {}
 
-    virtual model_query_helper_base() = default;
+    virtual ~model_query_helper_base() = default;
 
     template <typename UnknownType=void>
     void is_unknown_type() const
