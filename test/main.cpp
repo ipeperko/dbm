@@ -455,6 +455,128 @@ BOOST_AUTO_TEST_CASE(default_constraint_test)
     }
 }
 
+BOOST_AUTO_TEST_CASE(timestamp2u_test)
+{
+    using dbm::timestamp2u_converter;
+
+    {
+        // Default constructor
+        timestamp2u_converter tu;
+        BOOST_TEST((tu == 0));
+        BOOST_TEST(tu.get() == 0);
+        BOOST_TEST(tu.has_reference() == false);
+
+        // Assign value
+        tu = 42;
+        BOOST_TEST((tu == 42));
+        BOOST_TEST(tu.get() == 42);
+        BOOST_TEST(tu.has_reference() == false);
+
+        // Assign value 2
+        tu = time_t(13);
+        BOOST_TEST(tu.get() == 13);
+        BOOST_TEST(tu.has_reference() == false);
+    }
+
+    {
+        // Construct from time_t
+        timestamp2u_converter tu(42);
+        BOOST_TEST(tu.get() == 42);
+        BOOST_TEST(tu.has_reference() == false);
+    }
+
+    {
+        // Construct from time_t reference
+        time_t storage = 42;
+        timestamp2u_converter tu(storage);
+        BOOST_TEST((tu == 42));
+        BOOST_TEST(tu.get() == 42);
+        BOOST_TEST(tu.has_reference());
+
+        storage = 13;
+        BOOST_TEST(tu.get() == 13);
+
+        tu = 14;
+        BOOST_TEST(tu.get() == 14);
+        BOOST_TEST(storage == 14);
+    }
+
+    {
+        // Copy construct local storage
+        timestamp2u_converter tu(42);
+        timestamp2u_converter tu2(tu);
+
+        BOOST_TEST(tu.get() == 42);
+        BOOST_TEST(tu.has_reference() == false);
+        BOOST_TEST(tu2.get() == 42);
+        BOOST_TEST(tu2.has_reference() == false);
+
+        tu = 43;
+        BOOST_TEST(tu.get() == 43);
+        BOOST_TEST(tu2.get() == 42);
+    }
+
+    {
+        // Copy construct reference storage
+        time_t storage = 42;
+        timestamp2u_converter tu(storage);
+        BOOST_TEST(tu.get() == 42);
+        BOOST_TEST(tu.has_reference());
+
+        timestamp2u_converter tu2 = tu;
+
+        BOOST_TEST(tu.get() == 42);
+        BOOST_TEST(tu.has_reference());
+        BOOST_TEST(tu2.get() == 42);
+        BOOST_TEST(tu2.has_reference());
+
+        // Modify external value
+        storage = 43;
+        BOOST_TEST(tu.get() == 43);
+        BOOST_TEST(tu2.get() == 43);
+
+        // Assignment
+        tu = 44;
+        BOOST_TEST(storage == 44);
+        BOOST_TEST(tu.get() == 44);
+        BOOST_TEST(tu2.get() == 44);
+    }
+
+    {
+        // Move construct local storage
+        timestamp2u_converter tu(42);
+        timestamp2u_converter tu2(std::move(tu));
+
+        BOOST_TEST(tu.get() == 42);
+        BOOST_TEST(tu.has_reference() == false);
+        BOOST_TEST(tu2.get() == 42);
+        BOOST_TEST(tu2.has_reference() == false);
+    }
+
+    {
+        // Move construct reference storage
+        time_t storage = 42;
+        timestamp2u_converter tu(storage);
+        BOOST_TEST(tu.get() == 42);
+        BOOST_TEST(tu.has_reference());
+
+        timestamp2u_converter tu2 = std::move(tu);
+
+        BOOST_TEST(tu.has_reference() == false);
+        BOOST_TEST(tu2.get() == 42);
+        BOOST_TEST(tu2.has_reference());
+
+        // Modify external value
+        storage = 43;
+        BOOST_TEST(tu2.get() == 43);
+
+        // Assignment
+        tu2 = 44;
+        BOOST_TEST(storage == 44);
+        BOOST_TEST(tu2.get() == 44);
+    }
+}
+
 BOOST_AUTO_TEST_CASE(item_test)
 {
     static_assert(dbm::xml::utils::is_string_type<std::string>::value);

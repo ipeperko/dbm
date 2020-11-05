@@ -123,6 +123,8 @@ public:
                 case data_type::Short:
                 case data_type::Long:
                     return "INTEGER";
+                case data_type::Timestamp2u:
+                    return "TIMESTAMP";
                 case data_type::Double:
                     return "REAL";
                 case data_type::String:
@@ -151,6 +153,8 @@ public:
                     return "SMALLINT";
                 case data_type::Long:
                     return "BIGINT";
+                case data_type::Timestamp2u:
+                    return "TIMESTAMP";
                 case data_type::Double:
                     return "DOUBLE";
                 case data_type::String:

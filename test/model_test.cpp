@@ -91,6 +91,24 @@ BOOST_AUTO_TEST_CASE(model_test_replace_container)
     m.at("test").set(dbm::binding(val));
 }
 
+BOOST_AUTO_TEST_CASE(model_item_timestamp)
+{
+    time_t storage = 42;
+    auto item = dbm::model_item(dbm::timestamp2u(storage));
+
+    BOOST_TEST(item.value<dbm::timestamp2u_converter>().has_reference());
+    BOOST_TEST(item.to_string() == "42");
+    BOOST_TEST(item.value<dbm::timestamp2u_converter>().get() == 42);
+
+    storage = 123;
+    BOOST_TEST(item.to_string() == "123");
+    BOOST_TEST(item.value<dbm::timestamp2u_converter>().get() == 123);
+
+    item.from_string("666");
+    BOOST_TEST(item.to_string() == "666");
+    BOOST_TEST(item.value<dbm::timestamp2u_converter>().get() == 666);
+}
+
 BOOST_AUTO_TEST_CASE(model_item_swap)
 {
     double vald = 3.14;
@@ -315,13 +333,11 @@ dbm::model get_test_model()
 #ifdef DBM_MYSQL
     if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
         autoincr_str = " AUTO_INCREMENT";
-        ts = " NOT NULL DEFAULT CURRENT_TIMESTAMP";
     }
 #endif
 #ifdef DBM_SQLITE3
     if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
         //        autoincr_str = " AUTOINCREMENT";
-        ts = " NOT NULL DEFAULT CURRENT_TIMESTAMP";
     }
 #endif
 
@@ -373,7 +389,7 @@ dbm::model get_test_model()
           { dbm::local<std::string>(),
             dbm::key("timestamp"),
             dbm::tag("timestamp_tag"),
-            dbm::custom_data_type("TIMESTAMP" + ts),
+            dbm::custom_data_type("TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"),
             //dbm::valquotes(false)
           } }
     };

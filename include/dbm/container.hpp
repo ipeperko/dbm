@@ -229,6 +229,8 @@ container_ptr binding(T& ref, Validator&& validator = nullptr,
         defined == init_defined::defined);
 }
 
+#define timestamp2u local<dbm::timestamp2u_converter>
+
 }// namespace dbm
 
 #endif//DBM_CONTAINER_HPP

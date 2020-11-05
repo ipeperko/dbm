@@ -17,6 +17,9 @@ std::string container_impl<T, ContType, conf>::to_string() const
     if constexpr (std::is_same_v<T, std::string>) {
         return val_;
     }
+    else if constexpr (std::is_same_v<T, kind::detail::timestamp2u_converter>) {
+        return std::to_string(val_.get());
+    }
     else {
         std::ostringstream os;
         os << val_;
@@ -45,6 +48,20 @@ void container_impl<T, ContType, conf>::from_string(std::string_view v)
         val_ = std::move(tmp_val);
         is_null_ = false;
         defined_ = true;
+    }
+    else if constexpr (std::is_same_v<T, kind::detail::timestamp2u_converter>) {
+        kind::detail::timestamp2u_converter::value_type tmp_val;
+        utils::istream_extbuf is(const_cast<char*>(&v[0]), v.length());
+        is >> tmp_val;
+        if (is.fail()) {
+            on_error_exception("Container from_string failed");
+        }
+        else {
+            validate(tmp_val);
+            val_ = tmp_val;
+            is_null_ = false;
+            defined_ = true;
+        }
     }
 #ifdef DBM_EXPERIMENTAL_BLOB
     else if constexpr (std::is_same_v<T, kind::blob>) {
