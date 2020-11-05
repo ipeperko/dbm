@@ -1,5 +1,37 @@
 ### Timestamp
 
+#### String representation of timestamp example
+
+```c++
+model m("test_table", 
+    {
+        {
+            local<int>(),
+            key("id"),
+            primary(true),
+            not_null(true),
+            auto_increment(true)
+        },
+        {
+            local<std::string>("1970-05-23 21:21:18"),
+            dbm::key("time"),
+            dbm::custom_data_type("TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
+        }
+    });
+m.create_table(session); // create table with columns id and time 
+
+m >> session; // write new record with timestamp '1970-05-23 21:21:18'  
+```
+
+#### Using integers 
+
+
+
+#### Timestamp to unix time conversion
+
+
+### Timestamp - dirty solution
+
 Conversion to unix time stamp example
 
 ```c++

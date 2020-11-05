@@ -11,49 +11,9 @@
 #include <boost/test/unit_test.hpp>
 #include <iomanip>
 
+#include "db_settings.h"
+
 using namespace boost::unit_test;
-
-static constexpr const char* dbm_test_db_name = "dbm_test";
-static constexpr const char* dbm_test_db_file_name = "dbm_test.sqlite3";
-static constexpr const char* dbm_test_table_name = "test_table";
-
-#ifdef DBM_MYSQL
-static std::string mysql_host;
-static std::string mysql_username;
-static std::string mysql_password;
-static int mysql_port = 3306;
-
-BOOST_AUTO_TEST_CASE(db_config)
-{
-    mysql_host = "127.0.0.1";
-
-    int argc = framework::master_test_suite().argc;
-
-    for (int i = 0; i < argc - 1; i++) {
-        std::string arg = framework::master_test_suite().argv[i];
-
-        if (arg == "--mysql-host") {
-            mysql_host = framework::master_test_suite().argv[i + 1];
-        }
-        else if (arg == "--mysql-username" || arg == "--db-username") {
-            mysql_username = framework::master_test_suite().argv[i + 1];
-        }
-        else if (arg == "--mysql-password" || arg == "--db-password") {
-            mysql_password = framework::master_test_suite().argv[i + 1];
-        }
-    }
-
-    if (mysql_host.empty()) {
-        BOOST_FAIL("mysql host name not defined");
-    }
-    if (mysql_username.empty()) {
-        BOOST_FAIL("mysql username not defined");
-    }
-    if (mysql_password.empty()) {
-        BOOST_TEST_MESSAGE("mysql password not defined - using blank password");
-    }
-}
-#endif
 
 BOOST_AUTO_TEST_CASE(model_test_set_table_name)
 {
@@ -300,7 +260,6 @@ BOOST_AUTO_TEST_CASE(model_test_serialization)
 
 int getActiveProfileId(int controller_id)
 {
-
     int active_profile_id;
     dbm::model model("table",
                      { { dbm::key("profile"), dbm::local(active_profile_id) },
@@ -327,6 +286,7 @@ static DataFields data_fields;
 template<typename SessionType>
 dbm::model get_test_model()
 {
+    auto& db_sett = db_settings::instance();
     std::string autoincr_str;
     std::string ts;
 
@@ -342,7 +302,7 @@ dbm::model get_test_model()
 #endif
 
     dbm::model m {
-        dbm_test_table_name,
+        db_sett.test_table_name,
         { { dbm::binding(data_fields.id),
             dbm::key("id"),
             dbm::tag("tag_id"),
@@ -417,28 +377,29 @@ dbm::model get_test_model()
 }
 
 template<typename SessionType>
-void test_mysql()
+void test_table()
 {
     SessionType session;
-    const std::string db_name = dbm_test_db_name;
-    const std::string tbl_name = dbm_test_table_name;
+    auto& db_sett = db_settings::instance();
+    const std::string db_name = db_sett.test_db_name;
+    const std::string tbl_name = db_sett.test_table_name;
 
 #ifdef DBM_MYSQL
     if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
         BOOST_TEST_MESSAGE("MySQL test\n");
 
         SessionType tmp_session;
-        tmp_session.init(mysql_host, mysql_username, mysql_password, mysql_port, "");
+        db_sett.init_mysql_session(tmp_session, "");
         tmp_session.open();
         tmp_session.create_database(db_name, true);
 
-        session.init(mysql_host, mysql_username, mysql_password, mysql_port, db_name);
+        db_sett.init_mysql_session(session, db_name);
     }
 #endif
 #ifdef DBM_SQLITE3
     if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
         BOOST_TEST_MESSAGE("SQLite test\n");
-        session.set_db_name(dbm_test_db_file_name);
+        session.set_db_name(db_sett.test_db_file_name);
     }
 #endif
 
@@ -502,11 +463,11 @@ VALUES
 BOOST_AUTO_TEST_CASE(sql_test)
 {
 #ifdef DBM_MYSQL
-    test_mysql<dbm::mysql_session>();
+    test_table<dbm::mysql_session>();
 #endif
 
 #ifdef DBM_SQLITE3
-    test_mysql<dbm::sqlite_session>();
+    test_table<dbm::sqlite_session>();
 #endif
 }
 
@@ -519,19 +480,20 @@ void test_model()
     data_fields.id = 1;
 
     SessionType session;
-    const std::string db_name = dbm_test_db_name;
-    const std::string tbl_name = dbm_test_table_name;
+    auto& db_sett = db_settings::instance();
+    const std::string db_name = db_sett.test_db_name;
+    const std::string tbl_name = db_sett.test_table_name;
 
 #ifdef DBM_MYSQL
     if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
         BOOST_TEST_MESSAGE("MySQL model test\n");
-        session.init(mysql_host, mysql_username, mysql_password, mysql_port, db_name);
+        db_sett.init_mysql_session(session, db_name);
     }
 #endif
 #ifdef DBM_SQLITE3
     if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
         BOOST_TEST_MESSAGE("SQLite model test\n");
-        session.set_db_name(dbm_test_db_file_name);
+        session.set_db_name(db_sett.test_db_file_name);
     }
 #endif
 
@@ -755,66 +717,65 @@ void test_model_with_timestamp()
             dbm::primary(true),
             dbm::not_null(true),
             dbm::auto_increment(true)
-          },
-          { dbm::local<std::string>(),
-            dbm::key("timestamp"),
-            dbm::custom_data_type("TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"),
-            dbm::direction::read_only,
-            dbm::valquotes(false)
-          } }
+            },
+          }
     };
 
-    dbm::model_item* item_read_unixtime = nullptr;
+    //dbm::model_item& item_timestamp_string = //
+    m.emplace_back(dbm::local<std::string>(),
+            dbm::key("timestamp"),
+            dbm::tag("timestamp_string"),
+            dbm::custom_data_type("TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            dbm::direction::read_only
+            );
 
 #ifdef DBM_MYSQL
     if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
         m.set_table_options("ENGINE=MEMORY");
 
-        item_read_unixtime = &m.emplace_back(dbm::local<time_t>(),
-                       dbm::key("UNIX_TIMESTAMP(timestamp)"),
-                       dbm::tag("unixtime"),
-                       dbm::direction::read_only,
-                       dbm::create(false));
+        m.emplace_back(dbm::local<time_t>(),
+            dbm::key("UNIX_TIMESTAMP(timestamp)"),
+            dbm::tag("unixtime"),
+            dbm::direction::read_only,
+            dbm::create(false));
     }
 #endif
 
 #ifdef DBM_SQLITE3
     if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
-        item_read_unixtime = &m.emplace_back(dbm::local<time_t>(),
-                       dbm::key("strftime('%s',timestamp)"),
-                       dbm::tag("unixtime"),
-                       dbm::direction::read_only,
-                       dbm::create(false));
+        m.emplace_back(dbm::local<time_t>(),
+            dbm::key("strftime('%s',timestamp)"),
+            dbm::tag("unixtime"),
+            dbm::direction::read_only,
+            dbm::create(false));
     }
 #endif
 
-    dbm::model_item* item_write_unixtime = &m.emplace_back(dbm::local<std::string>(),
-                      dbm::key("timestamp"),
-                      dbm::direction::write_only,
-                      dbm::valquotes(false), // quotes are disabled as we are writing functions
-                      dbm::create(false));
+    m.emplace_back(dbm::local<std::string>(),
+        dbm::key("timestamp"),
+        dbm::tag("timestamp_write_only"),
+        dbm::direction::write_only,
+        dbm::valquotes(false), // quotes are disabled as we are writing functions
+        dbm::create(false));
 
     SessionType session;
-    const std::string db_name = dbm_test_db_name;
-    const std::string tbl_name = dbm_test_table_name;
+    auto& db_sett = db_settings::instance();
 
 #ifdef DBM_MYSQL
     if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
         BOOST_TEST_MESSAGE("MySQL test_model_with_timestamp");
-        session.init(mysql_host, mysql_username, mysql_password, mysql_port, db_name);
+        db_sett.init_mysql_session(session, db_sett.test_db_name);
     }
 #endif
 #ifdef DBM_SQLITE3
     if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
         BOOST_TEST_MESSAGE("SQLite test_model_with_timestamp");
-        session.set_db_name(dbm_test_db_file_name);
+        session.set_db_name(db_sett.test_db_file_name);
     }
 #endif
 
-    // Open session
+    // Open session and create table
     session.open();
-
-    // Delete existing table if exists and create new one
     m.drop_table(session);
     m.create_table(session);
 
@@ -822,33 +783,102 @@ void test_model_with_timestamp()
     m >> session;
 
     // Read record to get timestamp
+    BOOST_TEST_MESSAGE(session.read_model_query(m, ""));
     session >> m;
 
-    //BOOST_TEST_MESSAGE("Read timestamp " + item_read_unixtime->to_string());
+    auto& item_timestamp_string = m.items().at(1);
+    auto& item_read_unixtime = m.items().at(2);
+    auto& item_write_unixtime = m.items().back();
+
+    BOOST_TEST_MESSAGE("Read timestamp " + item_read_unixtime.to_string() + " " + item_timestamp_string.to_string());
 
     // Set timestamp functions
 #ifdef DBM_MYSQL
     if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
-        item_write_unixtime->set_value("FROM_UNIXTIME(12345678)");
+        item_write_unixtime.set_value("FROM_UNIXTIME(12345678)");
     }
 #endif
 #ifdef DBM_SQLITE3
     if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
-        item_write_unixtime->set_value("datetime(12345678, 'unixepoch')");
+        item_write_unixtime.set_value("datetime(12345678, 'unixepoch')");
     }
 #endif
     m >> session;
-    item_write_unixtime->set_value("0");
+    item_read_unixtime.set_value(0);
 
     // Raad value and validate
     session >> m;
-    BOOST_TEST(item_read_unixtime->to_string() == "12345678");
+    BOOST_TEST(item_read_unixtime.to_string() == "12345678");
 }
 
 BOOST_AUTO_TEST_CASE(model_with_timestamp)
 {
 #ifdef DBM_MYSQL
     test_model_with_timestamp<dbm::mysql_session>();
+#endif
+#ifdef DBM_SQLITE3
+    test_model_with_timestamp<dbm::sqlite_session>();
+#endif
+}
+
+template<typename SessionType>
+void test_model_timestamp2u()
+{
+    time_t time = 12345678;
+
+    dbm::model m {
+        "test_timestamp2u",
+        { { dbm::local<int>(1),
+            dbm::key("id"),
+            dbm::primary(true),
+            dbm::not_null(true),
+            dbm::auto_increment(true)
+          },
+          { dbm::timestamp2u(time),
+            dbm::key("time"),
+            dbm::not_null(true),
+            dbm::defaultc("CURRENT_TIMESTAMP")
+          } }
+    };
+
+    SessionType session;
+    auto& db_sett = db_settings::instance();
+
+#ifdef DBM_MYSQL
+    if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
+        BOOST_TEST_MESSAGE("MySQL test_model_with_timestamp");
+        db_sett.init_mysql_session(session, db_sett.test_db_name);
+    }
+#endif
+#ifdef DBM_SQLITE3
+    if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
+        BOOST_TEST_MESSAGE("SQLite test_model_with_timestamp");
+        session.set_db_name(db_sett.test_db_file_name);
+    }
+#endif
+
+    // Open session and create table
+    session.open();
+    m.drop_table(session);
+    m.create_table(session);
+
+    // Insert one record - timestamp will be '1970-05-23 21:21:18'
+    m >> session;
+
+    // Reset time
+    time = 0;
+    BOOST_TEST(m.find("time")->to_string() == "0");
+
+    // Read record to get timestamp
+    BOOST_TEST_MESSAGE(session.read_model_query(m, ""));
+    session >> m;
+    BOOST_TEST(m.find("time")->to_string() == "12345678");
+}
+
+BOOST_AUTO_TEST_CASE(model_timestamp2u)
+{
+#ifdef DBM_MYSQL
+    test_model_timestamp2u<dbm::mysql_session>();
 #endif
 #ifdef DBM_SQLITE3
     test_model_with_timestamp<dbm::sqlite_session>();
