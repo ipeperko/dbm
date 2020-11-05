@@ -211,7 +211,12 @@ void container_impl<T, ContType, conf>::serialize(serializer& s, std::string_vie
         s.serialize(tag, nullptr);
     }
     else {
-        s.serialize(tag, val_);
+        if constexpr (std::is_same_v<unreferenced_type, kind::detail::timestamp2u_converter>) {
+            s.serialize(tag, val_.get());
+        }
+        else {
+            s.serialize(tag, val_);
+        }
     }
 }
 
@@ -219,7 +224,14 @@ template<typename T, template<typename> class ContType, container_conf conf>
 bool container_impl<T, ContType, conf>::deserialize(deserializer& s, std::string_view tag)
 {
     unreferenced_type tmp_val;
-    auto res = s.deserialize(tag, tmp_val);
+    deserializer::parse_result res;
+
+    if constexpr (std::is_same_v<unreferenced_type, kind::detail::timestamp2u_converter>) {
+        res = s.deserialize(tag, *tmp_val.ptr()); // will be deserialized as long int
+    }
+    else {
+        res = s.deserialize(tag, tmp_val);
+    }
 
     switch (res) {
         case deserializer::ok:

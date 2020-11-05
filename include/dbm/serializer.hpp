@@ -27,9 +27,6 @@ public:
 
     virtual void serialize(std::string_view, long) = 0;
 
-    virtual void serialize(std::string_view, const kind::detail::timestamp2u_converter& v)
-    {} // TODO: pure virtual
-
     virtual void serialize(std::string_view, double) = 0;
 
     virtual void serialize(std::string_view, const std::string&) = 0;
@@ -70,9 +67,6 @@ public:
     virtual parse_result deserialize(std::string_view, short&) const = 0;
 
     virtual parse_result deserialize(std::string_view, long&) const = 0;
-
-    virtual parse_result deserialize(std::string_view, kind::detail::timestamp2u_converter& v)
-    { return parse_result::ok; } // TODO: pure virtual
 
     virtual parse_result deserialize(std::string_view, double&) const = 0;
 
