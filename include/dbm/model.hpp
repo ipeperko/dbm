@@ -59,6 +59,10 @@ public:
 
     model_item const& at(std::string_view key) const;
 
+    model_item& at(std::size_t pos);
+
+    model_item const& at(std::size_t pos) const;
+
     iterator find(const kind::key& key);
 
     const_iterator find(const kind::key& key) const;

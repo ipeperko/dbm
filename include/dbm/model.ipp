@@ -80,6 +80,16 @@ DBM_INLINE model_item const& model::at(std::string_view key) const
     return *it;
 }
 
+DBM_INLINE model_item& model::at(std::size_t pos)
+{
+    return items_.at(pos);
+}
+
+DBM_INLINE model_item const& model::at(std::size_t pos) const
+{
+    return items_.at(pos);
+}
+
 DBM_INLINE model::iterator model::find(const kind::key& key)
 {
     return std::find_if(begin(), end(), [&](const model_item& item) {
@@ -182,16 +192,19 @@ DBM_INLINE void model::read_record(const kind::sql_row& row)
     }
 
     for (auto& it : items_) {
-        std::string const& k = it.key().get();
 
-        if (row.field_map()->find(k) != row.field_map()->end()) {
-            const auto& v = row.at(k);
+        if (it.conf().readable()) {
+            std::string const& k = it.key().get();
 
-            if (v.null()) {
-                it.set_value(nullptr);
-            }
-            else {
-                it.from_string(v.get());
+            if (row.field_map()->find(k) != row.field_map()->end()) {
+                const auto& v = row.at(k);
+
+                if (v.null()) {
+                    it.set_value(nullptr);
+                }
+                else {
+                    it.from_string(v.get());
+                }
             }
         }
     }
