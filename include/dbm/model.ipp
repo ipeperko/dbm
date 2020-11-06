@@ -80,6 +80,24 @@ DBM_INLINE model_item const& model::at(std::string_view key) const
     return *it;
 }
 
+DBM_INLINE model_item& model::at(const kind::tag& tag)
+{
+    auto it = find(tag);
+    if (it == end()) {
+        throw_exception<std::out_of_range>("Item not found tag '" + tag.get() + "'");
+    }
+    return *it;
+}
+
+DBM_INLINE model_item const& model::at(const kind::tag& tag) const
+{
+    auto it = find(tag);
+    if (it == end()) {
+        throw_exception<std::out_of_range>("Item not found tag '" + tag.get() + "'");
+    }
+    return *it;
+}
+
 DBM_INLINE model_item& model::at(std::size_t pos)
 {
     return items_.at(pos);
@@ -117,6 +135,21 @@ DBM_INLINE model::const_iterator model::find(std::string_view key) const
         return item.key().get() == key;
     });
 }
+
+DBM_INLINE model::iterator model::find(const kind::tag& tag)
+{
+    return std::find_if(begin(), end(), [&](const model_item& item) {
+        return item.tag() == tag;
+    });
+}
+
+DBM_INLINE model::const_iterator model::find(const kind::tag& tag) const
+{
+    return std::find_if(begin(), end(), [&](const model_item& item) {
+        return item.tag() == tag;
+    });
+}
+
 
 DBM_INLINE model::item_array& model::items()
 {
