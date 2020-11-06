@@ -651,6 +651,9 @@ BOOST_AUTO_TEST_CASE(query_test)
     q3 = std::move(q2);
     BOOST_TEST(q2.get() == "");
     BOOST_TEST(q3.get() == "SELECT * FROM whatever WHERE fancy=1");
+
+    q3.clear();
+    BOOST_TEST(q3.get() == "");
 }
 
 class CustomException : public std::exception

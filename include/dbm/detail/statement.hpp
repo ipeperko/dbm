@@ -22,6 +22,11 @@ public:
         return os_.str();
     }
 
+    void clear()
+    {
+        os_ = std::ostringstream{};
+    }
+
 private:
     std::ostringstream os_;
 };
