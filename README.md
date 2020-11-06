@@ -127,6 +127,7 @@ auto_increment | false | Field auto increment feature (only relevant for table c
 create | true | Determines if field will be created (only relevant for table creation). 
 local | | Value container with local storage of any supported type.
 binding | | Value container with binding.
+timestamp | | Special container with unix time to timestamp conversion
 
 #### Value container
 
@@ -146,7 +147,7 @@ m.item("name").set(binding(name));          // replace with new binding containe
 - long
 - double
 - std::string
-- timestamp (can hold or bind time_t and converts it to/from sql timestamp data type )
+- timestamp (can hold or bind time_t and converts it to/from sql timestamp data type - see timestamp section)
 
 ##### Binding enums
 
@@ -242,23 +243,23 @@ double | DOUBLE | REAL
 std::string | TEXT | TEXT
 timestamp * | TIMESTAMP | TIMESTAMP
 
-(*) See timestamp
+(*) See timestamp section
 
-If custom_data_type is specified field constraints (not null, auto increment, default etc) are ignored. 
+If custom_data_type is specified field constraints will be ignored (not null, auto increment, default etc). 
 
 ```c++
 model_item(key("mytext"), local<std::string>(), custom_data_type("VARCHAR(45) NOT NULL DEFAULT ''"));
 ```
 
-Table options can also be specified:
+Table options can also be specified.
 
 ```c++
-m.set_table_options("ENGINE=MEMORY");   // set table options (engine, collations...)
+m.set_table_options("ENGINE=MEMORY");   // set table options (engine, collations etc)
 ```
 
-#### Timestamp
+##### Timestamp
 
-If time is stored as integer in data base create container with long data type.
+If time is stored as integer create container of type time_t.
 
 ```c++
 time_t my_time;
@@ -272,7 +273,7 @@ std::string str_time;
 m.emplace_back( key("time"), binding(str_time), custom_data_type("TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP") );
 ```
 
-Converting unix time to timestamp is also possible. In this case create table will create 
+Converting unix time to timestamp is also possible. In this case model create function will create 
 field of type timestamp. Data will be converted to unix time when reading and writing data.  
 
 ```c++
@@ -280,7 +281,7 @@ time_t my_time;
 m.emplace_back( key("time"), timestamp(my_time), not_null(true), defaultc("CURRENT_TIMESTAMP") );
 ``` 
 
-timestamp is a special container which can hold time_t value or binds to external variable.
+timestamp is a special container which can hold time_t value or is bind to an external variable.
 
 ```c++
 time_t my_time;
