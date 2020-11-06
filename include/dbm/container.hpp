@@ -229,7 +229,18 @@ container_ptr binding(T& ref, Validator&& validator = nullptr,
         defined == init_defined::defined);
 }
 
-#define timestamp local<dbm::timestamp2u_converter>
+/*!
+ * Make timestamp container
+ *
+ * @tparam Args
+ * @param args
+ * @return container unique pointer
+ */
+template <typename... Args>
+auto timestamp(Args&&... args)
+{
+    return local<kind::detail::timestamp2u_converter>(std::forward<Args>(args)...);
+}
 
 }// namespace dbm
 
