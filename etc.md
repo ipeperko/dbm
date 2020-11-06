@@ -1,4 +1,5 @@
-### Timestamp
+
+### Timestamp - dirty solution
 
 Conversion to unix time stamp example
 
@@ -85,10 +86,11 @@ Some ideas how to deal with relations:
 - create view for one to one relation and data reading
 - use more than one model. Data can be retrieved with custom sql statement with joins and imported to each model. 
 
+
 ### To do
 
+- time_t may not be portable - not necessary long
 - unsigned data types
 - indexes
 - binary, blob support
-- portable timestamp to unix time conversion
 - Postgres

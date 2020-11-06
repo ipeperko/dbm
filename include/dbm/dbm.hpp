@@ -29,9 +29,13 @@ using blob = kind::blob;
 #endif
 using variant = kind::variant;
 
+using timestamp2u_converter = kind::detail::timestamp2u_converter;
+
 using sql_row = kind::sql_row;
 using sql_rows = kind::sql_rows;
 using sql_rows_dump = kind::sql_rows_dump;
+
+using statement = detail::statement;
 
 /*!
  * Get library version string

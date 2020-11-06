@@ -29,7 +29,7 @@ public:
         : type_(t)
     {}
 
-    virtual model_query_helper_base() = default;
+    virtual ~model_query_helper_base() = default;
 
     template <typename UnknownType=void>
     void is_unknown_type() const
@@ -123,6 +123,8 @@ public:
                 case data_type::Short:
                 case data_type::Long:
                     return "INTEGER";
+                case data_type::Timestamp2u:
+                    return "TIMESTAMP";
                 case data_type::Double:
                     return "REAL";
                 case data_type::String:
@@ -151,6 +153,8 @@ public:
                     return "SMALLINT";
                 case data_type::Long:
                     return "BIGINT";
+                case data_type::Timestamp2u:
+                    return "TIMESTAMP";
                 case data_type::Double:
                     return "DOUBLE";
                 case data_type::String:
@@ -172,6 +176,53 @@ public:
 
         throw_exception<std::domain_error>("Unsupported data type - index " +
                                            std::to_string(static_cast<std::underlying_type_t<kind::data_type>>(t)));
+    }
+
+    [[nodiscard]] std::string value_write(const model_item& item) const
+    {
+        std::string s;
+
+        if (item.is_null()) {
+            s = "NULL";
+        }
+        else if (item.get_container().type() == kind::data_type::Timestamp2u) {
+            if (is_SQlite()) {
+                s += "datetime(" + item.to_string() + ", 'unixepoch')";
+            }
+            else if (is_MySql()) {
+                s += "FROM_UNIXTIME(" + item.to_string() + ")";
+            }
+        }
+        else {
+            if (item.conf().valquotes())
+                s += "'";
+
+            s += item.to_string();
+
+            if (item.conf().valquotes())
+                s += "'";
+        }
+
+        return s;
+    }
+
+    [[nodiscard]] std::string key_read(const model_item& item) const
+    {
+        std::string key;
+
+        if (item.get_container().type() == kind::data_type::Timestamp2u) {
+            if (is_SQlite()) {
+                key += "strftime('%s'," + item.key().get() + ") AS " + item.key().get();
+            }
+            else if (is_MySql()) {
+                key += "UNIX_TIMESTAMP(" + item.key().get() + ") AS " + item.key().get();
+            }
+        }
+        else {
+            key = item.key().get();
+        }
+
+        return key;
     }
 };
 
@@ -201,18 +252,7 @@ std::string model_query_helper<SessionType>::write_query() const
             keys += it.key().get();
 
             // Value
-            if (it.is_null()) {
-                values += "NULL";
-            }
-            else {
-                if (it.conf().valquotes()) {
-                    values += "'";
-                }
-                values += it.to_string();
-                if (it.conf().valquotes()) {
-                    values += "'";
-                }
-            }
+            values += value_write(it);
 
             // Duplicate keys
             if constexpr (is_MySql()) {
@@ -279,17 +319,17 @@ std::string model_query_helper<SessionType>::read_query(const std::string& extra
                 what += ",";
             }
 
-            what += it.key().get();
+            what += key_read(it); //it.key().get();
             ++n;
         }
     }
 
     q += what + " FROM " + model_.table_ + " WHERE ";
 
-    // primary
+    // Filter by primary keys
     n = 0;
     for (const auto& it : model_.items_) {
-        // TODO: write only direction
+        // TODO: write only direction?
         if (!it.conf().primary()) {
             continue;
         }

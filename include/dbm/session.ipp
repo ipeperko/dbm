@@ -68,6 +68,11 @@ DBM_INLINE void session::query(const std::string& statement)
     mstatement = statement;
 }
 
+DBM_INLINE void session::query(const detail::statement& q)
+{
+    query(q.get());
+}
+
 DBM_INLINE kind::sql_rows session::select(const std::string& statement)
 {
     return select_rows(statement);
@@ -94,6 +99,11 @@ DBM_INLINE kind::sql_rows session::select(const std::vector<std::string>& what, 
     }
 
     return select_rows(statement);
+}
+
+DBM_INLINE kind::sql_rows session::select(const detail::statement& q)
+{
+    return select(q.get());
 }
 
 DBM_INLINE void session::create_database(const std::string& db_name, bool if_not_exists)
