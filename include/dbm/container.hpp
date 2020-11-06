@@ -46,13 +46,13 @@ public:
 
     virtual container_ptr clone() = 0;
 
-    void set_null(bool null);
+    void set_null(bool null) noexcept;
 
-    constexpr bool is_null() const;
+    constexpr bool is_null() const noexcept;
 
-    void set_defined(bool defined);
+    void set_defined(bool defined) noexcept;
 
-    constexpr bool is_defined() const;
+    constexpr bool is_defined() const noexcept;
 
     virtual kind::variant get() const = 0;
 
@@ -71,7 +71,7 @@ public:
 
     virtual bool deserialize(deserializer& s, std::string_view tag) = 0;
 
-    virtual kind::data_type type() const = 0;
+    virtual kind::data_type type() const noexcept = 0;
 
 protected:
     bool is_null_ {true};
@@ -83,22 +83,22 @@ DBM_INLINE container::container(bool null, bool defined)
     , defined_(defined)
 {}
 
-DBM_INLINE void container::set_null(bool null)
+DBM_INLINE void container::set_null(bool null) noexcept
 {
     is_null_ = null;
 }
 
-DBM_INLINE constexpr bool container::is_null() const
+DBM_INLINE constexpr bool container::is_null() const noexcept
 {
     return is_null_;
 }
 
-DBM_INLINE void container::set_defined(bool defined)
+DBM_INLINE void container::set_defined(bool defined) noexcept
 {
     defined_ = defined;
 }
 
-DBM_INLINE constexpr bool container::is_defined() const
+DBM_INLINE constexpr bool container::is_defined() const noexcept
 {
     return defined_;
 }

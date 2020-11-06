@@ -237,26 +237,26 @@ public:
     DBM_EXPORT const node& back() const;
 
     // Iterators
-    DBM_EXPORT iterator begin();
+    DBM_EXPORT iterator begin() noexcept;
 
-    DBM_EXPORT const_iterator begin() const;
+    DBM_EXPORT const_iterator begin() const noexcept;
 
-    DBM_EXPORT iterator end();
+    DBM_EXPORT iterator end() noexcept;
 
-    DBM_EXPORT const_iterator end() const;
+    DBM_EXPORT const_iterator end() const noexcept;
 
     // Children, parent etc
-    DBM_EXPORT Items& items();
+    DBM_EXPORT Items& items() noexcept;
 
-    DBM_EXPORT const Items& items() const;
+    DBM_EXPORT const Items& items() const noexcept;
 
-    DBM_EXPORT node* parent();
+    DBM_EXPORT node* parent() noexcept;
 
-    DBM_EXPORT const node* parent() const;
+    DBM_EXPORT const node* parent() const noexcept;
 
-    DBM_EXPORT bool is_root() const;
+    DBM_EXPORT bool is_root() const noexcept;
 
-    DBM_EXPORT int level() const;
+    DBM_EXPORT int level() const noexcept;
 
     // Parser
     DBM_EXPORT static node parse(string_view data);

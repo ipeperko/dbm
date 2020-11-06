@@ -631,52 +631,52 @@ const node& node::back() const
     return items_.back();
 }
 
-node::iterator node::begin()
+node::iterator node::begin() noexcept
 {
     return items_.begin();
 }
 
-node::const_iterator node::begin() const
+node::const_iterator node::begin() const noexcept
 {
     return items_.begin();
 }
 
-node::iterator node::end()
+node::iterator node::end() noexcept
 {
     return items_.end();
 }
 
-node::const_iterator node::end() const
+node::const_iterator node::end() const noexcept
 {
     return items_.end();
 }
 
-node::Items& node::items()
+node::Items& node::items() noexcept
 {
     return items_;
 }
 
-const node::Items& node::items() const
+const node::Items& node::items() const noexcept
 {
     return items_;
 }
 
-node* node::parent()
+node* node::parent() noexcept
 {
     return parent_;
 }
 
-const node* node::parent() const
+const node* node::parent() const noexcept
 {
     return parent_;
 }
 
-bool node::is_root() const
+bool node::is_root() const noexcept
 {
     return parent_ == nullptr;
 }
 
-int node::level() const
+int node::level() const noexcept
 {
     int lev = 0;
     const node* p = parent_;

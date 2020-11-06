@@ -11,7 +11,7 @@ class sql_row : public std::vector<sql_value>
 public:
     sql_row() = default;
 
-    virtual ~sql_row() = default;
+    ~sql_row() = default;
 
     void set_fields(kind::sql_fields* field_names, sql_field_map* field_map);
 
@@ -23,13 +23,13 @@ public:
 
     sql_value const& at(int idx) const;
 
-    sql_fields* field_names();
+    sql_fields* field_names() noexcept;
 
-    sql_fields const* field_names() const;
+    sql_fields const* field_names() const noexcept;
 
-    sql_field_map* field_map();
+    sql_field_map* field_map() noexcept;
 
-    sql_field_map const* field_map() const;
+    sql_field_map const* field_map() const noexcept;
 
 private:
     sql_fields* fnames_ { nullptr };
@@ -74,22 +74,22 @@ DBM_INLINE sql_value const& sql_row::at(int idx) const
     return std::vector<sql_value>::at(idx);
 }
 
-DBM_INLINE sql_fields* sql_row::field_names()
+DBM_INLINE sql_fields* sql_row::field_names() noexcept
 {
     return fnames_;
 }
 
-DBM_INLINE sql_fields const* sql_row::field_names() const
+DBM_INLINE sql_fields const* sql_row::field_names() const noexcept
 {
     return fnames_;
 }
 
-DBM_INLINE sql_field_map* sql_row::field_map()
+DBM_INLINE sql_field_map* sql_row::field_map() noexcept
 {
     return fmap_;
 }
 
-DBM_INLINE sql_field_map const* sql_row::field_map() const
+DBM_INLINE sql_field_map const* sql_row::field_map() const noexcept
 {
     return fmap_;
 }
