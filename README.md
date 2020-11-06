@@ -145,6 +145,9 @@ m.item("name").set(binding(name));          // replace with new binding containe
 - int
 - short
 - long
+- unsigned int
+- unsigned short
+- unsigned long
 - double
 - std::string
 - timestamp (can hold or bind time_t and converts it to/from sql timestamp data type - see timestamp section)
@@ -239,6 +242,9 @@ bool | TINYINT | INTEGER
 short | SHORTINT | INTEGER
 int | INT | INTEGER
 long | BIGINT | INTEGER
+unsigned short | SHORTINT UNSIGNED | INTEGER
+unsigned int | INT UNSIGNED | INTEGER
+unsigned long | BIGINT UNSIGNED | INTEGER
 double | DOUBLE | REAL
 std::string | TEXT | TEXT
 timestamp * | TIMESTAMP | TIMESTAMP

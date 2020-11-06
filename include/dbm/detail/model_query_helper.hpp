@@ -122,6 +122,9 @@ public:
                 case data_type::Int:
                 case data_type::Short:
                 case data_type::Long:
+                case data_type::UInt:
+                case data_type::UShort:
+                case data_type::ULong:
                     return "INTEGER";
                 case data_type::Timestamp2u:
                     return "TIMESTAMP";
@@ -129,14 +132,6 @@ public:
                     return "REAL";
                 case data_type::String:
                     return "TEXT";
-#if false
-                    case data_type::Int_unsigned:
-                    return "INTEGER";
-                case data_type::Short_unsigned:
-                    return "INTEGER";
-                case data_type::Long_unsigned:
-                    return "INTEGER";
-#endif
                 case data_type::Nullptr:
                 case data_type::Char_ptr:
                 case data_type::String_view:
@@ -159,14 +154,12 @@ public:
                     return "DOUBLE";
                 case data_type::String:
                     return "TEXT";
-#if false
-                    case data_type::Int_unsigned:
+                case data_type::UInt:
                     return "INT UNSIGNED";
-                case data_type::Short_unsigned:
+                case data_type::UShort:
                     return "SMALLINT UNSIGNED";
-                case data_type::Long_unsigned:
+                case data_type::ULong:
                     return "BIGINT UNSIGNED";
-#endif
                 case data_type::Nullptr:
                 case data_type::Char_ptr:
                 case data_type::String_view:

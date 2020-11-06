@@ -66,6 +66,9 @@ using variant = std::variant<std::nullptr_t,
                              int,
                              short,
                              long,
+                             unsigned int,
+                             unsigned short,
+                             unsigned long,
                              detail::timestamp2u_converter,
                              double,
                              std::string,
@@ -83,6 +86,9 @@ enum class data_type : std::size_t
     Int,
     Short,
     Long,
+    UInt,
+    UShort,
+    ULong,
     Timestamp2u,
     Double,
     String,
@@ -99,6 +105,9 @@ static_assert(std::is_same_v<bool, std::variant_alternative_t< static_cast<std::
 static_assert(std::is_same_v<int, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int), variant>>, "Invalid data type");
 static_assert(std::is_same_v<short, std::variant_alternative_t< static_cast<std::size_t>(data_type::Short), variant>>, "Invalid data type");
 static_assert(std::is_same_v<long, std::variant_alternative_t< static_cast<std::size_t>(data_type::Long), variant>>, "Invalid data type");
+static_assert(std::is_same_v<unsigned int, std::variant_alternative_t< static_cast<std::size_t>(data_type::UInt), variant>>, "Invalid data type");
+static_assert(std::is_same_v<unsigned short, std::variant_alternative_t< static_cast<std::size_t>(data_type::UShort), variant>>, "Invalid data type");
+static_assert(std::is_same_v<unsigned long, std::variant_alternative_t< static_cast<std::size_t>(data_type::ULong), variant>>, "Invalid data type");
 static_assert(std::is_same_v<detail::timestamp2u_converter, std::variant_alternative_t< static_cast<std::size_t>(data_type::Timestamp2u), variant>>, "Invalid data type");
 static_assert(std::is_same_v<double, std::variant_alternative_t< static_cast<std::size_t>(data_type::Double), variant>>, "Invalid data type");
 static_assert(std::is_same_v<std::string, std::variant_alternative_t< static_cast<std::size_t>(data_type::String), variant>>, "Invalid data type");
