@@ -4,10 +4,10 @@
 #include <dbm/dbm_config.hpp>
 #include <dbm/dbm_export.hpp>
 #include <dbm/detail/utils.hpp>
-#include <dbm/detail/named_type.hpp>
 #include <dbm/detail/default_constraint.hpp>
+#include <dbm/detail/named_type.hpp>
+#include <dbm/detail/statement.hpp>
 #include <dbm/detail/timestamp2u_converter.hpp>
-#include <dbm/detail/query.hpp>
 #include <functional>
 #include <memory>
 #include <stdexcept>

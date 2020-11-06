@@ -35,7 +35,7 @@ using sql_row = kind::sql_row;
 using sql_rows = kind::sql_rows;
 using sql_rows_dump = kind::sql_rows_dump;
 
-using query = detail::query;
+using statement = detail::statement;
 
 /*!
  * Get library version string

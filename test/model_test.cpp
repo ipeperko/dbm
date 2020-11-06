@@ -534,7 +534,7 @@ void test_model()
     {
         SessionType s2(session);
         s2.open();
-        dbm::query q;
+        dbm::statement q;
         q << "SELECT * FROM " << tbl_name << " WHERE id=" << data_fields.id;
         auto rows = s2.select(q);
         BOOST_TEST(rows.empty());
@@ -568,7 +568,7 @@ void test_model()
     {
         SessionType s2(session);
         s2.open();
-        dbm::query q;
+        dbm::statement q;
         q << "SELECT * FROM " << tbl_name << " WHERE id=" << data_fields.id;
         auto rows = s2.select(q);
         BOOST_TEST(rows.empty());
@@ -583,7 +583,7 @@ void test_model()
     {
         SessionType s2(session);
         s2.open();
-        dbm::query q;
+        dbm::statement q;
         q << "SELECT * FROM " << tbl_name << " WHERE id=" << data_fields.id;
         auto rows = s2.select(q);
         BOOST_TEST(rows.size() == 1);

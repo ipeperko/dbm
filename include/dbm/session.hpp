@@ -24,10 +24,10 @@ public:
     virtual void close() = 0;
 
     virtual void query(const std::string& statement);
-    void query(const detail::query& q);
+    void query(const detail::statement& q);
     kind::sql_rows select(const std::string& statement);
     kind::sql_rows select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria="");
-    kind::sql_rows select(const detail::query& q);
+    kind::sql_rows select(const detail::statement& q);
 
     virtual std::string write_model_query(const model& m) const = 0;
     virtual std::string read_model_query(const model& m, const std::string& extra_condition="") const = 0;

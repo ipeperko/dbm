@@ -1,17 +1,17 @@
-#ifndef DBM_QUERY_HPP
-#define DBM_QUERY_HPP
+#ifndef DBM_STATEMENT_HPP
+#define DBM_STATEMENT_HPP
 
 #include <sstream>
 
 namespace dbm::detail {
 
-class query
+class statement
 {
 public:
-    query() = default;
+    statement() = default;
 
     template <typename T>
-    query& operator<< (const T& val)
+    statement& operator<< (const T& val)
     {
         os_ << val;
         return *this;
@@ -28,4 +28,4 @@ private:
 
 }
 
-#endif //DBM_QUERY_HPP
+#endif //DBM_STATEMENT_HPP
