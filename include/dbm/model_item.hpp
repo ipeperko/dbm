@@ -47,17 +47,17 @@ public:
 
     model_item& operator=(model_item&& oth) = default;
 
-    constexpr const kind::key& key() const;
+    constexpr const kind::key& key() const noexcept;
 
-    constexpr const kind::tag& tag() const;
+    constexpr const kind::tag& tag() const noexcept;
 
     const container& get_container() const;
 
-    bool is_null() const;
+    bool is_null() const noexcept;
 
-    bool is_defined() const;
+    bool is_defined() const noexcept;
 
-    const kind::custom_data_type& custom_data_type() const;
+    const kind::custom_data_type& custom_data_type() const noexcept;
 
     void set(const kind::key& v);
 
@@ -150,7 +150,7 @@ class model_item_conf_helper
 {
     model_item const& item_;
 
-    constexpr auto const& cnf() const
+    constexpr auto const& cnf() const noexcept
     {
         return item_.conf_;
     }
@@ -163,7 +163,7 @@ class model_item_conf_helper
      * @param pos flag position
      * @return flag state
      */
-    constexpr bool get(std::size_t pos) const
+    constexpr bool get(std::size_t pos) const noexcept
     {
         return cnf()[pos];
     }
@@ -173,52 +173,52 @@ public:
         : item_(item)
     {}
 
-    constexpr bool readable() const
+    constexpr bool readable() const noexcept
     {
         return get(model_item::db_readable);
     }
 
-    constexpr bool writable() const
+    constexpr bool writable() const noexcept
     {
         return get(model_item::db_writable);
     }
 
-    constexpr bool creatable() const
+    constexpr bool creatable() const noexcept
     {
         return get(model_item::db_creatable);
     }
 
-    constexpr bool primary() const
+    constexpr bool primary() const noexcept
     {
         return get(model_item::db_pkey);
     }
 
-    constexpr bool not_null() const
+    constexpr bool not_null() const noexcept
     {
         return get(model_item::db_not_null);
     }
 
-    constexpr bool auto_increment() const
+    constexpr bool auto_increment() const noexcept
     {
         return get(model_item::db_autoincrement);
     }
 
-    constexpr bool required() const
+    constexpr bool required() const noexcept
     {
         return get(model_item::s_required);
     }
 
-    constexpr bool taggable() const
+    constexpr bool taggable() const noexcept
     {
         return get(model_item::s_taggable);
     }
 
-    constexpr bool valquotes() const
+    constexpr bool valquotes() const noexcept
     {
         return get(model_item::w_quotes);
     }
 
-    const kind::defaultc& default_constraint() const
+    const kind::defaultc& default_constraint() const noexcept
     {
         return item_.defaultc_;
     }

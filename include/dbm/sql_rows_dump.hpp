@@ -25,13 +25,13 @@ public:
 
     sql_rows restore();
 
-    sql_fields const& field_names() const;
+    sql_fields const& field_names() const noexcept;
 
-    sql_field_map const& field_map() const;
+    sql_field_map const& field_map() const noexcept;
 
-    size_t size() const;
+    size_t size() const noexcept;
 
-    bool empty() const;
+    bool empty() const noexcept;
 
     void clear();
 
@@ -98,22 +98,22 @@ DBM_INLINE sql_rows sql_rows_dump::restore()
     return rows;
 }
 
-DBM_INLINE sql_fields const& sql_rows_dump::field_names() const
+DBM_INLINE sql_fields const& sql_rows_dump::field_names() const noexcept
 {
     return fnames_;
 }
 
-DBM_INLINE sql_field_map const& sql_rows_dump::field_map() const
+DBM_INLINE sql_field_map const& sql_rows_dump::field_map() const noexcept
 {
     return fmap_;
 }
 
-DBM_INLINE size_t sql_rows_dump::size() const
+DBM_INLINE size_t sql_rows_dump::size() const noexcept
 {
     return data_.size();
 }
 
-DBM_INLINE bool sql_rows_dump::empty() const
+DBM_INLINE bool sql_rows_dump::empty() const noexcept
 {
     return data_.empty();
 }

@@ -16,7 +16,7 @@ public:
 
     sql_rows(sql_rows&& oth) noexcept;
 
-    virtual ~sql_rows() = default;
+    ~sql_rows() = default;
 
     sql_rows& operator=(const sql_rows& oth);
 
@@ -24,13 +24,13 @@ public:
 
     void set_field_names(sql_fields&& f);
 
-    sql_fields& field_names();
+    sql_fields& field_names() noexcept;
 
-    sql_fields const& field_names() const;
+    sql_fields const& field_names() const noexcept;
 
-    sql_field_map& field_map();
+    sql_field_map& field_map() noexcept;
 
-    sql_field_map const& field_map() const;
+    sql_field_map const& field_map() const noexcept;
 
 private:
     void setup_rows();
@@ -87,22 +87,22 @@ DBM_INLINE void sql_rows::set_field_names(sql_fields&& f)
     }
 }
 
-DBM_INLINE sql_fields& sql_rows::field_names()
+DBM_INLINE sql_fields& sql_rows::field_names() noexcept
 {
     return fnames_;
 }
 
-DBM_INLINE sql_fields const& sql_rows::field_names() const
+DBM_INLINE sql_fields const& sql_rows::field_names() const noexcept
 {
     return fnames_;
 }
 
-DBM_INLINE sql_field_map& sql_rows::field_map()
+DBM_INLINE sql_field_map& sql_rows::field_map() noexcept
 {
     return fmap_;
 }
 
-DBM_INLINE sql_field_map const& sql_rows::field_map() const
+DBM_INLINE sql_field_map const& sql_rows::field_map() const noexcept
 {
     return fmap_;
 }

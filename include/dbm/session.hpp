@@ -46,7 +46,7 @@ public:
     void drop_table(const model& m, bool if_exists);
     void drop_table(const std::string& tbl_name, bool if_exists);
 
-    std::string const& last_statement() const { return mstatement; }
+    std::string const& last_statement() const noexcept { return mstatement; }
     std::string last_statement_info() const;
 
     model& operator>>(model& m);

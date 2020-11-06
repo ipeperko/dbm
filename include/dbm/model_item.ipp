@@ -31,12 +31,12 @@ DBM_INLINE model_item& model_item::operator=(const model_item& oth)
     return *this;
 }
 
-DBM_INLINE constexpr const kind::key& model_item::key() const
+DBM_INLINE constexpr const kind::key& model_item::key() const noexcept
 {
     return key_;
 }
 
-DBM_INLINE constexpr const kind::tag& model_item::tag() const
+DBM_INLINE constexpr const kind::tag& model_item::tag() const noexcept
 {
     return tag_;
 }
@@ -46,17 +46,17 @@ DBM_INLINE const container& model_item::get_container() const
     return *cont_;
 }
 
-DBM_INLINE bool model_item::is_null() const
+DBM_INLINE bool model_item::is_null() const noexcept
 {
     return !cont_ || cont_->is_null();
 }
 
-DBM_INLINE bool model_item::is_defined() const
+DBM_INLINE bool model_item::is_defined() const noexcept
 {
     return cont_ && cont_->is_defined();
 }
 
-DBM_INLINE const kind::custom_data_type& model_item::custom_data_type() const
+DBM_INLINE const kind::custom_data_type& model_item::custom_data_type() const noexcept
 {
     return dbtype_;
 }

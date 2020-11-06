@@ -231,7 +231,7 @@ m.create_table(session);                // creates table if not exists
 m.drop_table(session);                  // drops table if exists
 ```
 
-Table field data types are created based on container type and constraints (not null, auto increment, default etc).
+Table field data types are created based on container type and constraints (e.g. not null, auto increment, defaultc etc).
 
 Container type | MySQL | SQLite
 ---- | ---- | ----
@@ -245,13 +245,13 @@ timestamp * | TIMESTAMP | TIMESTAMP
 
 (*) See timestamp section
 
-If custom_data_type is specified field constraints will be ignored (not null, auto increment, default etc). 
+If custom_data_type is specified any other constraints will be ignored (e.g. not null, auto increment etc). 
 
 ```c++
 model_item(key("mytext"), local<std::string>(), custom_data_type("VARCHAR(45) NOT NULL DEFAULT ''"));
 ```
 
-Table options can also be specified.
+Table options can also be specified:
 
 ```c++
 m.set_table_options("ENGINE=MEMORY");   // set table options (engine, collations etc)
@@ -259,34 +259,34 @@ m.set_table_options("ENGINE=MEMORY");   // set table options (engine, collations
 
 ##### Timestamp
 
-If time is stored as integer create container of type time_t.
+If time is stored as integer simply create a container of type time_t.
 
 ```c++
 time_t my_time;
 m.emplace_back( key("time"), binding(my_time) ); // Add item to model 
 ``` 
 
-Another option is to have string container and handle textual representation of time.
+Another option is to create a string container and dela with textual representation of time.
 
 ```c++
 std::string str_time;
 m.emplace_back( key("time"), binding(str_time), custom_data_type("TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP") );
 ```
 
-Converting unix time to timestamp is also possible. In this case model create function will create 
-field of type timestamp. Data will be converted to unix time when reading and writing data.  
+Converting unix time to timestamp is also possible. In this case model create member function will create 
+field of type timestamp.  
 
 ```c++
 time_t my_time;
 m.emplace_back( key("time"), timestamp(my_time), not_null(true), defaultc("CURRENT_TIMESTAMP") );
 ``` 
 
-timestamp is a special container which can hold time_t value or is bind to an external variable.
+timestamp is a special container which can hold time_t value internally or has a reference to an external variable.
 
 ```c++
 time_t my_time;
-timestamp(1234);    // Has local storage
-timestanp(my_time); // Reference to my_time variable 
+timestamp(1234);    // Internal storage
+timestanp(my_time); // Holds reference to my_time variable 
 ``` 
 
 ### Thread safety
@@ -303,16 +303,16 @@ make
 make install
 ```
 
-CMake automatically searches for dependent libraries mysqlclient and sqlite3 and compiles each driver only if found on the system.
+CMake automatically searches for dependent libraries (e.g. mysqlclient and sqlite3) and compiles each driver only if found on the system.
+
+To build tests add -DDBM_BUILD_TESTS=ON to cmake command.
 
 Usage of this library in CMake projects:
 
 ```Batchfile
 find_package(dbm)
-target_link_libraries(target_name PUBLIC dbm::dbm)
+target_link_libraries(target_name PUBLIC dbm::dbm) 
 ```
-
-To build tests add -DDBM_BUILD_TESTS=ON to cmake command.
 
 ### Exceptions
 

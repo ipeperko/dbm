@@ -31,7 +31,7 @@ public:
 
     sql_value(const char* v, size_t len);
 
-    virtual ~sql_value() = default;
+    ~sql_value() = default;
 
     sql_value& operator=(const sql_value&) = default;
 
@@ -41,9 +41,9 @@ public:
 
     explicit operator bool() const;
 
-    bool null() const;
+    bool null() const noexcept;
 
-    size_t length() const;
+    size_t length() const noexcept;
 
     std::string_view get() const;
 
@@ -112,12 +112,12 @@ DBM_INLINE sql_value::operator bool() const
     return value_ != nullptr;
 }
 
-DBM_INLINE bool sql_value::null() const
+DBM_INLINE bool sql_value::null() const noexcept
 {
     return !value_;
 }
 
-DBM_INLINE size_t sql_value::length() const
+DBM_INLINE size_t sql_value::length() const noexcept
 {
     return len_;
 }
