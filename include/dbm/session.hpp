@@ -42,9 +42,7 @@ public:
     void create_database(const std::string& db_name, bool if_not_exists);
     void drop_database(const std::string& db_name, bool if_exists);
     void create_table(const model& m, bool if_not_exists);
-    void create_table(const std::string& tbl_name, std::vector<std::string> fields, bool if_not_exists);
     void drop_table(const model& m, bool if_exists);
-    void drop_table(const std::string& tbl_name, bool if_exists);
 
     std::string const& last_statement() const noexcept { return mstatement; }
     std::string last_statement_info() const;
@@ -63,7 +61,7 @@ class DBM_EXPORT session::transaction
 public:
     explicit transaction(session& db);
 
-    virtual ~transaction();
+    ~transaction();
 
     void commit();
 
@@ -75,7 +73,6 @@ private:
     dbm::session& db_;
     bool executed_ {false};
 };
-
 
 }// namespace dbm
 

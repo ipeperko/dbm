@@ -10,10 +10,6 @@ namespace dbm {
 class container;
 using container_ptr = std::unique_ptr<container>;
 
-namespace detail {
-class model_query_helper_base;
-}
-
 class container
 {
 public:

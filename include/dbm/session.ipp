@@ -132,43 +132,9 @@ DBM_INLINE void session::create_table(const model& m, bool if_not_exists)
     query(q);
 }
 
-DBM_INLINE void session::create_table(const std::string& tbl_name, std::vector<std::string> fields, bool if_not_exists)
-{
-    std::string q = "CREATE TABLE ";
-    if (if_not_exists) {
-        q += "IF NOT EXISTS ";
-    }
-    q += tbl_name + " (";
-
-    // TODO: empty list exception
-
-    unsigned i = 0;
-
-    for (auto const& field : fields) {
-        if (i) {
-            q += ", ";
-        }
-        q += field;
-        ++i;
-    }
-
-    q += ")";
-    query(q);
-}
-
 DBM_INLINE void session::drop_table(const model& m, bool if_exists)
 {
     std::string q = drop_table_query(m, if_exists);
-    query(q);
-}
-
-DBM_INLINE void session::drop_table(const std::string& tbl_name, bool if_exists)
-{
-    std::string q = "DROP TABLE ";
-    if (if_exists) {
-        q += "IF EXISTS ";
-    }
-    q += tbl_name;
     query(q);
 }
 
