@@ -47,17 +47,17 @@ public:
 
     model_item& operator=(model_item&& oth) = default;
 
-    constexpr const kind::key& key() const;
+    constexpr const kind::key& key() const noexcept;
 
-    constexpr const kind::tag& tag() const;
+    constexpr const kind::tag& tag() const noexcept;
 
     const container& get_container() const;
 
-    bool is_null() const;
+    bool is_null() const noexcept;
 
-    bool is_defined() const;
+    bool is_defined() const noexcept;
 
-    const kind::custom_data_type& custom_data_type() const;
+    const kind::custom_data_type& custom_data_type() const noexcept;
 
     void set(const kind::key& v);
 
