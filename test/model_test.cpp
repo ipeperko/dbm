@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(model_test_replace_container)
 BOOST_AUTO_TEST_CASE(model_item_timestamp)
 {
     time_t storage = 42;
-    auto item = dbm::model_item(dbm::timestamp2u(storage));
+    auto item = dbm::model_item(dbm::timestamp(storage));
 
     BOOST_TEST(item.value<dbm::timestamp2u_converter>().has_reference());
     BOOST_TEST(item.to_string() == "42");
@@ -840,7 +840,7 @@ void test_model_timestamp2u()
             dbm::not_null(true),
             dbm::auto_increment(true)
           },
-          { dbm::timestamp2u(time),
+          { dbm::timestamp(time),
             dbm::key("time"),
             dbm::not_null(true),
             dbm::defaultc("CURRENT_TIMESTAMP")
