@@ -6,10 +6,12 @@ namespace dbm::kind {
 /**
  * Sql rows
  */
-class sql_rows : public std::vector<sql_row>
+class sql_rows : private std::vector<sql_row>
 {
     friend class sql_rows_dump;
 public:
+    typedef std::vector<sql_row> vector_type;
+
     sql_rows() = default;
 
     sql_rows(const sql_rows& oth);
@@ -17,6 +19,44 @@ public:
     sql_rows(sql_rows&& oth) noexcept;
 
     ~sql_rows() = default;
+
+    // vector_type member types
+    using vector_type::iterator;
+    using vector_type::const_iterator;
+    using vector_type::reverse_iterator;
+    using vector_type::const_reverse_iterator;
+    // vector_type member functions
+    using vector_type::assign;
+    // vector_type element access
+    using vector_type::at;
+    using vector_type::operator[];
+    using vector_type::front;
+    using vector_type::back;
+    using vector_type::data;
+    // vector_type iterators
+    using vector_type::begin;
+    using vector_type::end;
+    using vector_type::cbegin;
+    using vector_type::cend;
+    using vector_type::crbegin;
+    using vector_type::crend;
+    // vector_type capacity
+    using vector_type::empty;
+    using vector_type::size;
+    using vector_type::max_size;
+    using vector_type::reserve;
+    using vector_type::capacity;
+    using vector_type::shrink_to_fit;
+    // vector_type modifiers
+    using vector_type::clear;
+    using vector_type::insert;
+    using vector_type::emplace;
+    using vector_type::erase;
+    using vector_type::push_back;
+    using vector_type::emplace_back;
+    using vector_type::pop_back;
+    using vector_type::resize;
+    // no swap
 
     sql_rows& operator=(const sql_rows& oth);
 
