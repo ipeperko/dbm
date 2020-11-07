@@ -139,6 +139,12 @@ void container_impl<T, ContType, conf>::set(kind::variant& v)
             }
             else if (utils::arithmetic_convert<short>(tmp_val, v)) {
             }
+            else if (utils::arithmetic_convert<unsigned long>(tmp_val, v)) {
+            }
+            else if (utils::arithmetic_convert<unsigned int>(tmp_val, v)) {
+            }
+            else if (utils::arithmetic_convert<unsigned short>(tmp_val, v)) {
+            }
             else if (utils::arithmetic_convert<bool>(tmp_val, v)) {
             }
             else {
@@ -163,6 +169,18 @@ void container_impl<T, ContType, conf>::set(kind::variant& v)
             }
             else if (std::holds_alternative<short>(v)) {
                 tmp_val = std::get<short>(v);
+            }
+            else if (std::holds_alternative<unsigned long>(v)) {
+                tmp_val = std::get<unsigned long>(v);
+            }
+            else if (std::holds_alternative<unsigned int>(v)) {
+                tmp_val = std::get<unsigned int>(v);
+            }
+            else if (std::holds_alternative<unsigned short>(v)) {
+                tmp_val = std::get<unsigned short>(v);
+            }
+            else if (std::holds_alternative<bool>(v)) {
+                tmp_val = std::get<bool>(v);
             }
             else {
                 on_error("Setting container floating type value from incompatible type");

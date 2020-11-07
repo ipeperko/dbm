@@ -142,9 +142,12 @@ m.item("name").set(binding(name));          // replace with new binding containe
 ##### Supported types
 
 - bool
-- int
-- short
-- long
+- int16_t
+- int32_t
+- int64_t
+- uint16_t
+- uint32_t
+- uint64_t
 - double
 - std::string
 - timestamp (can hold or bind time_t and converts it to/from sql timestamp data type - see timestamp section)
@@ -236,9 +239,12 @@ Table field data types are created based on container type and constraints (e.g.
 Container type | MySQL | SQLite
 ---- | ---- | ----
 bool | TINYINT | INTEGER
-short | SHORTINT | INTEGER
-int | INT | INTEGER
-long | BIGINT | INTEGER
+int16_t | SHORTINT | INTEGER
+int32_t | INT | INTEGER
+int64_t | BIGINT | INTEGER
+uint16_t | SHORTINT UNSIGNED | INTEGER
+uint32_t | INT UNSIGNED | INTEGER
+uint64_t | BIGINT UNSIGNED | INTEGER
 double | DOUBLE | REAL
 std::string | TEXT | TEXT
 timestamp * | TIMESTAMP | TIMESTAMP

@@ -27,6 +27,12 @@ public:
 
     virtual void serialize(std::string_view, long) = 0;
 
+    virtual void serialize(std::string_view, unsigned int) = 0;
+
+    virtual void serialize(std::string_view, unsigned short) = 0;
+
+    virtual void serialize(std::string_view, unsigned long) = 0;
+
     virtual void serialize(std::string_view, double) = 0;
 
     virtual void serialize(std::string_view, const std::string&) = 0;
@@ -67,6 +73,12 @@ public:
     virtual parse_result deserialize(std::string_view, short&) const = 0;
 
     virtual parse_result deserialize(std::string_view, long&) const = 0;
+
+    virtual parse_result deserialize(std::string_view, unsigned int&) const = 0;
+
+    virtual parse_result deserialize(std::string_view, unsigned short&) const = 0;
+
+    virtual parse_result deserialize(std::string_view, unsigned long&) const = 0;
 
     virtual parse_result deserialize(std::string_view, double&) const = 0;
 

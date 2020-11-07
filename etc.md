@@ -89,8 +89,7 @@ Some ideas how to deal with relations:
 
 ### To do
 
-- time_t may not be portable - not necessary long
-- unsigned data types
+- time_t may not be portable - not necessary long int
 - indexes
 - binary, blob support
 - Postgres

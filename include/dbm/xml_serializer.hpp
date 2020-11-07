@@ -45,6 +45,18 @@ public:
     {
         return deserialize_tmpl<std::decay_t<decltype(val)>>(tag, val);
     }
+    parse_result deserialize(std::string_view tag, unsigned int& val) const override
+    {
+        return deserialize_tmpl<std::decay_t<decltype(val)>>(tag, val);
+    }
+    parse_result deserialize(std::string_view tag, unsigned short& val) const override
+    {
+        return deserialize_tmpl<std::decay_t<decltype(val)>>(tag, val);
+    }
+    parse_result deserialize(std::string_view tag, unsigned long& val) const override
+    {
+        return deserialize_tmpl<std::decay_t<decltype(val)>>(tag, val);
+    }
     parse_result deserialize(std::string_view tag, double& val) const override
     {
         return deserialize_tmpl<std::decay_t<decltype(val)>>(tag, val);
@@ -155,6 +167,21 @@ public:
     }
 
     void serialize(std::string_view tag, long val) override
+    {
+        root_.add(tag, val);
+    }
+
+    void serialize(std::string_view tag, unsigned int val) override
+    {
+        root_.add(tag, val);
+    }
+
+    void serialize(std::string_view tag, unsigned short val) override
+    {
+        root_.add(tag, val);
+    }
+
+    void serialize(std::string_view tag, unsigned long val) override
     {
         root_.add(tag, val);
     }

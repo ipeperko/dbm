@@ -14,8 +14,6 @@
 #include <variant>
 #include <vector>
 
-#define DBM_INLINE inline
-
 namespace dbm {
 
 // ----------------------------------------------------------
@@ -63,9 +61,12 @@ typedef std::vector<char> blob;
 
 using variant = std::variant<std::nullptr_t,
                              bool,
-                             int,
-                             short,
-                             long,
+                             int32_t,
+                             int16_t,
+                             int64_t,
+                             uint32_t,
+                             uint16_t,
+                             uint64_t,
                              detail::timestamp2u_converter,
                              double,
                              std::string,
@@ -80,9 +81,12 @@ enum class data_type : std::size_t
 {
     Nullptr = 0,    /* Exists only to pass null */
     Bool,
-    Int,
-    Short,
-    Long,
+    Int32,
+    Int16,
+    Int64,
+    UInt32,
+    UInt16,
+    Uint64,
     Timestamp2u,
     Double,
     String,
@@ -96,9 +100,12 @@ enum class data_type : std::size_t
 
 static_assert(std::is_same_v<std::nullptr_t , std::variant_alternative_t< static_cast<std::size_t>(data_type::Nullptr), variant>>, "Invalid data type");
 static_assert(std::is_same_v<bool, std::variant_alternative_t< static_cast<std::size_t>(data_type::Bool), variant>>, "Invalid data type");
-static_assert(std::is_same_v<int, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int), variant>>, "Invalid data type");
-static_assert(std::is_same_v<short, std::variant_alternative_t< static_cast<std::size_t>(data_type::Short), variant>>, "Invalid data type");
-static_assert(std::is_same_v<long, std::variant_alternative_t< static_cast<std::size_t>(data_type::Long), variant>>, "Invalid data type");
+static_assert(std::is_same_v<int, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int32), variant>>, "Invalid data type");
+static_assert(std::is_same_v<short, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int16), variant>>, "Invalid data type");
+static_assert(std::is_same_v<long, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int64), variant>>, "Invalid data type");
+static_assert(std::is_same_v<unsigned int, std::variant_alternative_t< static_cast<std::size_t>(data_type::UInt32), variant>>, "Invalid data type");
+static_assert(std::is_same_v<unsigned short, std::variant_alternative_t< static_cast<std::size_t>(data_type::UInt16), variant>>, "Invalid data type");
+static_assert(std::is_same_v<unsigned long, std::variant_alternative_t< static_cast<std::size_t>(data_type::Uint64), variant>>, "Invalid data type");
 static_assert(std::is_same_v<detail::timestamp2u_converter, std::variant_alternative_t< static_cast<std::size_t>(data_type::Timestamp2u), variant>>, "Invalid data type");
 static_assert(std::is_same_v<double, std::variant_alternative_t< static_cast<std::size_t>(data_type::Double), variant>>, "Invalid data type");
 static_assert(std::is_same_v<std::string, std::variant_alternative_t< static_cast<std::size_t>(data_type::String), variant>>, "Invalid data type");
@@ -107,6 +114,8 @@ static_assert(std::is_same_v<std::string_view, std::variant_alternative_t< stati
 #ifdef DBM_EXPERIMENTAL_BLOB
 static_assert(std::is_same_v<blob, std::variant_alternative_t< static_cast<std::size_t>(data_type::Blob), variant>>, "Invalid data type");
 #endif
+
+static_assert(std::is_same_v<time_t, int64_t> or std::is_same_v<time_t, uint64_t> or std::is_same_v<time_t, double>, "time_t not portable");
 
 namespace detail {
 
