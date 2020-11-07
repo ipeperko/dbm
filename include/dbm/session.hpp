@@ -8,6 +8,9 @@ namespace dbm {
 
 class model;
 
+/*!
+ * Database session interface class
+ */
 class DBM_EXPORT session
 {
 public:
@@ -56,6 +59,9 @@ protected:
     std::string mstatement;
 };
 
+/*!
+ * Database transaction class
+ */
 class DBM_EXPORT session::transaction
 {
 public:

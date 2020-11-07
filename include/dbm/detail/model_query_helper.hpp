@@ -119,12 +119,12 @@ public:
         if constexpr (is_SQlite()) {
             switch (t) {
                 case data_type::Bool:
-                case data_type::Int:
-                case data_type::Short:
-                case data_type::Long:
-                case data_type::UInt:
-                case data_type::UShort:
-                case data_type::ULong:
+                case data_type::Int32:
+                case data_type::Int16:
+                case data_type::Int64:
+                case data_type::UInt32:
+                case data_type::UInt16:
+                case data_type::Uint64:
                     return "INTEGER";
                 case data_type::Timestamp2u:
                     return "TIMESTAMP";
@@ -142,11 +142,11 @@ public:
             switch (t) {
                 case data_type::Bool:
                     return "BOOL";
-                case data_type::Int:
+                case data_type::Int32:
                     return "INT";
-                case data_type::Short:
+                case data_type::Int16:
                     return "SMALLINT";
-                case data_type::Long:
+                case data_type::Int64:
                     return "BIGINT";
                 case data_type::Timestamp2u:
                     return "TIMESTAMP";
@@ -154,11 +154,11 @@ public:
                     return "DOUBLE";
                 case data_type::String:
                     return "TEXT";
-                case data_type::UInt:
+                case data_type::UInt32:
                     return "INT UNSIGNED";
-                case data_type::UShort:
+                case data_type::UInt16:
                     return "SMALLINT UNSIGNED";
-                case data_type::ULong:
+                case data_type::Uint64:
                     return "BIGINT UNSIGNED";
                 case data_type::Nullptr:
                 case data_type::Char_ptr:
