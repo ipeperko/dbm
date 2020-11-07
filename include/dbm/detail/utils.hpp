@@ -6,6 +6,15 @@
 #include <string>
 #include <sstream>
 
+#define DBM_INLINE inline
+#if __cplusplus > 201703L
+#define DBM_LIKELY [[likely]]
+#define DBM_UNLIKELY [[unlikely]]
+#else
+#define DBM_LIKELY
+#define DBM_UNLIKELY
+#endif
+
 #ifdef NDEBUG
 #include <ostream>
 #else

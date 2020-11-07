@@ -178,7 +178,7 @@ public:
         if (item.is_null()) {
             s = "NULL";
         }
-        else if (item.get_container().type() == kind::data_type::Timestamp2u) {
+        else if (item.get_container().type() == kind::data_type::Timestamp2u) DBM_UNLIKELY {
             if (is_SQlite()) {
                 s += "datetime(" + item.to_string() + ", 'unixepoch')";
             }
@@ -186,7 +186,7 @@ public:
                 s += "FROM_UNIXTIME(" + item.to_string() + ")";
             }
         }
-        else {
+        else DBM_LIKELY {
             if (item.conf().valquotes())
                 s += "'";
 
@@ -203,7 +203,7 @@ public:
     {
         std::string key;
 
-        if (item.get_container().type() == kind::data_type::Timestamp2u) {
+        if (item.get_container().type() == kind::data_type::Timestamp2u) DBM_UNLIKELY {
             if (is_SQlite()) {
                 key += "strftime('%s'," + item.key().get() + ") AS " + item.key().get();
             }
@@ -211,7 +211,7 @@ public:
                 key += "UNIX_TIMESTAMP(" + item.key().get() + ") AS " + item.key().get();
             }
         }
-        else {
+        else DBM_LIKELY {
             key = item.key().get();
         }
 
@@ -233,7 +233,7 @@ std::string model_query_helper<SessionType>::write_query() const
             continue;
         }
 
-        if (it.is_defined()) {
+        if (it.is_defined()) DBM_LIKELY {
 
             // Commas
             if (i) {
@@ -262,7 +262,7 @@ std::string model_query_helper<SessionType>::write_query() const
             // Increment counter
             ++i;
         }
-        else {
+        else DBM_LIKELY {
             if (it.conf().required()) {
                 throw_exception<std::domain_error>("Item is required " + it.key().get());
             }
@@ -404,11 +404,11 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
             keys += it.key().get() + " ";
 
             // Data type
-            if (!it.custom_data_type().get().empty()) {
+            if (!it.custom_data_type().get().empty()) DBM_UNLIKELY {
                 // Custom type
                 keys += it.custom_data_type().get();
             }
-            else {
+            else DBM_LIKELY {
                 // Standard type
                 keys += value_type_string(it.get_container().type());
 

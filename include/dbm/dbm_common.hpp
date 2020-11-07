@@ -14,8 +14,6 @@
 #include <variant>
 #include <vector>
 
-#define DBM_INLINE inline
-
 namespace dbm {
 
 // ----------------------------------------------------------
