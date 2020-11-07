@@ -100,12 +100,12 @@ enum class data_type : std::size_t
 
 static_assert(std::is_same_v<std::nullptr_t , std::variant_alternative_t< static_cast<std::size_t>(data_type::Nullptr), variant>>, "Invalid data type");
 static_assert(std::is_same_v<bool, std::variant_alternative_t< static_cast<std::size_t>(data_type::Bool), variant>>, "Invalid data type");
-static_assert(std::is_same_v<int, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int32), variant>>, "Invalid data type");
-static_assert(std::is_same_v<short, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int16), variant>>, "Invalid data type");
-static_assert(std::is_same_v<long, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int64), variant>>, "Invalid data type");
-static_assert(std::is_same_v<unsigned int, std::variant_alternative_t< static_cast<std::size_t>(data_type::UInt32), variant>>, "Invalid data type");
-static_assert(std::is_same_v<unsigned short, std::variant_alternative_t< static_cast<std::size_t>(data_type::UInt16), variant>>, "Invalid data type");
-static_assert(std::is_same_v<unsigned long, std::variant_alternative_t< static_cast<std::size_t>(data_type::Uint64), variant>>, "Invalid data type");
+static_assert(std::is_same_v<int32_t, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int32), variant>>, "Invalid data type");
+static_assert(std::is_same_v<int16_t, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int16), variant>>, "Invalid data type");
+static_assert(std::is_same_v<int64_t, std::variant_alternative_t< static_cast<std::size_t>(data_type::Int64), variant>>, "Invalid data type");
+static_assert(std::is_same_v<uint32_t, std::variant_alternative_t< static_cast<std::size_t>(data_type::UInt32), variant>>, "Invalid data type");
+static_assert(std::is_same_v<uint16_t, std::variant_alternative_t< static_cast<std::size_t>(data_type::UInt16), variant>>, "Invalid data type");
+static_assert(std::is_same_v<uint64_t, std::variant_alternative_t< static_cast<std::size_t>(data_type::Uint64), variant>>, "Invalid data type");
 static_assert(std::is_same_v<detail::timestamp2u_converter, std::variant_alternative_t< static_cast<std::size_t>(data_type::Timestamp2u), variant>>, "Invalid data type");
 static_assert(std::is_same_v<double, std::variant_alternative_t< static_cast<std::size_t>(data_type::Double), variant>>, "Invalid data type");
 static_assert(std::is_same_v<std::string, std::variant_alternative_t< static_cast<std::size_t>(data_type::String), variant>>, "Invalid data type");
