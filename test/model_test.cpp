@@ -356,7 +356,7 @@ dbm::model get_test_model()
 
 #ifdef DBM_MYSQL
     if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
-        m.emplace_back(dbm::local<time_t>(),
+        m.emplace_back(dbm::local<int64_t>(),
                        dbm::key("UNIX_TIMESTAMP(timestamp)"),
                        dbm::tag("unixtime_tag"),
                        dbm::direction::read_only,
@@ -365,7 +365,7 @@ dbm::model get_test_model()
 #endif
 #ifdef DBM_SQLITE3
     if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
-        m.emplace_back(dbm::local<time_t>(),
+        m.emplace_back(dbm::local<int64_t>(),
                        dbm::key("strftime('%s',timestamp)"),
                        dbm::tag("unixtime_tag"),
                        dbm::direction::read_only,
@@ -656,7 +656,7 @@ BOOST_AUTO_TEST_CASE(model_find_item)
     dbm::model m("",
                  {
                      { dbm::local(1), dbm::key("controller_id"), dbm::primary(true), dbm::taggable(false) },
-                     { dbm::local<time_t>(), dbm::key("time"), dbm::primary(true) },
+                     { dbm::local<int64_t>(), dbm::key("time"), dbm::primary(true) },
                      { dbm::local<int>(), dbm::key("element_id"), dbm::primary(true) },
                      { dbm::local<double>(), dbm::key("value") },
                  });
@@ -739,7 +739,7 @@ void test_model_with_timestamp()
     if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
         m.set_table_options("ENGINE=MEMORY");
 
-        m.emplace_back(dbm::local<time_t>(),
+        m.emplace_back(dbm::local<int64_t>(),
             dbm::key("UNIX_TIMESTAMP(timestamp)"),
             dbm::tag("unixtime"),
             dbm::direction::read_only,
@@ -749,7 +749,7 @@ void test_model_with_timestamp()
 
 #ifdef DBM_SQLITE3
     if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
-        m.emplace_back(dbm::local<time_t>(),
+        m.emplace_back(dbm::local<int64_t>(),
             dbm::key("strftime('%s',timestamp)"),
             dbm::tag("unixtime"),
             dbm::direction::read_only,

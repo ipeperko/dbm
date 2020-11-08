@@ -17,27 +17,27 @@ public:
     {
         return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
     }
-    parse_result deserialize(std::string_view tag, int& val) const override
+    parse_result deserialize(std::string_view tag, int32_t& val) const override
     {
         return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
     }
-    parse_result deserialize(std::string_view tag, short& val) const override
+    parse_result deserialize(std::string_view tag, int16_t& val) const override
     {
         return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
     }
-    parse_result deserialize(std::string_view tag, long& val) const override
+    parse_result deserialize(std::string_view tag, int64_t& val) const override
     {
         return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
     }
-    parse_result deserialize(std::string_view tag, unsigned int& val) const override
+    parse_result deserialize(std::string_view tag, uint32_t& val) const override
     {
         return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
     }
-    parse_result deserialize(std::string_view tag, unsigned short& val) const override
+    parse_result deserialize(std::string_view tag, uint16_t& val) const override
     {
         return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
     }
-    parse_result deserialize(std::string_view tag, unsigned long& val) const override
+    parse_result deserialize(std::string_view tag, uint64_t& val) const override
     {
         return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
     }
@@ -123,32 +123,32 @@ public:
         root_[tag.data()] = val;
     }
 
-    void serialize(std::string_view tag, int val) override
+    void serialize(std::string_view tag, int32_t val) override
     {
         root_[tag.data()] = val;
     }
 
-    void serialize(std::string_view tag, short val) override
+    void serialize(std::string_view tag, int16_t val) override
     {
         root_[tag.data()] = val;
     }
 
-    void serialize(std::string_view tag, long val) override
+    void serialize(std::string_view tag, int64_t val) override
     {
         root_[tag.data()] = val;
     }
 
-    void serialize(std::string_view tag, unsigned int val) override
+    void serialize(std::string_view tag, uint32_t val) override
     {
         root_[tag.data()] = val;
     }
 
-    void serialize(std::string_view tag, unsigned short val) override
+    void serialize(std::string_view tag, uint16_t val) override
     {
         root_[tag.data()] = val;
     }
 
-    void serialize(std::string_view tag, unsigned long val) override
+    void serialize(std::string_view tag, uint64_t val) override
     {
         root_[tag.data()] = val;
     }

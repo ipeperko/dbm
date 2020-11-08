@@ -52,6 +52,8 @@ public:
 
     virtual kind::variant get() const = 0;
 
+    virtual kind::variant get(size_t type_index) const = 0;
+
     template<typename T>
     T get() const;
 
@@ -102,7 +104,11 @@ DBM_INLINE constexpr bool container::is_defined() const noexcept
 template<typename T>
 T container::get() const
 {
+    /*
     kind::variant v = get();
+    return std::get<T>(v);
+     */
+    auto v = get(kind::detail::variant_index<T>());
     return std::get<T>(v);
 }
 

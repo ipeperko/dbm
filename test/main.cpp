@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(container_test)
     local_int->set(222);
     BOOST_TEST(not local_int->is_null());
     BOOST_TEST(std::get<int>(local_int->get()) == 222);
-    local_int->set(long(333));
+    local_int->set((int64_t)(333));
     BOOST_TEST(std::get<int>(local_int->get()) == 333);
     local_int->set(short(444));
     BOOST_TEST(std::get<int>(local_int->get()) == 444);
@@ -215,66 +215,58 @@ BOOST_AUTO_TEST_CASE(item_narrow_cast_test)
     // Set double value to integer container
     BOOST_REQUIRE_NO_THROW(dbm::local<int>()->set(1.1));
     BOOST_REQUIRE_NO_THROW(dbm::local<unsigned int>()->set(1.1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<long>()->set(1.1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned long>()->set(1.1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<int64_t>()->set(1.1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<uint64_t>()->set(1.1));
     BOOST_REQUIRE_NO_THROW(dbm::local<short>()->set(1.1));
     BOOST_REQUIRE_NO_THROW(dbm::local<unsigned short>()->set(1.1));
 
     // short container - set value of a different integer type
     BOOST_REQUIRE_NO_THROW(dbm::local<short>()->set(true));
     BOOST_REQUIRE_NO_THROW(dbm::local<short>()->set((int)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<short>()->set((long)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<short>()->set((int64_t)1));
     BOOST_REQUIRE_NO_THROW(dbm::local<short>()->set((unsigned short)1));
     BOOST_REQUIRE_NO_THROW(dbm::local<short>()->set((unsigned int)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<short>()->set((unsigned long)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<short>()->set((uint64_t)1));
 
     // int container - set value of a different integer type
     BOOST_REQUIRE_NO_THROW(dbm::local<int>()->set(true));
     BOOST_REQUIRE_NO_THROW(dbm::local<int>()->set((short)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<int>()->set((long)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<int>()->set((int64_t)1));
     BOOST_REQUIRE_NO_THROW(dbm::local<int>()->set((unsigned short)1));
     BOOST_REQUIRE_NO_THROW(dbm::local<int>()->set((unsigned int)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<int>()->set((unsigned long)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<int>()->set((uint64_t)1));
 
     // int container - set value of a different integer type
-    BOOST_REQUIRE_NO_THROW(dbm::local<long>()->set(true));
-    BOOST_REQUIRE_NO_THROW(dbm::local<long>()->set((short)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<long>()->set((int)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<long>()->set((unsigned short)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<long>()->set((unsigned int)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<long>()->set((unsigned long)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<int64_t>()->set(true));
+    BOOST_REQUIRE_NO_THROW(dbm::local<int64_t>()->set((short)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<int64_t>()->set((int)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<int64_t>()->set((unsigned short)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<int64_t>()->set((unsigned int)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<int64_t>()->set((uint64_t)1));
 
     // unsigned short container - set value of a different integer type
     BOOST_REQUIRE_NO_THROW(dbm::local<unsigned short>()->set(true));
     BOOST_REQUIRE_NO_THROW(dbm::local<unsigned short>()->set((short)1));
     BOOST_REQUIRE_NO_THROW(dbm::local<unsigned short>()->set((int)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned short>()->set((long)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned short>()->set((int64_t)1));
     BOOST_REQUIRE_NO_THROW(dbm::local<unsigned short>()->set((unsigned int)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned short>()->set((unsigned long)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned short>()->set((uint64_t)1));
 
     // int container - set value of a different integer type
     BOOST_REQUIRE_NO_THROW(dbm::local<unsigned int>()->set(true));
     BOOST_REQUIRE_NO_THROW(dbm::local<unsigned int>()->set((short)1));
     BOOST_REQUIRE_NO_THROW(dbm::local<unsigned int>()->set((int)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned int>()->set((long)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned int>()->set((int64_t)1));
     BOOST_REQUIRE_NO_THROW(dbm::local<unsigned int>()->set((unsigned short)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned int>()->set((unsigned long)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned int>()->set((uint64_t)1));
 
     // int container - set value of a different integer type
-    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned long>()->set(true));
-    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned long>()->set((short)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned long>()->set((int)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned long>()->set((long)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned long>()->set((unsigned short)1));
-    BOOST_REQUIRE_NO_THROW(dbm::local<unsigned long>()->set((unsigned int)1));
-}
-
-BOOST_AUTO_TEST_CASE(item_time_t_test)
-{
-    time_t t = 0;
-    auto local_time_t = dbm::local<time_t>(t);
-    BOOST_TEST(local_time_t->is_defined());
-    BOOST_TEST(!local_time_t->is_null());
+    BOOST_REQUIRE_NO_THROW(dbm::local<uint64_t>()->set(true));
+    BOOST_REQUIRE_NO_THROW(dbm::local<uint64_t>()->set((short)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<uint64_t>()->set((int)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<uint64_t>()->set((int64_t)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<uint64_t>()->set((unsigned short)1));
+    BOOST_REQUIRE_NO_THROW(dbm::local<uint64_t>()->set((unsigned int)1));
 }
 
 class EnumClass
@@ -627,6 +619,15 @@ BOOST_AUTO_TEST_CASE(timestamp2u_test)
         tu2 = 44;
         BOOST_TEST(storage == 44);
         BOOST_TEST(tu2.get() == 44);
+    }
+
+    {
+        // Model item set/get value
+        dbm::model_item mitem(dbm::timestamp(11));
+        BOOST_TEST(mitem.value<dbm::timestamp2u_converter>().get() == 11);
+        BOOST_TEST(mitem.value<int64_t>() == 11);
+        mitem.set_value(12);
+        BOOST_TEST(mitem.value<int64_t>() == 12);
     }
 }
 
