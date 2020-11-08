@@ -100,6 +100,8 @@ public:
         return { val_ };
     }
 
+    kind::variant get(size_t type_index) const override;
+
     void set(kind::variant& v) override;
 
     void set(kind::variant&& v) override

@@ -103,6 +103,33 @@ void container_impl<T, ContType, conf>::from_string(std::string_view v)
     }
 }
 
+
+
+template<typename T, template<typename> class ContType, container_conf conf>
+kind::variant container_impl<T, ContType, conf>::get(size_t type_index) const
+{
+    kind::data_type const type = static_cast<kind::data_type>(type_index);
+    constexpr kind::data_type const this_type = static_cast<kind::data_type>(kind::detail::variant_index<unreferenced_type>());
+
+    if constexpr (std::is_same_v<kind::detail::timestamp2u_converter, unreferenced_type>) {
+        if (type == kind::data_type::Timestamp2u) {
+            return { val_ };
+        }
+        else if (type == kind::data_type::Int64) {
+            return { static_cast<int64_t>(val_.get()) };
+        }
+        // TODO: maybe add time_t to kind::variant
+    }
+    else {
+        if (type == this_type) {
+            return { val_ };
+        }
+        // TODO: maybe narrow cast integer types
+    }
+
+    throw_exception<std::domain_error>("Error type");
+}
+
 template<typename T, template<typename> class ContType, container_conf conf>
 void container_impl<T, ContType, conf>::set(kind::variant& v)
 {
@@ -202,6 +229,24 @@ void container_impl<T, ContType, conf>::set(kind::variant& v)
             on_error("Unsupported string type");
         }
     }
+    else if constexpr (std::is_same_v<kind::detail::timestamp2u_converter, unreferenced_type>) {
+
+        if (std::holds_alternative<kind::detail::timestamp2u_converter>(v)) {
+            tmp_val = std::get<kind::detail::timestamp2u_converter>(v);
+        }
+        else if (std::holds_alternative<int64_t>(v)) {
+            tmp_val = std::get<int64_t>(v);
+        }
+        else if (std::holds_alternative<int32_t>(v)) {
+            tmp_val = std::get<int32_t>(v);
+        }
+        else if (std::holds_alternative<uint32_t>(v)) {
+            tmp_val = std::get<uint32_t>(v);
+        }
+        else {
+            on_error("Unsupported timestamp type");
+        }
+    }
     else {
         tmp_val = std::move(std::get<unreferenced_type>(v));
     }
@@ -226,10 +271,12 @@ void container_impl<T, ContType, conf>::serialize(serializer& s, std::string_vie
     }
     else {
         if constexpr (std::is_same_v<unreferenced_type, kind::detail::timestamp2u_converter>) {
+
             if constexpr (std::is_same_v<time_t, int64_t>) {
                 s.serialize(tag, val_.get());
             }
             else {
+                // i386 compatibility
                 s.serialize(tag, static_cast<int64_t>(val_.get()));
             }
         }
@@ -246,11 +293,12 @@ bool container_impl<T, ContType, conf>::deserialize(deserializer& s, std::string
     deserializer::parse_result res;
 
     if constexpr (std::is_same_v<unreferenced_type, kind::detail::timestamp2u_converter>) {
-        // will be deserialized as long int
+
         if constexpr (std::is_same_v<time_t, int64_t>) {
             res = s.deserialize(tag, *tmp_val.ptr()); 
         }
         else {
+            // i386 compatibility
             int64_t val64;
             res = s.deserialize(tag, val64); 
             tmp_val = static_cast<kind::detail::timestamp2u_converter::value_type>(val64);
