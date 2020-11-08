@@ -21,17 +21,17 @@ public:
 
     virtual void serialize(std::string_view, bool) = 0;
 
-    virtual void serialize(std::string_view, int) = 0;
+    virtual void serialize(std::string_view, int32_t) = 0;
 
-    virtual void serialize(std::string_view, short) = 0;
+    virtual void serialize(std::string_view, int16_t) = 0;
 
-    virtual void serialize(std::string_view, long) = 0;
+    virtual void serialize(std::string_view, int64_t) = 0;
 
-    virtual void serialize(std::string_view, unsigned int) = 0;
+    virtual void serialize(std::string_view, uint32_t) = 0;
 
-    virtual void serialize(std::string_view, unsigned short) = 0;
+    virtual void serialize(std::string_view, uint16_t) = 0;
 
-    virtual void serialize(std::string_view, unsigned long) = 0;
+    virtual void serialize(std::string_view, uint64_t) = 0;
 
     virtual void serialize(std::string_view, double) = 0;
 
@@ -68,17 +68,17 @@ public:
 
     virtual parse_result deserialize(std::string_view, bool&) const = 0;
 
-    virtual parse_result deserialize(std::string_view, int&) const = 0;
+    virtual parse_result deserialize(std::string_view, int32_t&) const = 0;
 
-    virtual parse_result deserialize(std::string_view, short&) const = 0;
+    virtual parse_result deserialize(std::string_view, int16_t&) const = 0;
 
-    virtual parse_result deserialize(std::string_view, long&) const = 0;
+    virtual parse_result deserialize(std::string_view, int64_t&) const = 0;
 
-    virtual parse_result deserialize(std::string_view, unsigned int&) const = 0;
+    virtual parse_result deserialize(std::string_view, uint32_t&) const = 0;
 
-    virtual parse_result deserialize(std::string_view, unsigned short&) const = 0;
+    virtual parse_result deserialize(std::string_view, uint16_t&) const = 0;
 
-    virtual parse_result deserialize(std::string_view, unsigned long&) const = 0;
+    virtual parse_result deserialize(std::string_view, uint64_t&) const = 0;
 
     virtual parse_result deserialize(std::string_view, double&) const = 0;
 

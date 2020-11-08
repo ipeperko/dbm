@@ -120,9 +120,9 @@ void container_impl<T, ContType, conf>::set(kind::variant& v)
 
     unreferenced_type tmp_val;
 
-    if constexpr (std::is_integral_v<value_type>) {
+    if constexpr (std::is_integral_v<unreferenced_type>) {
 
-        if (std::holds_alternative<value_type>(v)) {
+        if (std::holds_alternative<unreferenced_type>(v)) {
             tmp_val = std::get<unreferenced_type>(v);
         }
         else if (conf & no_narrow_cast) {
@@ -133,17 +133,17 @@ void container_impl<T, ContType, conf>::set(kind::variant& v)
             // TODO: lost precision warning maybe?
         }
         else {
-            if (utils::arithmetic_convert<long>(tmp_val, v)) {
+            if (utils::arithmetic_convert<int64_t>(tmp_val, v)) {
             }
-            else if (utils::arithmetic_convert<int>(tmp_val, v)) {
+            else if (utils::arithmetic_convert<int32_t>(tmp_val, v)) {
             }
-            else if (utils::arithmetic_convert<short>(tmp_val, v)) {
+            else if (utils::arithmetic_convert<int16_t>(tmp_val, v)) {
             }
-            else if (utils::arithmetic_convert<unsigned long>(tmp_val, v)) {
+            else if (utils::arithmetic_convert<uint64_t>(tmp_val, v)) {
             }
-            else if (utils::arithmetic_convert<unsigned int>(tmp_val, v)) {
+            else if (utils::arithmetic_convert<uint32_t>(tmp_val, v)) {
             }
-            else if (utils::arithmetic_convert<unsigned short>(tmp_val, v)) {
+            else if (utils::arithmetic_convert<uint16_t>(tmp_val, v)) {
             }
             else if (utils::arithmetic_convert<bool>(tmp_val, v)) {
             }
@@ -152,32 +152,32 @@ void container_impl<T, ContType, conf>::set(kind::variant& v)
             }
         }
     }
-    else if constexpr (std::is_floating_point_v<value_type>) {
+    else if constexpr (std::is_floating_point_v<unreferenced_type>) {
 
-        if (std::holds_alternative<value_type>(v)) {
+        if (std::holds_alternative<unreferenced_type>(v)) {
             tmp_val = std::get<unreferenced_type>(v);
         }
         else if (conf & no_int_to_double) {
             on_error("Setting container floating type value from incompatible type");
         }
         else {
-            if (std::holds_alternative<long>(v)) {
-                tmp_val = std::get<long>(v);
+            if (std::holds_alternative<int64_t>(v)) {
+                tmp_val = std::get<int64_t>(v);
             }
-            else if (std::holds_alternative<int>(v)) {
-                tmp_val = std::get<int>(v);
+            else if (std::holds_alternative<int32_t>(v)) {
+                tmp_val = std::get<int32_t>(v);
             }
-            else if (std::holds_alternative<short>(v)) {
-                tmp_val = std::get<short>(v);
+            else if (std::holds_alternative<int16_t>(v)) {
+                tmp_val = std::get<int16_t>(v);
             }
-            else if (std::holds_alternative<unsigned long>(v)) {
-                tmp_val = std::get<unsigned long>(v);
+            else if (std::holds_alternative<uint64_t>(v)) {
+                tmp_val = std::get<uint64_t>(v);
             }
-            else if (std::holds_alternative<unsigned int>(v)) {
-                tmp_val = std::get<unsigned int>(v);
+            else if (std::holds_alternative<uint32_t>(v)) {
+                tmp_val = std::get<uint32_t>(v);
             }
-            else if (std::holds_alternative<unsigned short>(v)) {
-                tmp_val = std::get<unsigned short>(v);
+            else if (std::holds_alternative<uint16_t>(v)) {
+                tmp_val = std::get<uint16_t>(v);
             }
             else if (std::holds_alternative<bool>(v)) {
                 tmp_val = std::get<bool>(v);
@@ -226,7 +226,12 @@ void container_impl<T, ContType, conf>::serialize(serializer& s, std::string_vie
     }
     else {
         if constexpr (std::is_same_v<unreferenced_type, kind::detail::timestamp2u_converter>) {
-            s.serialize(tag, val_.get());
+            if constexpr (std::is_same_v<time_t, int64_t>) {
+                s.serialize(tag, val_.get());
+            }
+            else {
+                s.serialize(tag, static_cast<int64_t>(val_.get()));
+            }
         }
         else {
             s.serialize(tag, val_);
@@ -241,7 +246,15 @@ bool container_impl<T, ContType, conf>::deserialize(deserializer& s, std::string
     deserializer::parse_result res;
 
     if constexpr (std::is_same_v<unreferenced_type, kind::detail::timestamp2u_converter>) {
-        res = s.deserialize(tag, *tmp_val.ptr()); // will be deserialized as long int
+        // will be deserialized as long int
+        if constexpr (std::is_same_v<time_t, int64_t>) {
+            res = s.deserialize(tag, *tmp_val.ptr()); 
+        }
+        else {
+            int64_t val64;
+            res = s.deserialize(tag, val64); 
+            tmp_val = static_cast<kind::detail::timestamp2u_converter::value_type>(val64);
+        }
     }
     else {
         res = s.deserialize(tag, tmp_val);

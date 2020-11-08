@@ -115,8 +115,6 @@ static_assert(std::is_same_v<std::string_view, std::variant_alternative_t< stati
 static_assert(std::is_same_v<blob, std::variant_alternative_t< static_cast<std::size_t>(data_type::Blob), variant>>, "Invalid data type");
 #endif
 
-static_assert(std::is_same_v<time_t, int64_t> or std::is_same_v<time_t, uint64_t> or std::is_same_v<time_t, double>, "time_t not portable");
-
 namespace detail {
 
 inline constexpr std::size_t variant_size = std::variant_size_v<variant>;

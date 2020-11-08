@@ -6,7 +6,7 @@ namespace dbm::kind::detail {
 class timestamp2u_converter
 {
 public:
-    using value_type = time_t;
+    using value_type = time_t; //int64_t
 
     timestamp2u_converter() noexcept
         : local_(0)
