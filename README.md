@@ -47,7 +47,7 @@ try
 }
 catch (std::exception& e)
 {
-    std::cout << "exception: " << e.what() << "\n";
+    std::cerr << "exception: " << e.what() << "\n";
 }
 ```
 
