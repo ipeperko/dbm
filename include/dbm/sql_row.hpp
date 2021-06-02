@@ -55,9 +55,9 @@ public:
 
     void set_fields(kind::sql_fields* field_names, sql_field_map* field_map) noexcept;
 
-    sql_value& at(std::string_view key);
+    sql_value& at(std::string const& key);
 
-    sql_value const& at(std::string_view key) const;
+    sql_value const& at(std::string const& key) const;
 
     sql_fields* field_names() noexcept;
 
@@ -78,22 +78,20 @@ DBM_INLINE void sql_row::set_fields(kind::sql_fields* field_names, sql_field_map
     fmap_ = field_map;
 }
 
-DBM_INLINE sql_value& sql_row::at(std::string_view key)
+DBM_INLINE sql_value& sql_row::at(std::string const& key)
 {
-    for (auto& it : *fmap_) {
-        if (it.first == key) {
-            return at(it.second);
-        }
+    auto it = fmap_->find(key);
+    if (it != fmap_->end()) {
+        return at(it->second);
     }
     throw_exception<std::out_of_range>("sql row item not found " + std::string(key));
 }
 
-DBM_INLINE sql_value const& sql_row::at(std::string_view key) const
+DBM_INLINE sql_value const& sql_row::at(std::string const& key) const
 {
-    for (auto& it : *fmap_) {
-        if (it.first == key) {
-            return at(it.second);
-        }
+    auto it = fmap_->find(key);
+    if (it != fmap_->end()) {
+        return at(it->second);
     }
     throw_exception<std::out_of_range>("sql row item not found " + std::string(key));
 }

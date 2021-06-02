@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(dbm VERSION 0.0.30 DESCRIPTION "Database table models with serialization " LANGUAGES CXX)
+project(dbm VERSION 0.0.31 DESCRIPTION "Database table models with serialization " LANGUAGES CXX)
 
 option(DBM_BUILD_TESTS "Build dbm tests" OFF)
 
@@ -47,10 +47,47 @@ set(SOURCES
     src/drivers/sqlite/sqlite_session.cpp
     )
 
+# Headers
+set(HEADERS
+    include/dbm/container.hpp
+    include/dbm/dbm_common.hpp
+    include/dbm/dbm.hpp
+    include/dbm/dbm_qt.hpp
+    include/dbm/model.hpp
+    include/dbm/model.ipp
+    include/dbm/model_item.hpp
+    include/dbm/model_item.ipp
+    include/dbm/nlohmann_json_serializer.hpp
+    include/dbm/serializer.hpp
+    include/dbm/serializer.ipp
+    include/dbm/session.hpp
+    include/dbm/session.ipp
+    include/dbm/sql_row.hpp
+    include/dbm/sql_rows_dump.hpp
+    include/dbm/sql_rows.hpp
+    include/dbm/sql_types.hpp
+    include/dbm/sql_value.hpp
+    include/dbm/xml.hpp
+    include/dbm/xml_serializer.hpp
+
+    include/dbm/detail/container_impl.hpp
+    include/dbm/detail/container_impl.ipp
+    include/dbm/detail/default_constraint.hpp
+    include/dbm/detail/model_query_helper.hpp
+    include/dbm/detail/named_type.hpp
+    include/dbm/detail/statement.hpp
+    include/dbm/detail/timestamp2u_converter.hpp
+    include/dbm/detail/utils.hpp
+
+    include/dbm/drivers/mysql/mysql_session.hpp
+    include/dbm/drivers/sqlite/sqlite_session.hpp
+    )
+
 # Objects
 add_library(DBM_OBJECTS
     OBJECT
     ${SOURCES}
+    ${HEADERS}
     )
 set_target_properties(DBM_OBJECTS
     PROPERTIES

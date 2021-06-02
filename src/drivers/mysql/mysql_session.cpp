@@ -134,6 +134,11 @@ mysql_session::~mysql_session()
     mysql_session::close();
 }
 
+std::unique_ptr<session> mysql_session::clone() const
+{
+    return std::make_unique<mysql_session>(*this);
+};
+
 void mysql_session::init(const std::string& host_name, const std::string& user, const std::string& pass, unsigned int port,
                          const std::string& db_name, unsigned int flags)
 {

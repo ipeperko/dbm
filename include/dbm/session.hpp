@@ -23,6 +23,8 @@ public:
     session& operator=(session&& oth) noexcept;
     virtual ~session() = default;
 
+    virtual std::unique_ptr<session> clone() const = 0;
+
     virtual void open() = 0;
     virtual void close() = 0;
 

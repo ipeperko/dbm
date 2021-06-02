@@ -18,6 +18,8 @@ public:
     sqlite_session& operator=(sqlite_session&& oth) = delete;
     ~sqlite_session() override;
 
+    std::unique_ptr<session> clone() const override;
+
     void set_db_name(std::string_view file_name);
     std::string_view db_name() const;
 
