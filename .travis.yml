@@ -9,7 +9,7 @@ env:
     - BOOST_DOT_VER=1.72.0
 
 before_install:
-  - wget -O boost_${BOOST_VERSION}.tar.gz https://dl.bintray.com/boostorg/release/${BOOST_DOT_VER}/source/boost_${BOOST_VERSION}.tar.gz && tar -xzf boost_${BOOST_VERSION}.tar.gz
+  - wget -O boost_${BOOST_VERSION}.tar.gz https://boostorg.jfrog.io/artifactory/main/release/${BOOST_DOT_VERSION}/source/boost_${BOOST_VERSION}.tar.gz && tar -xzf boost_${BOOST_VERSION}.tar.gz
   - cd boost_${BOOST_VERSION}
   - ./bootstrap.sh --with-libraries=test > build.log 2>&1 || (cat build.log && exit 1)
   - sudo ./b2 install > build.log 2>&1 || (cat build.log && exit 1)
@@ -22,6 +22,20 @@ services:
 
 matrix:
   include:
+    - env: CXX=g++-11 CC=gcc-11
+      addons:
+        apt:
+          packages:
+            - g++-11
+          sources:
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'    
+    - env: CXX=g++-10 CC=gcc-10
+      addons:
+        apt:
+          packages:
+            - g++-10
+          sources:
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'  
     - env: CXX=g++-9 CC=gcc-9
       addons:
         apt:
