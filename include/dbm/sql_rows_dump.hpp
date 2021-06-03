@@ -11,7 +11,7 @@ class sql_rows_dump
 public:
     sql_rows_dump() = default;
 
-    virtual ~sql_rows_dump() = default;
+    ~sql_rows_dump() = default;
 
     sql_rows_dump(const sql_rows& src); // implicit is desired
 
