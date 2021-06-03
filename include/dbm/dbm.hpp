@@ -5,9 +5,9 @@
 #include <dbm/sql_types.hpp>
 #include <dbm/model.hpp>
 #include <dbm/session.hpp>
-#include <dbm/model.ipp>
-#include <dbm/session.ipp>
-#include <dbm/serializer.ipp>
+#include <dbm/impl/model.ipp>
+#include <dbm/impl/session.ipp>
+#include <dbm/impl/serializer.ipp>
 
 namespace dbm {
 

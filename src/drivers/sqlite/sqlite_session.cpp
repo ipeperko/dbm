@@ -2,8 +2,8 @@
 
 #include <dbm/drivers/sqlite/sqlite_session.hpp>
 #include <dbm/model.hpp>
-#include <dbm/model.ipp>
-#include <dbm/session.ipp>
+#include <dbm/impl/model.ipp>
+#include <dbm/impl/session.ipp>
 #include <dbm/detail/model_query_helper.hpp>
 #include <cstring>
 #include <sqlite3.h>
