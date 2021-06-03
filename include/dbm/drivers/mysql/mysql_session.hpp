@@ -15,6 +15,8 @@ public:
     mysql_session& operator=(mysql_session&& oth) noexcept;
     ~mysql_session() override;
 
+    std::unique_ptr<session> clone() const override;
+
     void init(const std::string& host_name, const std::string& user, const std::string& pass, unsigned int port, const std::string& db_name, unsigned int flags = 0);
 
     /* Set database name doesn't work if already connected! */

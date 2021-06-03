@@ -2,8 +2,8 @@
 
 #include <dbm/drivers/sqlite/sqlite_session.hpp>
 #include <dbm/model.hpp>
-#include <dbm/model.ipp>
-#include <dbm/session.ipp>
+#include <dbm/impl/model.ipp>
+#include <dbm/impl/session.ipp>
 #include <dbm/detail/model_query_helper.hpp>
 #include <cstring>
 #include <sqlite3.h>
@@ -103,6 +103,11 @@ sqlite_session::~sqlite_session()
 {
     sqlite_session::close();
 }
+
+std::unique_ptr<session> sqlite_session::clone() const
+{
+    return std::make_unique<sqlite_session>(*this);
+};
 
 void sqlite_session::set_db_name(std::string_view file_name)
 {

@@ -2,8 +2,8 @@
 
 #include <dbm/drivers/mysql/mysql_session.hpp>
 #include <dbm/model.hpp>
-#include <dbm/model.ipp>
-#include <dbm/session.ipp>
+#include <dbm/impl/model.ipp>
+#include <dbm/impl/session.ipp>
 #include <dbm/detail/model_query_helper.hpp>
 
 #ifdef __WIN32
@@ -133,6 +133,11 @@ mysql_session::~mysql_session()
 {
     mysql_session::close();
 }
+
+std::unique_ptr<session> mysql_session::clone() const
+{
+    return std::make_unique<mysql_session>(*this);
+};
 
 void mysql_session::init(const std::string& host_name, const std::string& user, const std::string& pass, unsigned int port,
                          const std::string& db_name, unsigned int flags)

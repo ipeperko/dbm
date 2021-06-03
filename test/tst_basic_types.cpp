@@ -3,7 +3,7 @@
 #include "no_driver_session.h"
 #include <iomanip>
 
-#define BOOST_TEST_MODULE dbm_test_module
+#define BOOST_TEST_MODULE dbm_basic_types
 #include <boost/test/unit_test.hpp>
 using namespace boost::unit_test;
 
@@ -35,6 +35,8 @@ std::ostream& operator<<(std::ostream& os, const dbm::blob& v)
 #endif
 
 } // namespace dbm
+
+BOOST_AUTO_TEST_SUITE(TstBasicTypes)
 
 BOOST_AUTO_TEST_CASE(narrow_cast_test)
 {
@@ -752,3 +754,4 @@ BOOST_AUTO_TEST_CASE(custom_exception)
     dbm::config::set_custom_exception(nullptr);
 }
 
+BOOST_AUTO_TEST_SUITE_END()

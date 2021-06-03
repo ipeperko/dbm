@@ -5,6 +5,8 @@
 using namespace boost::unit_test;
 namespace xml = dbm::xml;
 
+BOOST_AUTO_TEST_SUITE(TstXml)
+
 BOOST_AUTO_TEST_CASE(xml_value_get_test)
 {
     xml::node xml("xml");
@@ -143,3 +145,5 @@ BOOST_AUTO_TEST_CASE(xml_binding, * boost::unit_test::tolerance(0.00001))
     BOOST_TEST(xml2.get_optional("e", 0) == static_cast<int>(MyEnum::three));
     BOOST_TEST(xml2.get_optional("d", 0.0) == 2.345);
 }
+
+BOOST_AUTO_TEST_SUITE_END()

@@ -1,7 +1,7 @@
 #ifndef DBM_SQL_VALUE_HPP
 #define DBM_SQL_VALUE_HPP
 
-#include "dbm_common.hpp"
+#include <dbm/dbm_common.hpp>
 
 namespace dbm::kind {
 
@@ -89,7 +89,6 @@ DBM_INLINE sql_value::sql_value(const char* v, size_t len)
     : value_(v)
     , len_(len)
 {}
-
 
 DBM_INLINE sql_value& sql_value::operator=(sql_value&& oth) noexcept
 {

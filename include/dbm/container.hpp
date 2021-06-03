@@ -115,7 +115,7 @@ T container::get() const
 } // namespace dbm
 
 #include <dbm/detail/container_impl.hpp>
-#include <dbm/detail/container_impl.ipp>
+#include <dbm/detail/impl/container_impl.ipp>
 
 namespace dbm {
 

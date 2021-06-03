@@ -15,6 +15,8 @@
 
 using namespace boost::unit_test;
 
+BOOST_AUTO_TEST_SUITE(TstModel)
+
 BOOST_AUTO_TEST_CASE(model_test_set_table_name)
 {
     dbm::model m;
@@ -890,3 +892,5 @@ BOOST_AUTO_TEST_CASE(model_timestamp2u)
     test_model_with_timestamp<dbm::sqlite_session>();
 #endif
 }
+
+BOOST_AUTO_TEST_SUITE_END()

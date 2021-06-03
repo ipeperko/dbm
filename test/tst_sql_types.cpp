@@ -4,6 +4,8 @@
 
 using namespace boost::unit_test;
 
+BOOST_AUTO_TEST_SUITE(TstSqlTypes)
+
 BOOST_AUTO_TEST_CASE(sql_value_int_test)
 {
     dbm::kind::sql_value value("13", strlen("13"));
@@ -193,3 +195,5 @@ BOOST_AUTO_TEST_CASE(sql_rows_copy)
     dump.restore(rows_from_dump);
     validate_rows(rows_from_dump);
 }
+
+BOOST_AUTO_TEST_SUITE_END()
