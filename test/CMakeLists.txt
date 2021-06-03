@@ -11,6 +11,7 @@ add_executable(${BINARY}
     tst_model.cpp
     tst_sql_types.cpp
     tst_xml.cpp
+    tst_pool.cpp
     )
 
 target_link_libraries(${BINARY}

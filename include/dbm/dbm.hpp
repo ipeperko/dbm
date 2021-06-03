@@ -3,8 +3,11 @@
 
 #include <dbm/dbm_common.hpp>
 #include <dbm/sql_types.hpp>
+#include <dbm/model_item.hpp>
 #include <dbm/model.hpp>
 #include <dbm/session.hpp>
+#include <dbm/pool.hpp>
+#include <dbm/impl/model_item.ipp>
 #include <dbm/impl/model.ipp>
 #include <dbm/impl/session.ipp>
 #include <dbm/impl/serializer.ipp>

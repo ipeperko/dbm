@@ -1,7 +1,11 @@
 #ifdef DBM_SQLITE3
 
 #include <dbm/drivers/sqlite/sqlite_session.hpp>
+#include <dbm/dbm_common.hpp>
+
+#include <dbm/model_item.hpp>
 #include <dbm/model.hpp>
+#include <dbm/impl/model_item.ipp>
 #include <dbm/impl/model.ipp>
 #include <dbm/impl/session.ipp>
 #include <dbm/detail/model_query_helper.hpp>

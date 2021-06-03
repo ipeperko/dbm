@@ -1,7 +1,10 @@
 #ifdef DBM_MYSQL
 
 #include <dbm/drivers/mysql/mysql_session.hpp>
+#include <dbm/dbm_common.hpp>
+#include <dbm/model_item.hpp>
 #include <dbm/model.hpp>
+#include <dbm/impl/model_item.ipp>
 #include <dbm/impl/model.ipp>
 #include <dbm/impl/session.ipp>
 #include <dbm/detail/model_query_helper.hpp>
@@ -169,10 +172,17 @@ void mysql_session::open()
     }
 
     /* connect to server */
-    MYSQL* s = mysql_real_connect(reinterpret_cast<MYSQL*>(conn__), opt_host_name.c_str(), opt_user_name.c_str(), opt_password.c_str(), opt_db_name.c_str(), opt_port_num, opt_socket_name, opt_flags);
+    MYSQL* s = mysql_real_connect(reinterpret_cast<MYSQL*>(conn__),
+                                  opt_host_name.c_str(),
+                                  opt_user_name.c_str(),
+                                  opt_password.c_str(),
+                                  opt_db_name.empty() ? nullptr : opt_db_name.c_str(),
+                                  opt_port_num,
+                                  opt_socket_name,
+                                  opt_flags);
     if (s == nullptr) {
         conn__ = nullptr;
-        throw_exception<std::runtime_error>("Cannot connect to data base " + opt_db_name);
+        throw_exception<std::runtime_error>("Cannot connect to database " + opt_db_name);
     }
 }
 
