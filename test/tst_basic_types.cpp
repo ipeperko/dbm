@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(key_test)
     BOOST_TEST(model.at(dbm::key("key_int2")).is_null());
 }
 
-BOOST_AUTO_TEST_CASE(container_test)
+BOOST_AUTO_TEST_CASE(container_test, *tolerance(0.00001))
 {
     struct Test
     {
@@ -752,6 +752,66 @@ BOOST_AUTO_TEST_CASE(custom_exception)
     {}
 
     dbm::config::set_custom_exception(nullptr);
+}
+
+BOOST_AUTO_TEST_CASE(timer_timeouts, * tolerance(0.1))
+{
+    using Clock = std::chrono::steady_clock;
+    using Timer = dbm::utils::timer<Clock>;
+
+    auto t = Timer();
+    bool flag;
+    Timer::time_point_t tp1, tp2;
+    std::chrono::duration<double, std::milli> dt;
+
+    // Expires after
+    flag = false;
+    tp1 = Clock::now();
+    t.expires_after(std::chrono::milliseconds (1000), [&]() {
+        flag = true;
+        tp2 = Clock::now();
+    });
+
+    BOOST_TEST(flag == false);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    BOOST_TEST(flag == false);
+    t.wait();
+    dt = tp2 - tp1;
+    BOOST_TEST(flag == true);
+    BOOST_TEST(dt.count() == 1000.0);
+
+    // Expires at
+    flag = false;
+    tp1 = Clock::now();
+    t.expires_at(tp1 + std::chrono::milliseconds (1000), [&]() {
+        flag = true;
+        tp2 = Clock::now();
+    });
+
+    BOOST_TEST(flag == false);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    BOOST_TEST(flag == false);
+    t.wait();
+    dt = tp2 - tp1;
+    BOOST_TEST(flag == true);
+    BOOST_TEST(dt.count() == 1000.0);
+
+    // Cancel
+    flag = false;
+    tp1 = tp2 = Clock::now();
+    t.expires_after(std::chrono::seconds(2), [&]() {
+        flag = true;
+        tp2 = Clock::now();
+    });
+
+    BOOST_TEST(flag == false);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    t.cancel();
+    BOOST_TEST(flag == false);
+    std::this_thread::sleep_for(std::chrono::milliseconds (500 + 200));
+    dt = tp2 - tp1;
+    BOOST_TEST(flag == false); // did not set the flag to true
+    BOOST_TEST(dt.count() == 0);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

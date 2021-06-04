@@ -79,6 +79,7 @@ set(HEADERS
     include/dbm/detail/model_query_helper.hpp
     include/dbm/detail/named_type.hpp
     include/dbm/detail/statement.hpp
+    include/dbm/detail/timer.hpp
     include/dbm/detail/timestamp2u_converter.hpp
     include/dbm/detail/utils.hpp
 
