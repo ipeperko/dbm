@@ -3,10 +3,12 @@ set(BINARY ${CMAKE_PROJECT_NAME}_test)
 find_package (Boost REQUIRED COMPONENTS unit_test_framework)
 
 add_executable(${BINARY}
+    # common files
     db_settings.cpp
     db_settings.h
     no_driver_session.h
 
+    # tests
     tst_basic_types.cpp
     tst_model.cpp
     tst_sql_types.cpp

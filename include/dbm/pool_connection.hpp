@@ -1,7 +1,7 @@
 #ifndef DBM_POOL_CONNECTION_HPP
 #define DBM_POOL_CONNECTION_HPP
 
-#include "dbm/session.hpp"
+#include <dbm/session.hpp>
 
 namespace dbm {
 
@@ -46,7 +46,8 @@ public:
     {
         if (resetter_)
             resetter_();
-        p_.reset();
+        resetter_ = nullptr;
+        p_ = nullptr;
     }
 
 private:

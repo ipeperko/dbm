@@ -59,6 +59,12 @@ public:
         }).join();
     }
 
+    bool canceled() const
+    {
+        std::lock_guard lock(cv_mtx_);
+        return canceled_;
+    }
+
 private:
     void start_thread(callback_t&& cb)
     {
@@ -87,9 +93,8 @@ private:
         });
 
         // Callback
-        if (!canceled_) {
-            if (cb)
-                cb();
+        if (!canceled_ && cb) {
+            cb();
         }
 
         // Signal waiters
@@ -100,10 +105,10 @@ private:
     }
 
     std::thread thr_;
-    std::mutex cv_mtx_;
+    std::mutex mutable cv_mtx_;
     std::condition_variable cv_;
     bool canceled_ {false};
-    std::mutex wait_cv_mtx_;
+    std::mutex mutable wait_cv_mtx_;
     std::condition_variable wait_cv_;
     time_point_t expiry_;
 };

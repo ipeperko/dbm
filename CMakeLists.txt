@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(dbm VERSION 0.0.32 DESCRIPTION "Database table models with serialization " LANGUAGES CXX)
 
-option(DBM_BUILD_TESTS "Build dbm tests" OFF)
+option(BUILD_TESTS "Build dbm tests" OFF)
+option(DBM_BUILD_TESTS "Build dbm tests - DEPRECATED" OFF)
 
 # --------------------------------------------------------------------------------
 # Library
@@ -191,7 +192,7 @@ install(
 # Test
 # --------------------------------------------------------------------------------
 
-if (DBM_BUILD_TESTS)
+if (BUILD_TESTS OR DBM_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
 endif()
