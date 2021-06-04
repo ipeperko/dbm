@@ -57,7 +57,8 @@ set(HEADERS
     include/dbm/model_item.hpp
     include/dbm/nlohmann_json_serializer.hpp
     include/dbm/pool.hpp
-    include/dbm/pool_instance.hpp
+    include/dbm/pool_intern_item.hpp
+    include/dbm/pool_connection.hpp
     include/dbm/serializer.hpp
     include/dbm/session.hpp
     include/dbm/sql_row.hpp

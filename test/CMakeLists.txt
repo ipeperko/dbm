@@ -16,6 +16,7 @@ add_executable(${BINARY}
 
 target_link_libraries(${BINARY}
     dbm
+    pthread
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
     )
 

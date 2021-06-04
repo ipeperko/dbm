@@ -1,9 +1,10 @@
 #ifndef DBM_POOL_HPP
 #define DBM_POOL_HPP
 
-#include "pool_instance.hpp"
-#include <shared_mutex>
+#include "pool_intern_item.hpp"
+#include "pool_connection.hpp"
 #include <numeric>
+#include <shared_mutex>
 
 namespace dbm {
 
@@ -20,28 +21,32 @@ public:
 
     void set_session_initializer(MakeSessionFn&& fn) { make_session_ = fn; }
 
-    session& acquire_connection();
-    void release_connection(session& s);
+    pool_connection acquire();
 
     size_t num_connections() const;
     size_t num_active_connections() const;
     size_t num_idle_connections() const;
 
 private:
+    void release(session* s);
+
     size_t max_conn_ {0};
-    std::vector<pool_instance> sessions_;
+    std::vector<pool_intern_item> sessions_;
     MakeSessionFn make_session_;
     std::shared_mutex mutable mtx_;
 };
 
-DBM_INLINE session& pool::acquire_connection()
+DBM_INLINE pool_connection pool::acquire()
 {
     std::unique_lock lock(mtx_);
 
     for  (auto& it : sessions_) {
         if (!it.active()) {
             it.set_active(true);
-            return *it.get();
+            return pool_connection(it.get(), [this, cn=it.get().get()]() {
+                    release(cn);
+                   });
+//            return *it.get();
         }
     }
 
@@ -57,23 +62,25 @@ DBM_INLINE session& pool::acquire_connection()
         throw_exception("Session initializer function not defined");
     s.set(make_session_());
     s.set_active(true);
-    return *s.get();
+    return pool_connection(s.get(), [this, cn=s.get().get()]() {
+        release(cn);
+    });
 }
 
-DBM_INLINE void pool::release_connection(session& s)
+DBM_INLINE void pool::release(session* s)
 {
     std::unique_lock lock(mtx_);
 
     // TODO: maybe clear result set ?
 
     for (auto& it : sessions_) {
-        if (it.get().get() == &s) {
+        if (it.get().get() == s) {
             it.set_active(false);
             return;
         }
     }
 
-    throw_exception("No such connection to release");
+    throw_exception("No such connection to release"); // TODO: maybe just quiet exit?
 }
 
 DBM_INLINE size_t pool::num_connections() const
@@ -85,7 +92,7 @@ DBM_INLINE size_t pool::num_connections() const
 DBM_INLINE size_t pool::num_active_connections() const
 {
     std::shared_lock lock(mtx_);
-    return std::accumulate(sessions_.begin(), sessions_.end(), 0, [](size_t n, pool_instance const& s) {
+    return std::accumulate(sessions_.begin(), sessions_.end(), 0, [](size_t n, pool_intern_item const& s) {
         return n + (s.active() ? 1 : 0);
     });
 }
@@ -93,7 +100,7 @@ DBM_INLINE size_t pool::num_active_connections() const
 DBM_INLINE size_t pool::num_idle_connections() const
 {
     std::shared_lock lock(mtx_);
-    return std::accumulate(sessions_.begin(), sessions_.end(), 0, [](size_t n, pool_instance const& s) {
+    return std::accumulate(sessions_.begin(), sessions_.end(), 0, [](size_t n, pool_intern_item const& s) {
         return n + (s.active() ? 0 : 1);
     });
 }

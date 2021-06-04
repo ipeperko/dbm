@@ -1,12 +1,12 @@
-#ifndef DBM_POOL_INSTANCE_HPP
-#define DBM_POOL_INSTANCE_HPP
+#ifndef DBM_POOL_INTERN_ITEM_HPP
+#define DBM_POOL_INTERN_ITEM_HPP
 
 #include "session.hpp"
 #include <chrono>
 
 namespace dbm {
 
-class pool_instance
+class pool_intern_item
 {
 public:
 
@@ -42,4 +42,4 @@ private:
 
 }
 
-#endif //DBM_POOL_INSTANCE_HPP
+#endif //DBM_POOL_INTERN_ITEM_HPP
