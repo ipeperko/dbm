@@ -3,7 +3,7 @@
 
 #include "pool_intern_item.hpp"
 #include "pool_connection.hpp"
-#include <list>
+#include <vector>
 #include <numeric>
 #include <shared_mutex>
 #include <atomic>
@@ -23,24 +23,18 @@ public:
         size_t n_heartbeats {0};
     };
 
-    auto debug_log() const
-    {
-        return utils::debug_logger(utils::debug_logger::level::Debug, debug_);
-    }
 
-    auto error_log() const
-    {
-        return utils::debug_logger(utils::debug_logger::level::Debug, debug_);
-    }
+    pool();
 
+    pool(pool const&) = delete;
 
-    pool()
-    {
-        do_run_ = true;
-        thr_ = std::thread([this]{ heartbeat_task(); });
-    }
+    pool(pool&&) = delete;
 
     ~pool();
+
+    pool& operator=(pool const&) = delete;
+
+    pool& operator=(pool&&) = delete;
 
     auto max_connections() const
     {
@@ -110,6 +104,16 @@ public:
 
     void enable_debbug(bool enable) { debug_ = enable; }
 
+    auto debug_log() const
+    {
+        return utils::debug_logger(utils::debug_logger::level::Debug, debug_);
+    }
+
+    auto error_log() const
+    {
+        return utils::debug_logger(utils::debug_logger::level::Error, debug_);
+    }
+
 private:
     void release(session* s);
     void notify_release();
@@ -132,6 +136,13 @@ private:
     std::unordered_map<::dbm::session*, std::unique_ptr<pool_intern_item>> sessions_active_;
     std::unordered_map<::dbm::session*, std::unique_ptr<pool_intern_item>> sessions_idle_;
 };
+
+DBM_INLINE pool::pool()
+{
+    do_run_ = true;
+    thr_ = std::thread([this]{ heartbeat_task(); });
+}
+
 
 DBM_INLINE pool::~pool()
 {
