@@ -10,57 +10,109 @@
 
 namespace dbm {
 
-class pool
+class DBM_EXPORT pool
 {
 public:
     using MakeSessionFn = std::function<std::shared_ptr<session>()>;
 
-    pool()
-        : items_shared_(std::make_shared<pool_intern_item::shared_data>())
+    struct statistics
     {
-        items_shared_->heartbeat_query = "SELECT 1";
-        items_shared_->heartbeat_interval = std::chrono::seconds(5);
-        items_shared_->notify_available = [this](auto*) {
-            notify_release();
-        };
-        items_shared_->notify_heartbeat_error = [this](auto* item) {
-            std::cout << "items_shared_->notify_heartbeat_error" << std::endl;
-            // We need to remove from different thread to avoid deadlock
-            std::thread([this, item]() {
-                remove(item);
-            }).detach();
-        };
-        items_shared_->heartbeat_completed = nullptr; // disabled by default
+        size_t n_conn;
+        size_t n_active_conn;
+        size_t n_idle_conn;
+        size_t n_heartbeats;
+    };
+
+    auto debug_log()
+    {
+        return utils::debug_logger(utils::debug_logger::level::Debug, debug_);
     }
 
-    auto max_connections() const { return max_conn_; }
+    auto error_log()
+    {
+        return utils::debug_logger(utils::debug_logger::level::Debug, debug_);
+    }
+
+
+    pool()
+    {
+        do_run_ = true;
+        thr_ = std::thread([this]{ heartbeat_task(); });
+    }
+
+    ~pool()
+    {
+        do_run_ = false;
+        if (thr_.joinable())
+            thr_.join();
+
+        std::unique_lock lock(mtx_);
+        sessions_idle_.clear();
+        lock.unlock();
+
+        while (!sessions_active_.empty()) {
+            debug_log() << "Cannot exit pool - unreleased connections";
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    }
+
+    auto max_connections() const
+    {
+        std::shared_lock lock(mtx_);
+        return max_conn_;
+    }
 
     void set_max_connections(size_t n)
     {
+        std::lock_guard lock(mtx_);
         max_conn_ = n;
     }
 
-    auto acquire_timeout() const { return acquire_timeout_; }
-
-    void set_acquire_timeout(std::chrono::milliseconds to) { acquire_timeout_ = to; }
-
-    void set_session_initializer(MakeSessionFn&& fn) { make_session_ = fn; }
-
-    void set_heartbeat_interval(std::chrono::milliseconds ms) { items_shared_->heartbeat_interval = ms; }
-
-    void set_heartbeat_query(std::string query) { items_shared_->heartbeat_query = std::move(query); }
-
-    void enable_heartbeat_count(bool enable)
+    auto acquire_timeout() const
     {
-        if (enable) {
-            items_shared_->heartbeat_completed = [this](auto*) {
-                ++heartbeat_counter_;
-            };
-        }
-        else {
-            items_shared_->heartbeat_completed = nullptr;
-            heartbeat_counter_ = 0;
-        }
+        std::shared_lock lock(mtx_);
+        return acquire_timeout_;
+    }
+
+    void set_acquire_timeout(std::chrono::milliseconds to)
+    {
+        std::lock_guard lock(mtx_);
+        acquire_timeout_ = to;
+    }
+
+    void set_session_initializer(MakeSessionFn&& fn)
+    {
+        std::lock_guard lock(mtx_);
+        make_session_ = fn;
+    }
+
+    void set_heartbeat_interval(std::chrono::milliseconds ms)
+    {
+        std::lock_guard lock(mtx_);
+        heartbeat_interval_ = ms;
+    }
+
+    void set_heartbeat_query(std::string query)
+    {
+        std::lock_guard lock(mtx_);
+        heartbeat_query_ = std::move(query);
+    }
+
+    void reset_heartbeats_counter()
+    {
+        std::lock_guard lock(mtx_);
+        heartbeat_counter_ = 0;
+    }
+
+    statistics stat()
+    {
+        statistics s;
+        std::shared_lock lock(mtx_); // TODO: locking mutex is not the best way to get stat data
+        s.n_conn = sessions_idle_.size() + sessions_active_.size();
+        s.n_active_conn = sessions_active_.size();
+        s.n_idle_conn = sessions_idle_.size();
+        s.n_heartbeats = heartbeat_counter_;
+        return s;
     }
 
     pool_connection acquire();
@@ -70,57 +122,81 @@ public:
     size_t num_idle_connections() const;
     size_t heartbeats_count() const { return heartbeat_counter_; }
 
+    void enable_debbug(bool enable) { debug_ = enable; }
+
 private:
-    void remove(pool_intern_item*);
+    void remove(session* s);
     void release(session* s);
     void notify_release();
+    void heartbeat_task();
 
     size_t max_conn_ {10};
-    std::list<pool_intern_item> sessions_;
     MakeSessionFn make_session_;
     std::shared_mutex mutable mtx_; // mutex protecting sessions_
     std::condition_variable cv_;
     std::mutex mutable cv_mtx_; // mutex protecting cv_
     std::chrono::milliseconds acquire_timeout_ {5000};
-    std::shared_ptr<pool_intern_item::shared_data> items_shared_;
+    std::atomic<size_t> n_acquiring_;
     std::atomic<size_t> heartbeat_counter_ {0};
+    std::string heartbeat_query_ {"SELECT 1" };
+    std::chrono::milliseconds heartbeat_interval_ {5000};
+    std::thread thr_;
+    std::atomic<bool> do_run_ {false};
+    bool debug_ {false};
+
+    std::unordered_map<::dbm::session*, std::unique_ptr<pool_intern_item>> sessions_active_;
+    std::unordered_map<::dbm::session*, std::unique_ptr<pool_intern_item>> sessions_idle_;
 };
 
 DBM_INLINE pool_connection pool::acquire()
 {
     using clock_t = std::chrono::steady_clock;
-    auto tp0 = clock_t::now();
-    auto expire = tp0 + acquire_timeout_;
+    auto started = clock_t::now();
+    auto expires = started + acquire_timeout_;
+
+    ++n_acquiring_;
+
+    utils::execute_at_exit atexit([this]{
+        --n_acquiring_;
+    });
 
     while (true) {
+
         // Lock mutex
         std::unique_lock lock(mtx_);
 
         // Check existing connections
-        for (auto& it : sessions_) {
-            if (it.activate()) {
-                return pool_connection(it.get(), [this, cn = it.get().get()]() {
-                    release(cn);
-                });
-            }
+        auto it_available = std::find_if(sessions_idle_.begin(), sessions_idle_.end(), [](auto const& it) {
+            return it.second->state_ == pool_intern_item::state::idle;
+        });
+
+        if (it_available != sessions_idle_.end()) {
+            auto& session = it_available->second->session_;
+            it_available->second->state_ = pool_intern_item::state::active;
+            sessions_active_[it_available->first] = std::move(it_available->second);
+            sessions_idle_.erase(it_available);
+            return pool_connection(session, [this, ptr = session.get()]() {
+                release(ptr);
+            });
         }
 
         // All connections active or none initialized
-        if (sessions_.size() >= max_conn_) {
-            // Inlock
+        if (sessions_active_.size() >= max_conn_) {
+
+            // Unlock
             lock.unlock();
 
             // Check timeout
-            std::chrono::duration<double, std::milli> dt = clock_t::now() - tp0;
+            std::chrono::duration<double, std::milli> dt = clock_t::now() - started;
             if (dt > acquire_timeout_) {
                 //std::string msg = "connection timeout dt = " + std::to_string(dt.count()) + " > acquire_timeout_ = " + std::to_string(acquire_timeout_.count());
-                //throw_exception(msg);
+                //throw_exception(msg)
                 throw_exception("connection acquire timeout");
             }
 
             // Wait for free connection with timeout
             std::unique_lock cv_lk(cv_mtx_);
-            cv_.wait_until(cv_lk, expire);
+            cv_.wait_until(cv_lk, expires);
 
             // continue one more time and try to acquire connection
             //std::this_thread::yield();
@@ -128,34 +204,26 @@ DBM_INLINE pool_connection pool::acquire()
         }
 
         // Add connection instance
-        auto& s = sessions_.emplace_back(items_shared_);
-
-        // Initialize instance
         if (!make_session_)
             throw_exception("Session initializer function not defined");
-        s.set(make_session_());
+        auto* new_intern_item = new pool_intern_item(make_session_());
+        auto* ptr = new_intern_item->session_.get();
+        sessions_active_[ptr] = std::unique_ptr<pool_intern_item>(new_intern_item);
 
         // Return pool_connection
-        return pool_connection(s.get(), [this, cn = s.get().get()]() {
-            release(cn);
+        return pool_connection(new_intern_item->session_, [this, ptr]() {
+            release(ptr);
         });
     }
 }
 
-DBM_INLINE void pool::remove(pool_intern_item* item)
+DBM_INLINE void pool::remove(session* s)
 {
-    std::unique_lock lock(mtx_);
+    debug_log() << "remove session " << s;
 
-    std::cout << "remove item " << item << " session " << item->get().get() << std::endl;
-
-    auto it = std::find_if(sessions_.begin(), sessions_.end(), [&](auto const& it) {
-        return &it == item;
-    });
-
-    if (it != sessions_.end()) {
-        sessions_.erase(it);
-        lock.unlock();
-        notify_release();
+    auto it = sessions_idle_.find(s);
+    if (it != sessions_idle_.end()) {
+        sessions_idle_.erase(it);
     }
 }
 
@@ -163,17 +231,19 @@ DBM_INLINE void pool::release(session* s)
 {
     std::unique_lock lock(mtx_);
 
-    std::cout << "release session " << s << std::endl;
+    debug_log() << "release session " << s;
 
     // TODO: maybe clear result set ?
 
-    for (auto& it : sessions_) {
-        if (it.get().get() == s) {
-            it.deactivate();
-            lock.unlock(); // TODO: should unlock mtx_ here?
-            notify_release();
-            return;
-        }
+    auto it = sessions_active_.find(s);
+    if (it != sessions_active_.end()) {
+        it->second->state_ = pool_intern_item::state::idle;
+        it->second->heartbeat_time_ = pool_intern_item::clock_t::now();
+        sessions_idle_[s] = std::move(it->second);
+        sessions_active_.erase(it);
+        lock.unlock(); // TODO: should unlock mtx_ here?
+        notify_release();
+        return;
     }
 
     throw_exception("No such connection to release"); // TODO: maybe just quiet exit without exception?
@@ -182,29 +252,97 @@ DBM_INLINE void pool::release(session* s)
 DBM_INLINE size_t pool::num_connections() const
 {
     std::shared_lock lock(mtx_);
-    return sessions_.size();
+    return sessions_active_.size() + sessions_idle_.size();
 }
 
 DBM_INLINE size_t pool::num_active_connections() const
 {
     std::shared_lock lock(mtx_);
-    return std::accumulate(sessions_.begin(), sessions_.end(), 0, [](size_t n, pool_intern_item const& s) {
-        return n + (s.active() ? 1 : 0);
-    });
+    return sessions_active_.size();
 }
 
 DBM_INLINE size_t pool::num_idle_connections() const
 {
     std::shared_lock lock(mtx_);
-    return std::accumulate(sessions_.begin(), sessions_.end(), 0, [](size_t n, pool_intern_item const& s) {
-        return n + (s.active() ? 0 : 1);
-    });
+    return sessions_idle_.size();
 }
 
 DBM_INLINE void pool::notify_release()
 {
     std::lock_guard lk(cv_mtx_);
     cv_.notify_all();
+}
+
+DBM_INLINE void pool::heartbeat_task()
+{
+    using clock_t = pool_intern_item::clock_t;
+
+    // initial sleep
+    std::chrono::milliseconds sleep_time = std::chrono::milliseconds(500);
+
+    while (do_run_) {
+
+        std::this_thread::sleep_for(sleep_time);
+
+        if (heartbeat_interval_ == std::chrono::seconds(0))
+            continue;;
+
+        // try to lock mutex
+        if (mtx_.try_lock()) {
+            // we managed to acquire mutex lock
+
+            // find items and perform heartbeat query if necessary
+            std::vector<pool_intern_item*> items;
+
+            for (auto& it : sessions_idle_) {
+                if (it.second->state_ == pool_intern_item::state::idle && clock_t::now() - it.second->heartbeat_time_ >  heartbeat_interval_) {
+                    it.second->state_ = pool_intern_item::state::pending_heartbeat;
+                    items.push_back(it.second.get());
+                }
+            }
+
+            // Unlock mutex and perform heartbeats
+            // we don't need mutex lock as sessions on which heartbeat will be
+            // performed already have state pending_heartbeat
+            mtx_.unlock();
+
+            std::vector<pool_intern_item*> items_failed;
+
+            for (auto* it : items) {
+                try {
+                    debug_log() << "performing heartbeat session " << it->session_.get();
+                    if (!it->session_->select(heartbeat_query_).empty()) {
+                        it->heartbeat_time_ = clock_t::now();
+                        it->state_ = pool_intern_item::state::idle;
+                        ++heartbeat_counter_;
+                    }
+                }
+                catch (std::exception& e) {
+                    error_log() << "Heartbeat error session " << it->session_.get() << " : " << e.what();
+                    it->state_ = pool_intern_item::state::canceled;
+                    items_failed.push_back(it);
+                }
+            }
+
+            if (!items_failed.empty()) {
+                // remove items from idle session list
+                mtx_.lock();
+
+                for (auto* it : items_failed) {
+                    sessions_idle_.erase(it->session_.get());
+                }
+
+                // notify connections released
+                mtx_.unlock();
+                notify_release();
+            }
+        }
+        else {
+            // if try lock fails it is likely that pool load is high so we
+            // will try later again and adjust sleep time to a lower value
+            sleep_time = std::chrono::milliseconds(100);
+        }
+    }
 }
 
 }

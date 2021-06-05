@@ -109,6 +109,70 @@ private:
     std::stringbuf sb_;
 };
 
+template <typename Fn>
+class execute_at_exit
+{
+    Fn fn_;
+    bool canceled_ {false};
+public:
+    explicit execute_at_exit(Fn&& fn)
+        : fn_(std::move(fn))
+    {}
+
+    ~execute_at_exit()
+    {
+        if (!canceled_)
+            fn_();
+    }
+
+    void cancel() { canceled_ = true; }
+};
+
+class DBM_EXPORT debug_logger
+{
+public:
+
+    enum class level
+    {
+        Debug,
+        Error
+    };
+
+    explicit debug_logger(level lv, bool enable)
+        : lv_(lv), enabled_(enable)
+    {
+    }
+
+    ~debug_logger()
+    {
+        if (enabled_) {
+            if (lv_ == level::Debug) {
+                std::cout << os_.str() << std::endl;
+            }
+            else {
+                std::cerr << os_.str() << std::endl;
+            }
+        }
+    }
+
+    void enable(bool val) { enabled_ = val; }
+
+    template<typename T>
+    debug_logger& operator<<(T const& val)
+    {
+        if (enabled_) {
+            os_ << val;
+        }
+
+        return *this;
+    }
+
+private:
+    std::ostringstream os_;
+    bool enabled_{false};
+    level lv_;
+};
+
 } // namespase utils
 } // namespace dbm
 

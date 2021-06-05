@@ -879,4 +879,18 @@ BOOST_AUTO_TEST_CASE(timer_repeat)
     BOOST_TEST(rep.count == 6);
 }
 
+BOOST_AUTO_TEST_CASE(execute_at_exit)
+{
+    int val = 0;
+    {
+        dbm::utils::execute_at_exit ex([&]{
+            val = 2;
+        });
+
+        val = 1;
+    }
+
+    BOOST_TEST(val == 2);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

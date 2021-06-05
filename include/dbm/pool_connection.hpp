@@ -5,7 +5,7 @@
 
 namespace dbm {
 
-class pool_connection
+class DBM_EXPORT pool_connection
 {
 public:
     pool_connection() = default;
@@ -37,16 +37,17 @@ public:
     session& get()
     {
         if (!p_)
-            throw_exception("session is null");
+            throw_exception("pool_connection::get session is null");
         return *p_;
     }
 
     // releases session from pool
     void release()
     {
-        if (resetter_)
+        if (resetter_) {
             resetter_();
-        resetter_ = nullptr;
+            resetter_ = nullptr;
+        }
         p_ = nullptr;
     }
 

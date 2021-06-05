@@ -20,6 +20,7 @@ constexpr const char* db_name = "dbm_pool_unit_test";
 void setup_pool(dbm::pool& pool)
 {
     pool.set_max_connections(10);
+    pool.enable_debbug(true);
     pool.set_session_initializer([]() {
         auto conn = std::make_shared<dbm::mysql_session>();
         db_settings::instance().init_mysql_session(*conn, db_name);
@@ -29,7 +30,7 @@ void setup_pool(dbm::pool& pool)
 }
 }
 
-BOOST_AUTO_TEST_SUITE(TstBasicTypes)
+BOOST_AUTO_TEST_SUITE(TstPool)
 
 BOOST_AUTO_TEST_CASE(pool_init)
 {
@@ -174,30 +175,28 @@ BOOST_AUTO_TEST_CASE(pool_acquire_timeout_exception)
     t1.join();
 }
 
-//BOOST_AUTO_TEST_CASE(pool_heartbeat_error)
-//{
-//    dbm::pool pool;
-//    setup_pool(pool);
-//    pool.set_heartbeat_interval(std::chrono::seconds(1));
-//    pool.enable_heartbeat_count(true);
-//    BOOST_TEST(pool.num_connections() == 0);
-//
-//
-//    auto conn = pool.acquire();
-//    auto* db = &conn.get();
-//    conn.release();
-//
-//    std::this_thread::sleep_for(std::chrono::milliseconds(2500));
-//    BOOST_TEST(pool.heartbeats_count() == 2);
-//
-//    db->close(); // manually close connection
-//
-//    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
-//    BOOST_TEST(pool.num_connections() == 0);
-//}
+BOOST_AUTO_TEST_CASE(pool_heartbeat_error)
+{
+    dbm::pool pool;
+    setup_pool(pool);
+    pool.set_heartbeat_interval(std::chrono::seconds(1));
+    BOOST_TEST(pool.num_connections() == 0);
 
-// The goal of this test is to verify if all tasks acquired connection
-// in a high load scenario (num threads > max connections in pool)
+    auto conn = pool.acquire();
+    auto* db = &conn.get();
+    conn.release();
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+    BOOST_TEST(pool.heartbeats_count() == 2);
+
+    db->close(); // manually close connection
+
+    // verify connection has been removed
+    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+    BOOST_TEST(pool.num_connections() == 0);
+}
+
+
 class PoolHighLoad
 {
 public:
@@ -261,6 +260,8 @@ public:
     dbm::pool pool;
 };
 
+// The goal of this test is to verify if all tasks acquired connection
+// in a high load scenario (num threads > max connections in pool)
 BOOST_AUTO_TEST_CASE(pool_acquire_high_load)
 {
     PoolHighLoad high_load;
@@ -279,6 +280,11 @@ BOOST_AUTO_TEST_CASE(pool_acquire_high_load)
         high_load.run();
 
     }
+}
+
+BOOST_AUTO_TEST_CASE(pool_variable_load)
+{
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()
