@@ -146,6 +146,8 @@ DBM_INLINE pool::pool()
 
 DBM_INLINE pool::~pool()
 {
+    debug_log() << "Exit pool begin";
+
     do_run_ = false;
 
     if (thr_.joinable())
@@ -157,7 +159,7 @@ DBM_INLINE pool::~pool()
         if (sessions_active_.empty() && sessions_idle_.empty())
             break;
 
-        debug_log() << "Cannot exit pool - waiting unreleased connections";
+        debug_log() << "Exit pool : waiting connections to close";
 
         if (!sessions_idle_.empty()) {
             sessions_idle_.clear();
@@ -167,6 +169,8 @@ DBM_INLINE pool::~pool()
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+
+    debug_log() << "Exit pool end";
 }
 
 DBM_INLINE pool_connection pool::acquire()
@@ -193,6 +197,7 @@ DBM_INLINE pool_connection pool::acquire()
         if (it_available != sessions_idle_.end()) {
             // Idle connection will be reused
             auto& session = it_available->second->session_;
+            debug_log() << "Activating idle session " << session.get();
             it_available->second->state_ = pool_intern_item::state::active;
             sessions_active_[it_available->first] = std::move(it_available->second);
             sessions_idle_.erase(it_available);
@@ -208,12 +213,8 @@ DBM_INLINE pool_connection pool::acquire()
             lock.unlock();
 
             // Check timeout
-            std::chrono::duration<double, std::milli> dt = clock_t::now() - started;
-            if (dt > acquire_timeout_) {
-                //std::string msg = "connection timeout dt = " + std::to_string(dt.count()) + " > acquire_timeout_ = " + std::to_string(acquire_timeout_.count());
-                //throw_exception(msg)
-                throw_exception("connection acquire timeout");
-            }
+            if (clock_t::now() - started > acquire_timeout_)
+                throw_exception("Connection acquire timeout");
 
             // Wait for free connection with timeout
             std::unique_lock cv_lk(cv_mtx_);
@@ -227,9 +228,12 @@ DBM_INLINE pool_connection pool::acquire()
         // Add connection instance
         if (!make_session_)
             throw_exception("Session initializer function not defined");
+
         auto* new_intern_item = new pool_intern_item(make_session_());
         auto* ptr = new_intern_item->session_.get();
         sessions_active_[ptr] = std::unique_ptr<pool_intern_item>(new_intern_item);
+
+        debug_log() << "Creating session " << ptr;
 
         // Return pool_connection
         return pool_connection(new_intern_item->session_, [this, ptr]() {
@@ -240,7 +244,7 @@ DBM_INLINE pool_connection pool::acquire()
 
 DBM_INLINE void pool::release(session* s)
 {
-    debug_log() << "release session " << s;
+    debug_log() << "Release session " << s;
 
     std::unique_lock lock(mtx_);
 
@@ -321,7 +325,7 @@ DBM_INLINE void pool::heartbeat_task()
 
             for (auto* it : items) {
                 try {
-                    debug_log() << "performing heartbeat session " << it->session_.get();
+                    debug_log() << "Performing heartbeat session " << it->session_.get();
                     if (!it->session_->select(heartbeat_query_).empty()) {
                         it->heartbeat_time_ = clock_t::now();
                         it->state_ = pool_intern_item::state::idle;
@@ -340,6 +344,7 @@ DBM_INLINE void pool::heartbeat_task()
                 mtx_.lock();
 
                 for (auto* it : items_failed) {
+                    debug_log() << "Remove session " << it->session_.get();
                     sessions_idle_.erase(it->session_.get());
                 }
 

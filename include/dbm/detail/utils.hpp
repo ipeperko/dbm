@@ -15,35 +15,9 @@
 #define DBM_UNLIKELY
 #endif
 
-#ifdef NDEBUG
-#include <ostream>
-#else
 #include <iostream>
-#endif
 
 namespace dbm {
-
-// ----------------------------------------------------------
-// Debug msg
-// ----------------------------------------------------------
-#ifdef NDEBUG
-#define DBM_LOG dbm::no_log()
-#define DBM_LOG_ERROR dbm::no_log()
-
-class no_log
-{
-public:
-    template<typename T>
-    no_log& operator<<(const T&)
-    {
-        return *this;
-    }
-};
-
-#else
-#define DBM_LOG std::cout
-#define DBM_LOG_ERROR std::cerr
-#endif
 
 // ----------------------------------------------------------
 // Exception
@@ -76,6 +50,9 @@ template<typename ExceptionType = std::domain_error>
     throw ExceptionType(what); // if custom exception not exists or didn't throw
 }
 
+// ----------------------------------------------------------
+// Utils
+// ----------------------------------------------------------
 
 namespace utils {
 
@@ -96,6 +73,10 @@ T1 narrow_cast(const T2& v2)
     return casted;
 }
 
+// ----------------------------------------------------------
+// Input stream with ext buffer
+// ----------------------------------------------------------
+
 class DBM_EXPORT istream_extbuf : public std::istream
 {
 public:
@@ -108,6 +89,10 @@ public:
 private:
     std::stringbuf sb_;
 };
+
+// ----------------------------------------------------------
+// Execute at function exit
+// ----------------------------------------------------------
 
 template <typename Fn>
 class execute_at_exit
@@ -128,6 +113,10 @@ public:
     void cancel() { canceled_ = true; }
 };
 
+// ----------------------------------------------------------
+// Debug logger
+// ----------------------------------------------------------
+
 class DBM_EXPORT debug_logger
 {
 public:
@@ -145,6 +134,7 @@ public:
 
     ~debug_logger()
     {
+#ifndef NDEBUG
         if (enabled_) {
             if (lv_ == level::Debug) {
                 std::cout << os_.str() << std::endl;
@@ -153,17 +143,19 @@ public:
                 std::cerr << os_.str() << std::endl;
             }
         }
+#endif
     }
 
     void enable(bool val) { enabled_ = val; }
 
     template<typename T>
-    debug_logger& operator<<(T const& val)
+    debug_logger& operator<<([[maybe_unused]] T const& val)
     {
+#ifndef NDEBUG
         if (enabled_) {
             os_ << val;
         }
-
+#endif
         return *this;
     }
 

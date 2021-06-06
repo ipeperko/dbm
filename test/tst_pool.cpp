@@ -8,22 +8,19 @@
 
 //#define BOOST_TEST_MODULE dbm_pool
 #include <boost/test/unit_test.hpp>
-#include <dbm/impl/session.ipp>
 #include <atomic>
 
 using namespace boost::unit_test;
 
 namespace{
 
-constexpr const char* db_name = "dbm_pool_unit_test";
-
 void setup_pool(dbm::pool& pool)
 {
     pool.set_max_connections(10);
-    pool.enable_debbug(true);
+    //pool.enable_debbug(true);
     pool.set_session_initializer([]() {
         auto conn = std::make_shared<dbm::mysql_session>();
-        db_settings::instance().init_mysql_session(*conn, db_name);
+        db_settings::instance().init_mysql_session(*conn, db_settings::instance().test_db_name);
         conn->open();
         return conn;
     });
@@ -34,24 +31,6 @@ BOOST_AUTO_TEST_SUITE(TstPool)
 
 BOOST_AUTO_TEST_CASE(pool_init)
 {
-    auto& db_sett = db_settings::instance();
-//    dbm::mysql_session setup_session;
-//    setup_session.init(db_sett.mysql_host, db_sett.mysql_password, db_sett.mysql_password, db_sett.mysql_port, "");
-//    setup_session.open();
-//    setup_session.session::query(dbm::statement() << "DROP DATABASE IF EXISTS " << db_name);
-//    setup_session.session::query(dbm::statement() << "CREATE DATABASE " << db_name);
-//    setup_session.close();
-
-    // TODO: this is not portable, seems like mysql driver does not connect if database is null
-    system((dbm::statement() << "mysql -u " << db_sett.mysql_username
-                             << " -h " << db_sett.mysql_host
-                             << " -p" << db_sett.mysql_password
-                             << " -e 'DROP DATABASE IF EXISTS " << db_name << "'").get().c_str());
-    system((dbm::statement() << "mysql -u " << db_sett.mysql_username
-                             << " -h " << db_sett.mysql_host
-                             << " -p" << db_sett.mysql_password
-                             << " -e 'CREATE DATABASE " << db_name << "'").get().c_str());
-
     dbm::pool pool;
     setup_pool(pool);
     BOOST_TEST(pool.num_connections() == 0);
@@ -196,25 +175,16 @@ BOOST_AUTO_TEST_CASE(pool_heartbeat_error)
     BOOST_TEST(pool.num_connections() == 0);
 }
 
-
-class PoolHighLoad
+class LoadTask
 {
 public:
-    PoolHighLoad()
-    {
-        setup_pool(pool);
-        pool.set_max_connections(n_conn);
-        pool.set_acquire_timeout(std::chrono::seconds(5));
-        BOOST_TEST(pool.num_connections() == 0);
-    }
 
-    void run()
-    {
-        std::atomic<size_t> num_exceptions = 0;
-        std::mutex mtx;
-        std::atomic<size_t> max_active_conn = 0;
-        std::atomic<size_t> total_rows = 0;
+    LoadTask(dbm::pool& p)
+        : pool(p)
+    {}
 
+    void run(size_t n_threads)
+    {
         auto update_stat = [&](size_t num_active_conn) {
           std::lock_guard guard(mtx);
           if (num_active_conn > max_active_conn)
@@ -248,10 +218,41 @@ public:
         for (auto& t : threads) {
             t.join();
         }
+    }
 
-        BOOST_TEST(num_exceptions == 0);
-        BOOST_TEST(total_rows == n_threads);
-        BOOST_TEST(max_active_conn == pool.max_connections());
+    void reset()
+    {
+        num_exceptions = 0;
+        max_active_conn = 0;
+        total_rows = 0;
+    }
+
+    dbm::pool& pool;
+    std::atomic<size_t> num_exceptions = 0;
+    std::mutex mtx;
+    std::atomic<size_t> max_active_conn = 0;
+    std::atomic<size_t> total_rows = 0;
+};
+
+class PoolHighLoad
+{
+public:
+    PoolHighLoad()
+    {
+        setup_pool(pool);
+        pool.set_max_connections(n_conn);
+        pool.set_acquire_timeout(std::chrono::seconds(5));
+        BOOST_TEST(pool.num_connections() == 0);
+    }
+
+    void run()
+    {
+        LoadTask task(pool);
+        task.run(n_threads);
+
+        BOOST_TEST(task.num_exceptions == 0);
+        BOOST_TEST(task.total_rows == n_threads);
+        BOOST_TEST(task.max_active_conn == pool.max_connections());
         BOOST_TEST(pool.num_idle_connections() == n_conn);
     }
 
@@ -269,8 +270,8 @@ BOOST_AUTO_TEST_CASE(pool_acquire_high_load)
     int n_runs = 1;
     int argc = framework::master_test_suite().argc;
     for (int i = 0; i < argc - 1; i++) {
-        std::string arg = framework::master_test_suite().argv[i];
-        if (arg == "--pool-high-load-runs") {
+        std::string_view arg = framework::master_test_suite().argv[i];
+        if (arg == "--repeat-pool-acquire-high-load" && i < argc - 1) {
             n_runs = std::stoi(framework::master_test_suite().argv[i + 1]);
             break;
         }
@@ -278,13 +279,117 @@ BOOST_AUTO_TEST_CASE(pool_acquire_high_load)
 
     for (int i = 0; i < n_runs; i++) {
         high_load.run();
-
     }
 }
 
+
+class PoolVariableload
+{
+public:
+    PoolVariableload()
+    {
+        setup_pool(pool);
+        pool.set_heartbeat_interval(std::chrono::seconds(1));
+        BOOST_TEST(pool.num_connections() == 0);
+    }
+
+    void run()
+    {
+        LoadTask task(pool);
+        bool run = true;
+
+        ++run_count;
+
+        auto side_thr = std::thread([&] {
+            while (run) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                task.pool.num_connections();
+                task.pool.num_idle_connections();
+                task.pool.num_active_connections();
+                task.pool.stat();
+            }
+        });
+
+        auto reset_counters = [&] {
+            task.total_rows = 0;
+            task.num_exceptions = 0;
+            pool.reset_heartbeats_counter();
+        };
+
+        // run 5 threads
+        BOOST_TEST_MESSAGE("Pool connecting 5 threads");
+        reset_counters();
+        task.run(5);
+        BOOST_TEST(task.num_exceptions == 0);
+        BOOST_TEST(task.total_rows == 5);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+        // run another 5 threads - all connections must be reused
+        BOOST_TEST_MESSAGE("Pool connecting 5 threads");
+        reset_counters();
+        task.run(5);
+        BOOST_TEST(task.num_exceptions == 0);
+        BOOST_TEST(task.total_rows == 5);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+        // run 8 threads
+        BOOST_TEST_MESSAGE("Pool connecting 8 threads");
+        reset_counters();
+        task.run(8);
+        BOOST_TEST(task.num_exceptions == 0);
+        BOOST_TEST(task.total_rows == 8);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+        // run 20 threads
+        BOOST_TEST_MESSAGE("Pool connecting 20 threads");
+        reset_counters();
+        task.run(20);
+        BOOST_TEST(task.num_exceptions == 0);
+        BOOST_TEST(task.total_rows == 20);
+        pool.reset_heartbeats_counter();
+        std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+        BOOST_TEST(pool.heartbeats_count() >= 20);
+        BOOST_TEST(pool.heartbeats_count() <= 30);
+
+        // run 5 threads
+        BOOST_TEST_MESSAGE("Pool connecting 5 threads");
+        reset_counters();
+        task.run(5);
+        BOOST_TEST(task.num_exceptions == 0);
+        BOOST_TEST(task.total_rows == 5);
+        pool.reset_heartbeats_counter();
+        std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+        BOOST_TEST(pool.heartbeats_count() >= 20);
+        BOOST_TEST(pool.heartbeats_count() <= 30);
+
+        BOOST_TEST(task.max_active_conn == pool.max_connections());
+        BOOST_TEST(pool.num_idle_connections() == pool.max_connections());
+
+        run = false;
+        side_thr.join();
+    }
+
+    dbm::pool pool;
+    size_t run_count {0};
+};
+
 BOOST_AUTO_TEST_CASE(pool_variable_load)
 {
+    PoolVariableload var_load;
 
+    int n_runs = 2;
+    int argc = framework::master_test_suite().argc;
+    for (int i = 0; i < argc - 1; i++) {
+        std::string_view arg = framework::master_test_suite().argv[i];
+        if (arg == "--repeat-pool-variable-load" && i < argc - 1) {
+            n_runs = std::stoi(framework::master_test_suite().argv[i + 1]);
+            break;
+        }
+    }
+
+    for (int i = 0; i < n_runs; i++) {
+        var_load.run();
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
