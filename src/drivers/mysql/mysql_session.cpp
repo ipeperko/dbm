@@ -47,11 +47,11 @@ public:
         }
         */
 
-        if (mysql_query(con, statement.c_str())) {
+        if (mysql_real_query(con, statement.c_str(), statement.length())) {
             throw_exception<std::runtime_error>(std::string("MySql query error : ") + mysql_error(con) + " Statement: " + statement);
         }
 
-        // grab the result
+        /* grab the result */
         res_set = mysql_store_result(con);
         if (res_set == nullptr) {
 
@@ -204,7 +204,7 @@ void mysql_session::query(const std::string& statement)
         throw_exception<std::runtime_error>("MySQL connection not established!");
     }
 
-    if (mysql_query(reinterpret_cast<MYSQL*>(conn__), statement.c_str())) {
+    if (mysql_real_query(reinterpret_cast<MYSQL*>(conn__), statement.c_str(), statement.length())) {
         throw_exception<std::runtime_error>(mysql_error(reinterpret_cast<MYSQL*>(conn__)) + last_statement_info());
     }
 }
@@ -271,7 +271,6 @@ kind::sql_rows mysql_session::select_rows(const std::string& statement)
     }
 
     /* check error */
-    // TODO: move after fetch_row ??
     if (mysql_errno(reinterpret_cast<MYSQL*>(conn__)) != 0) {
         throw_exception<std::runtime_error>("Fetch row error");
     }

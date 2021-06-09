@@ -348,8 +348,8 @@ public:
         BOOST_TEST(task.total_rows == 20);
         pool.reset_heartbeats_counter();
         std::this_thread::sleep_for(std::chrono::milliseconds(2500));
-        BOOST_TEST(pool.heartbeats_count() >= 20);
-        BOOST_TEST(pool.heartbeats_count() <= 30);
+        BOOST_TEST(pool.heartbeats_count() >= 10); // normally 20 but side thread might block the process
+        BOOST_TEST(pool.heartbeats_count() <= 30); // normally 20 but sometimes might the process delay while heartbeat still in progress
 
         // run 5 threads
         BOOST_TEST_MESSAGE("Pool connecting 5 threads");
@@ -359,8 +359,8 @@ public:
         BOOST_TEST(task.total_rows == 5);
         pool.reset_heartbeats_counter();
         std::this_thread::sleep_for(std::chrono::milliseconds(2500));
-        BOOST_TEST(pool.heartbeats_count() >= 20);
-        BOOST_TEST(pool.heartbeats_count() <= 30);
+        BOOST_TEST(pool.heartbeats_count() >= 10); // normally 20 but side thread might block the process
+        BOOST_TEST(pool.heartbeats_count() <= 30); // normally 20 but sometimes might the process delay while heartbeat still in progress
 
         BOOST_TEST(task.max_active_conn == pool.max_connections());
         BOOST_TEST(pool.num_idle_connections() == pool.max_connections());

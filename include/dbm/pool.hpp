@@ -180,9 +180,7 @@ DBM_INLINE pool_connection pool::acquire()
     auto expires = started + acquire_timeout_;
 
     ++n_acquiring_;
-    utils::execute_at_exit atexit([this]{
-        --n_acquiring_;
-    });
+    utils::execute_at_exit atexit([this]{ --n_acquiring_; });
 
     while (true) {
 
@@ -207,21 +205,16 @@ DBM_INLINE pool_connection pool::acquire()
         }
 
         // All connections active or none initialized
-        if (sessions_active_.size() >= max_conn_) {
-
-            // Unlock
-            lock.unlock();
+        if (sessions_active_.size() + sessions_idle_.size() >= max_conn_) {
 
             // Check timeout
             if (clock_t::now() - started > acquire_timeout_)
                 throw_exception("Connection acquire timeout");
 
-            // Wait for free connection with timeout
+            // Wait for a free connection with timeout
             std::unique_lock cv_lk(cv_mtx_);
+            lock.unlock();
             cv_.wait_until(cv_lk, expires);
-
-            // continue one more time and try to acquire connection
-            //std::this_thread::yield();
             continue;
         }
 
@@ -256,7 +249,7 @@ DBM_INLINE void pool::release(session* s)
         it->second->heartbeat_time_ = pool_intern_item::clock_t::now();
         sessions_idle_[s] = std::move(it->second);
         sessions_active_.erase(it);
-        lock.unlock(); // TODO: should unlock mtx_ here?
+        lock.unlock();
         notify_release();
         return;
     }
@@ -284,7 +277,7 @@ DBM_INLINE size_t pool::num_idle_connections() const
 
 DBM_INLINE void pool::notify_release()
 {
-    std::lock_guard lk(cv_mtx_);
+//    std::lock_guard lk(cv_mtx_);
     cv_.notify_all();
 }
 

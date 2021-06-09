@@ -191,7 +191,7 @@ kind::sql_rows sqlite_session::select_rows(const std::string& statement)
         r.set_fields(&rows.field_names(), &rows.field_map());
 
         for (int ci = 0; ci < nColumn; ci++) {
-            r.emplace_back(azResult[i], azResult[i] ? strlen(azResult[i]) : 0); // TODO: strlen ?
+            r.emplace_back(azResult[i], azResult[i] ? strlen(azResult[i]) : 0);
             i++;
         }
     }
