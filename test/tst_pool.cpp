@@ -2,18 +2,15 @@
 
 #include "dbm/dbm.hpp"
 #include "db_settings.h"
+#include "common.h"
 #ifdef DBM_MYSQL
 #include <dbm/drivers/mysql/mysql_session.hpp>
 #endif
-
-//#define BOOST_TEST_MODULE dbm_pool
-#include <boost/test/unit_test.hpp>
 #include <atomic>
 
 using namespace boost::unit_test;
 
 namespace{
-
 void setup_pool(dbm::pool& pool)
 {
     pool.set_max_connections(10);
@@ -267,17 +264,7 @@ BOOST_AUTO_TEST_CASE(pool_acquire_high_load)
 {
     PoolHighLoad high_load;
 
-    int n_runs = 1;
-    int argc = framework::master_test_suite().argc;
-    for (int i = 0; i < argc - 1; i++) {
-        std::string_view arg = framework::master_test_suite().argv[i];
-        if (arg == "--repeat-pool-acquire-high-load" && i < argc - 1) {
-            n_runs = std::stoi(framework::master_test_suite().argv[i + 1]);
-            break;
-        }
-    }
-
-    for (int i = 0; i < n_runs; i++) {
+    for (int i = 0; i < get_cmlopt_nun_runs(1); i++) {
         high_load.run();
     }
 }
@@ -377,17 +364,7 @@ BOOST_AUTO_TEST_CASE(pool_variable_load)
 {
     PoolVariableload var_load;
 
-    int n_runs = 2;
-    int argc = framework::master_test_suite().argc;
-    for (int i = 0; i < argc - 1; i++) {
-        std::string_view arg = framework::master_test_suite().argv[i];
-        if (arg == "--repeat-pool-variable-load" && i < argc - 1) {
-            n_runs = std::stoi(framework::master_test_suite().argv[i + 1]);
-            break;
-        }
-    }
-
-    for (int i = 0; i < n_runs; i++) {
+    for (int i = 0; i < get_cmlopt_nun_runs(2); i++) {
         var_load.run();
     }
 }

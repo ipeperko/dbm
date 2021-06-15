@@ -6,6 +6,7 @@ add_executable(${BINARY}
     # common files
     db_settings.cpp
     db_settings.h
+    common.h
     no_driver_session.h
 
     # tests
