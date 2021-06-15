@@ -29,7 +29,7 @@ public:
     virtual void close() = 0;
 
     virtual void query(const std::string& statement);
-    void query(const detail::statement& q);
+    virtual void query(const detail::statement& q);
     kind::sql_rows select(const std::string& statement);
     kind::sql_rows select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria="");
     kind::sql_rows select(const detail::statement& q);

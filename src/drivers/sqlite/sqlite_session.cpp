@@ -1,7 +1,11 @@
 #ifdef DBM_SQLITE3
 
 #include <dbm/drivers/sqlite/sqlite_session.hpp>
+#include <dbm/dbm_common.hpp>
+
+#include <dbm/model_item.hpp>
 #include <dbm/model.hpp>
+#include <dbm/impl/model_item.ipp>
 #include <dbm/impl/model.ipp>
 #include <dbm/impl/session.ipp>
 #include <dbm/detail/model_query_helper.hpp>
@@ -187,7 +191,7 @@ kind::sql_rows sqlite_session::select_rows(const std::string& statement)
         r.set_fields(&rows.field_names(), &rows.field_map());
 
         for (int ci = 0; ci < nColumn; ci++) {
-            r.emplace_back(azResult[i], azResult[i] ? strlen(azResult[i]) : 0); // TODO: strlen ?
+            r.emplace_back(azResult[i], azResult[i] ? strlen(azResult[i]) : 0);
             i++;
         }
     }

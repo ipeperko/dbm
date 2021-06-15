@@ -7,6 +7,7 @@
 #include <dbm/detail/default_constraint.hpp>
 #include <dbm/detail/named_type.hpp>
 #include <dbm/detail/statement.hpp>
+#include <dbm/detail/timer.hpp>
 #include <dbm/detail/timestamp2u_converter.hpp>
 #include <functional>
 #include <memory>
