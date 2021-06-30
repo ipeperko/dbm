@@ -41,6 +41,11 @@ public:
         return *p_;
     }
 
+    bool is_valid() const
+    {
+        return p_ != nullptr;
+    }
+
     // releases session from pool
     void release()
     {
