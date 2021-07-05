@@ -124,7 +124,7 @@ public:
                 case data_type::Int64:
                 case data_type::UInt32:
                 case data_type::UInt16:
-                case data_type::Uint64:
+                case data_type::UInt64:
                     return "INTEGER";
                 case data_type::Timestamp2u:
                     return "TIMESTAMP";
@@ -158,7 +158,7 @@ public:
                     return "INT UNSIGNED";
                 case data_type::UInt16:
                     return "SMALLINT UNSIGNED";
-                case data_type::Uint64:
+                case data_type::UInt64:
                     return "BIGINT UNSIGNED";
                 case data_type::Nullptr:
                 case data_type::Char_ptr:

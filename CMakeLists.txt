@@ -60,6 +60,7 @@ set(HEADERS
     include/dbm/pool.hpp
     include/dbm/pool_intern_item.hpp
     include/dbm/pool_connection.hpp
+    include/dbm/prepared_statement.hpp
     include/dbm/serializer.hpp
     include/dbm/session.hpp
     include/dbm/sql_row.hpp

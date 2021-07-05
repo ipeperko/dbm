@@ -29,6 +29,8 @@ public:
 
     void query(const std::string& statement) override;
 
+    void query(dbm::kind::prepared_statement& stmt) override;
+
     std::string write_model_query(const model& m) const override;
     std::string read_model_query(const model& m, const std::string& extra_condition) const override;
     std::string delete_model_query(const model& m) const override;

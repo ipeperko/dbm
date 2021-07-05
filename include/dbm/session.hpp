@@ -3,6 +3,7 @@
 
 #include <dbm/dbm_common.hpp>
 #include <dbm/sql_types.hpp>
+#include <dbm/prepared_statement.hpp>
 
 namespace dbm {
 
@@ -35,6 +36,8 @@ public:
     kind::sql_rows select(const std::string& statement);
     kind::sql_rows select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria="");
     kind::sql_rows select(const detail::statement& q);
+
+    virtual void query(dbm::kind::prepared_statement& stmt) {}
 
     virtual std::string write_model_query(const model& m) const = 0;
     virtual std::string read_model_query(const model& m, const std::string& extra_condition="") const = 0;

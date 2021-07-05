@@ -18,6 +18,8 @@
 #include <mysql/errmsg.h>
 #endif
 
+#include <cstring>
+
 namespace dbm {
 
 namespace {
@@ -218,6 +220,68 @@ void mysql_session::query(const std::string& statement)
                                             + errmsg
                                             + std::string(" (") + std::to_string(errn)
                                             + std::string(")") + last_statement_info());
+    }
+}
+
+
+void mysql_session::query(dbm::kind::prepared_statement& stmt)
+{
+    MYSQL_STMT* stmt_handle = mysql_stmt_init(reinterpret_cast<MYSQL*>(conn__));
+    auto result = mysql_stmt_prepare(stmt_handle, stmt.statement().c_str(), stmt.statement().size());
+
+    MYSQL_BIND bind[stmt.size()];
+    my_bool isNull[stmt.size()];
+    memset(bind, 0, sizeof(MYSQL_BIND) * stmt.size());
+
+    for (auto i = 0u; i < stmt.size(); ++i)
+    {
+        auto& p = stmt.param(i);
+        MYSQL_BIND& b = bind[i];
+
+        b.buffer = p.buffer();
+
+        isNull[i] = p.is_null();
+        b.is_null = &isNull[i];
+
+        switch (p.type()) {
+            case dbm::kind::data_type::Nullptr:
+                b.buffer_type = MYSQL_TYPE_NULL;
+                break;
+            case dbm::kind::data_type::Bool:
+                b.buffer_type = MYSQL_TYPE_TINY;
+                break;
+            case dbm::kind::data_type::Int32:
+                b.buffer_type = MYSQL_TYPE_LONG;
+                break;
+            case dbm::kind::data_type::Int16:
+                b.buffer_type = MYSQL_TYPE_SHORT;
+                break;
+            case dbm::kind::data_type::Int64:
+                b.buffer_type = MYSQL_TYPE_LONGLONG;
+                break;
+            case dbm::kind::data_type::UInt32:
+                b.buffer_type = MYSQL_TYPE_LONG;
+                b.is_unsigned = true;
+                break;
+            case dbm::kind::data_type::UInt16:
+                b.buffer_type = MYSQL_TYPE_SHORT;
+                b.is_unsigned = true;
+                break;
+            case dbm::kind::data_type::UInt64:
+                b.buffer_type = MYSQL_TYPE_LONGLONG;
+                b.is_unsigned = true;
+                break;
+            case dbm::kind::data_type::Double:
+                b.buffer_type = MYSQL_TYPE_DOUBLE;
+                break;
+            case dbm::kind::data_type::String:
+                b.buffer_type = MYSQL_TYPE_STRING;
+                break;
+            default:
+                throw_exception("Type not supported"); // TODO: handle other types
+        }
+
+
     }
 }
 

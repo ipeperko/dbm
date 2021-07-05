@@ -71,6 +71,8 @@ public:
 
     virtual kind::data_type type() const noexcept = 0;
 
+    virtual void* buffer() noexcept = 0;
+
 protected:
     bool is_null_ {true};
     bool defined_ {false};
