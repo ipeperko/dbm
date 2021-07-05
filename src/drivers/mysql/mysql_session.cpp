@@ -15,6 +15,7 @@
 #endif
 #ifdef __linux
 #include <mysql/mysql.h>
+#include <mysql/errmsg.h>
 #endif
 
 namespace dbm {
@@ -205,7 +206,18 @@ void mysql_session::query(const std::string& statement)
     }
 
     if (mysql_real_query(reinterpret_cast<MYSQL*>(conn__), statement.c_str(), statement.length())) {
-        throw_exception<std::runtime_error>(mysql_error(reinterpret_cast<MYSQL*>(conn__)) + last_statement_info());
+        auto errn = mysql_errno(reinterpret_cast<MYSQL*>(conn__));
+        const char* errmsg = mysql_error(reinterpret_cast<MYSQL*>(conn__));
+
+        if (errn == CR_SERVER_GONE_ERROR || errn == CR_SERVER_LOST) {
+            /* connection lost */
+            close();
+        }
+
+        throw_exception<std::runtime_error>(std::string("MySql query error : ")
+                                            + errmsg
+                                            + std::string(" (") + std::to_string(errn)
+                                            + std::string(")") + last_statement_info());
     }
 }
 
@@ -214,19 +226,11 @@ kind::sql_rows mysql_session::select_rows(const std::string& statement)
     kind::sql_rows rows;
     unsigned num_fields = 0;
 
-    mstatement = statement;
-
     /* free result set if it holds any data */
     free_result_set();
 
-    if (!conn__) {
-        throw_exception<std::runtime_error>("MySQL connection not established!" + last_statement_info());
-    }
-
-    /* execute statement */
-    if (mysql_query(reinterpret_cast<MYSQL*>(conn__), statement.c_str())) {
-        throw_exception<std::runtime_error>(std::string("MySql query error : ") + mysql_error(reinterpret_cast<MYSQL*>(conn__)) + last_statement_info());
-    }
+    /* execute query */
+    query(statement);
 
     /* grab the result */
     res_set__ = mysql_store_result(reinterpret_cast<MYSQL*>(conn__));

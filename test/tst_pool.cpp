@@ -41,6 +41,7 @@ BOOST_AUTO_TEST_CASE(pool_acquire_release)
 
     // Acquire connection
     auto conn1 = pool.acquire();
+    BOOST_TEST(conn1.is_valid());
     BOOST_TEST(pool.num_connections() == 1);
     BOOST_TEST(pool.num_active_connections() == 1);
     BOOST_TEST(pool.num_idle_connections() == 0);
@@ -51,6 +52,7 @@ BOOST_AUTO_TEST_CASE(pool_acquire_release)
 
     // Acquire another connection (should create a new one)
     auto conn2 = pool.acquire();
+    BOOST_TEST(conn2.is_valid());
     BOOST_TEST(pool.num_connections() == 2);
     BOOST_TEST(pool.num_active_connections() == 2);
     BOOST_TEST(pool.num_idle_connections() == 0);
@@ -61,11 +63,13 @@ BOOST_AUTO_TEST_CASE(pool_acquire_release)
 
     // Release connections
     conn1.release();
+    BOOST_TEST(!conn1.is_valid());
     BOOST_TEST(pool.num_connections() == 2);
     BOOST_TEST(pool.num_active_connections() == 1);
     BOOST_TEST(pool.num_idle_connections() == 1);
 
     conn2.release();
+    BOOST_TEST(!conn2.is_valid());
     BOOST_TEST(pool.num_connections() == 2);
     BOOST_TEST(pool.num_active_connections() == 0);
     BOOST_TEST(pool.num_idle_connections() == 2);

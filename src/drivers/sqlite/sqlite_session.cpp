@@ -149,6 +149,7 @@ void sqlite_session::query(const std::string& statement)
 
     int rc = sqlite3_exec(db3, statement.c_str(), nullptr, nullptr, zErrMsg.ptr());
     if (rc != SQLITE_OK) {
+        // TODO: check connection lost
         throw_exception<std::runtime_error>("SQLite error " + zErrMsg.to_string() + last_statement_info());
     }
 }

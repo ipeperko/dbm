@@ -28,9 +28,6 @@ public:
     state state_ {state::idle};
     std::shared_ptr<::dbm::session> session_;
     clock_t::time_point heartbeat_time_;
-
-//    std::chrono::steady_clock::duration duration_active_;
-//    std::chrono::steady_clock::duration duration_idle_;
 };
 
 }

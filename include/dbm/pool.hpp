@@ -247,7 +247,9 @@ DBM_INLINE void pool::release(session* s)
     if (it != sessions_active_.end()) {
         it->second->state_ = pool_intern_item::state::idle;
         it->second->heartbeat_time_ = pool_intern_item::clock_t::now();
-        sessions_idle_[s] = std::move(it->second); // TODO: if not connected just remove
+        if (it->second->session_->is_connected()) {
+            sessions_idle_[s] = std::move(it->second);
+        }
         sessions_active_.erase(it);
         lock.unlock();
         notify_release();

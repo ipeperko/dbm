@@ -28,6 +28,8 @@ public:
     virtual void open() = 0;
     virtual void close() = 0;
 
+    virtual bool is_connected() const = 0;
+
     virtual void query(const std::string& statement);
     virtual void query(const detail::statement& q);
     kind::sql_rows select(const std::string& statement);

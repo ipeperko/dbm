@@ -26,6 +26,8 @@ public:
     void open() override;
     void close() override;
 
+    bool is_connected() const override { return db3 != nullptr; }
+
     void query(const std::string& statement) override;
 
     std::string write_model_query(const model& m) const override;
