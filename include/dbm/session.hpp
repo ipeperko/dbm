@@ -5,6 +5,8 @@
 #include <dbm/sql_types.hpp>
 #include <dbm/prepared_statement.hpp>
 
+#include <unordered_map>
+
 namespace dbm {
 
 class model;
@@ -31,13 +33,15 @@ public:
 
     virtual bool is_connected() const = 0;
 
-    virtual void query(const std::string& statement);
+    virtual void query(const std::string& statement); // TODO: string_view
     virtual void query(const detail::statement& q);
-    kind::sql_rows select(const std::string& statement);
+    kind::sql_rows select(const std::string& statement); // TODO: string_view
     kind::sql_rows select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria="");
     kind::sql_rows select(const detail::statement& q);
 
-    virtual void query(dbm::kind::prepared_statement& stmt) {}
+    virtual void init_prepared_statement(dbm::kind::prepared_statement& stmt) {}
+    virtual void query(kind::prepared_statement& stmt) {}
+    virtual std::vector<std::vector<container_ptr>> select_prepared_statement(kind::prepared_statement& stmt) { return {}; }
 
     virtual std::string write_model_query(const model& m) const = 0;
     virtual std::string read_model_query(const model& m, const std::string& extra_condition="") const = 0;
@@ -54,16 +58,20 @@ public:
     void create_table(const model& m, bool if_not_exists);
     void drop_table(const model& m, bool if_exists);
 
-    std::string const& last_statement() const noexcept { return mstatement; }
+    std::string const& last_statement() const noexcept { return last_statement_; }
     std::string last_statement_info() const;
 
     model& operator>>(model& m);
     model&& operator>>(model&& m);
 
+    auto& prepared_statement_handles() { return prepared_stm_handle_; }
+    auto const& prepared_statement_handles() const { return prepared_stm_handle_; }
+
 protected:
     virtual kind::sql_rows select_rows(const std::string& statement) { return {}; }
 
-    std::string mstatement;
+    std::string last_statement_;
+    std::unordered_map<std::string, void*> prepared_stm_handle_;
 };
 
 /*!

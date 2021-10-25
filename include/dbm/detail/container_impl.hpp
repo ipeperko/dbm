@@ -120,6 +120,8 @@ public:
 
     void* buffer() noexcept override { return &val_; }
 
+    size_t length() const noexcept;
+
 private:
     value_type val_;
     validator_fn validator_;

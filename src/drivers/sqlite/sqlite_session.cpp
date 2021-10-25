@@ -145,7 +145,7 @@ void sqlite_session::query(const std::string& statement)
 {
     ErrMsg zErrMsg;
 
-    mstatement = statement;
+    last_statement_ = statement;
 
     int rc = sqlite3_exec(db3, statement.c_str(), nullptr, nullptr, zErrMsg.ptr());
     if (rc != SQLITE_OK) {
@@ -162,7 +162,7 @@ kind::sql_rows sqlite_session::select_rows(const std::string& statement)
     ErrMsg zErrMsg;
     kind::sql_rows rows;
 
-    mstatement = statement;
+    last_statement_ = statement;
 
     free_table();
 

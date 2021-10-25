@@ -335,6 +335,17 @@ bool container_impl<T, ContType, conf>::deserialize(deserializer& s, std::string
     }
 }
 
+template<typename T, template<typename> class ContType, container_conf conf>
+size_t container_impl<T, ContType, conf>::length() const noexcept
+{
+    if constexpr (std::is_same_v<std::string, unreferenced_type>) {
+        return val_.length();
+    }
+    // TODO: blob
+
+    return 0;
+}
+
 } // namespace dbm
 
 #endif

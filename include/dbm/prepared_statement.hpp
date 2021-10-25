@@ -3,47 +3,92 @@
 
 #include <dbm/container.hpp>
 
+class session;
+
 namespace dbm::kind {
 
 class prepared_statement
 {
+    friend class prepared_statement_manipulator;
 public:
-    prepared_statement() = default;
+//    prepared_statement() = default;
 
     explicit prepared_statement(std::string stmt)
         : stmt_(std::move(stmt))
-    {}
+    {
+//        prepare();
+    }
 
     ~prepared_statement() = default;
 
-    void set_statement(std::string stmt)
-    {
-        stmt_ = std::move(stmt);
-        parms_.clear();
-    }
+//    void set_statement(std::string stmt)
+//    {
+//        stmt_ = std::move(stmt);
+//        parms_.clear();
+//    }
+
+//    void query();
+//
+//    kind::sql_rows select();
 
     auto const& statement() const { return stmt_; }
 
-    void push(dbm::container_ptr&& p)
+//    auto& get_model() { return model_; }
+//
+//    auto const& get_model() const { return model_; }
+//
+//    auto& get_session() { return session_; }
+//
+//    auto const& get_session() const { return session_; }
+
+
+    void push(container* p)
     {
-        parms_.push_back(std::move(p));
+        parms_.push_back(p);
     }
 
-    auto& param(size_t idx)
+    auto& parms() { return parms_; }
+
+    auto const& parms() const { return parms_; }
+
+    container* param(size_t idx)
     {
-        return *parms_.at(idx);
+        return parms_.at(idx);
     }
 
-    auto const& param(size_t idx) const
+    container* const param(size_t idx) const
     {
-        return *parms_.at(idx);
+        return parms_.at(idx);
     }
 
     auto size() const { return parms_.size(); }
 
+    auto native_handle() { return native_handle_; }
+
+//    void set_native_handle(void* p) { native_handle_ = p; } // TODO: hide this
+
 private:
-    std::string stmt_;
-    std::vector<dbm::container_ptr> parms_;
+//    void prepare();
+
+//    model& model_;
+//    session& session_;
+    std::string stmt_; // TODO: std::shared_ptr<std::string const>
+    std::vector<container*> parms_;
+    //std::vector<container_ptr> parms_local_; // TODO: local storage optional
+    void* native_handle_ {nullptr};
+};
+
+class prepared_statement_manipulator
+{
+public:
+    explicit prepared_statement_manipulator(prepared_statement& ps)
+        : ps_(ps)
+    {}
+
+    void set_native_handle(void* p) { ps_.native_handle_ = p; }
+
+private:
+    prepared_statement& ps_;
 };
 
 } // namespace dbm

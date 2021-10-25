@@ -38,19 +38,19 @@ DBM_INLINE void session::transaction::perform(bool do_commit)
 }
 
 DBM_INLINE session::session(const session& oth)
-    : mstatement(oth.mstatement)
+    : last_statement_(oth.last_statement_)
 {
 }
 
 DBM_INLINE session::session(session&& oth) noexcept
-    : mstatement(std::move(oth.mstatement))
+    : last_statement_(std::move(oth.last_statement_))
 {
 }
 
 DBM_INLINE session& session::operator=(const session& oth)
 {
     if (this != &oth) {
-        mstatement = oth.mstatement;
+        last_statement_ = oth.last_statement_;
     }
     return *this;
 }
@@ -58,14 +58,14 @@ DBM_INLINE session& session::operator=(const session& oth)
 DBM_INLINE session& session::operator=(session&& oth) noexcept
 {
     if (this != &oth) {
-        mstatement = std::move(oth.mstatement);
+        last_statement_ = std::move(oth.last_statement_);
     }
     return *this;
 }
 
 DBM_INLINE void session::query(const std::string& statement)
 {
-    mstatement = statement;
+    last_statement_ = statement;
 }
 
 DBM_INLINE void session::query(const detail::statement& q)
@@ -80,7 +80,7 @@ DBM_INLINE kind::sql_rows session::select(const std::string& statement)
 
 DBM_INLINE kind::sql_rows session::select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria)
 {
-    std::string& statement = mstatement;
+    std::string& statement = last_statement_;
     statement = "SELECT ";
 
     int i = 0;
@@ -140,7 +140,7 @@ DBM_INLINE void session::drop_table(const model& m, bool if_exists)
 
 DBM_INLINE std::string session::last_statement_info() const
 {
-    return " - statement : " + mstatement;
+    return " - statement : " + last_statement_;
 }
 
 DBM_INLINE model& session::operator>>(model& m)

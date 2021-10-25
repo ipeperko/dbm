@@ -41,6 +41,11 @@ DBM_INLINE constexpr const kind::tag& model_item::tag() const noexcept
     return tag_;
 }
 
+DBM_INLINE container& model_item::get_container()
+{
+    return *cont_;
+}
+
 DBM_INLINE const container& model_item::get_container() const
 {
     return *cont_;

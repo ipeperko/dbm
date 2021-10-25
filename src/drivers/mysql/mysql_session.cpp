@@ -20,73 +20,10 @@
 
 #include <cstring>
 
+#define MYSQL_CONNECTION_HANDLE (reinterpret_cast<MYSQL*>(conn_))
+#define MYSQL_RES_HANDLE (reinterpret_cast<MYSQL_RES*>(res_set_))
+
 namespace dbm {
-
-namespace {
-
-class mysql_private
-{
-public:
-    explicit mysql_private(MYSQL* _con)
-    {
-        con = _con;
-        res_set = nullptr;
-    }
-
-    ~mysql_private()
-    {
-        if (res_set) {
-            mysql_free_result(res_set);
-            res_set = nullptr;
-        }
-    }
-
-    void execute(const std::string& statement)
-    {
-
-        /*
-        if (con == nullptr) {
-            throw "MySQL connection not established!";
-        }
-        */
-
-        if (mysql_real_query(con, statement.c_str(), statement.length())) {
-            throw_exception<std::runtime_error>(std::string("MySql query error : ") + mysql_error(con) + " Statement: " + statement);
-        }
-
-        /* grab the result */
-        res_set = mysql_store_result(con);
-        if (res_set == nullptr) {
-
-            if (mysql_field_count(con) > 0) {
-                throw_exception<std::runtime_error>(std::string("Error processing result set : ") + mysql_error(con) + " Statement: " + statement);
-            }
-            else {
-                throw_exception<std::runtime_error>(std::string("Error rows affected : ") + mysql_error(con) + " Statement: " + statement);
-            }
-        }
-
-        mysql_field_seek(res_set, 0);
-        for (unsigned i = 0; i < mysql_num_fields(res_set); i++) {
-            MYSQL_FIELD* field = mysql_fetch_field(res_set);
-            fieldnames.push_back(field->name);
-        }
-    }
-
-    int check_errors()
-    {
-        if (mysql_errno(con) != 0) {
-            throw_exception<std::runtime_error>("Fetch row error");
-        }
-
-        return 0;
-    }
-
-    MYSQL* con;        // pointer to connection handler
-    MYSQL_RES* res_set;// holds the result set
-    kind::sql_fields fieldnames;
-};
-}// namespace
 
 mysql_session::mysql_session()
 {
@@ -105,15 +42,17 @@ mysql_session::mysql_session(mysql_session&& oth) noexcept
 
 mysql_session& mysql_session::operator=(const mysql_session& oth)
 {
-    opt_host_name = oth.opt_host_name;
-    opt_user_name = oth.opt_user_name;
-    opt_password = oth.opt_password;
-    opt_port_num = oth.opt_port_num;
-    opt_socket_name = oth.opt_socket_name;
-    opt_db_name = oth.opt_db_name;
-    opt_flags = oth.opt_flags;
-    // __conn cannot copy
-    session::operator=(oth);
+    if (this != &oth) {
+        opt_host_name = oth.opt_host_name;
+        opt_user_name = oth.opt_user_name;
+        opt_password = oth.opt_password;
+        opt_port_num = oth.opt_port_num;
+        opt_socket_name = oth.opt_socket_name;
+        opt_db_name = oth.opt_db_name;
+        opt_flags = oth.opt_flags;
+        // __conn cannot copy
+        session::operator=(oth);
+    }
     return *this;
 }
 
@@ -123,13 +62,13 @@ mysql_session& mysql_session::operator=(mysql_session&& oth) noexcept
         opt_host_name = std::move(oth.opt_host_name);
         opt_user_name = std::move(oth.opt_user_name);
         opt_password = std::move(oth.opt_password);
-        opt_port_num = std::move(oth.opt_port_num);
-        opt_socket_name = std::move(oth.opt_socket_name);
+        opt_port_num = oth.opt_port_num;
+        opt_socket_name = oth.opt_socket_name;
         opt_db_name = std::move(oth.opt_db_name);
-        opt_flags = std::move(oth.opt_flags);
+        opt_flags = oth.opt_flags;
         close();
-        conn__ = oth.conn__;
-        oth.conn__ = nullptr;
+        conn_ = oth.conn_;
+        oth.conn_ = nullptr;
         session::operator=(std::move(oth));
     }
     return *this;
@@ -143,7 +82,7 @@ mysql_session::~mysql_session()
 std::unique_ptr<session> mysql_session::clone() const
 {
     return std::make_unique<mysql_session>(*this);
-};
+}
 
 void mysql_session::init(const std::string& host_name, const std::string& user, const std::string& pass, unsigned int port,
                          const std::string& db_name, unsigned int flags)
@@ -163,19 +102,19 @@ void mysql_session::set_database_name(const std::string& name)
 
 void mysql_session::open()
 {
-    if (conn__) {
+    if (conn_) {
         return;
     }
 
     /* initialize connection handler */
-    conn__ = mysql_init(nullptr);
+    conn_ = mysql_init(nullptr);
 
-    if (!conn__) {
+    if (!conn_) {
         throw_exception<std::runtime_error>("MySql connection failed");
     }
 
     /* connect to server */
-    MYSQL* s = mysql_real_connect(reinterpret_cast<MYSQL*>(conn__),
+    MYSQL* s = mysql_real_connect(MYSQL_CONNECTION_HANDLE,
                                   opt_host_name.c_str(),
                                   opt_user_name.c_str(),
                                   opt_password.c_str(),
@@ -184,8 +123,8 @@ void mysql_session::open()
                                   opt_socket_name,
                                   opt_flags);
     if (s == nullptr) {
-        conn__ = nullptr;
-        throw_exception<std::runtime_error>("Cannot connect to database " + opt_db_name);
+        conn_ = nullptr;
+        throw_exception<std::runtime_error>("MySql cannot connect to database " + opt_db_name);
     }
 }
 
@@ -193,23 +132,29 @@ void mysql_session::close()
 {
     free_result_set();
 
-    if (conn__) {
-        mysql_close(reinterpret_cast<MYSQL*>(conn__));
-        conn__ = nullptr;
+    if (MYSQL_CONNECTION_HANDLE) {
+        for (auto& h : prepared_stm_handle_) {
+            mysql_stmt_close(reinterpret_cast<MYSQL_STMT*>(h.second));
+        }
+
+        mysql_close(MYSQL_CONNECTION_HANDLE);
+        conn_ = nullptr;
     }
+
+    prepared_stm_handle_.clear();
 }
 
 void mysql_session::query(const std::string& statement)
 {
-    mstatement = statement;
+    last_statement_ = statement;
 
-    if (!conn__) {
+    if (!MYSQL_CONNECTION_HANDLE) {
         throw_exception<std::runtime_error>("MySQL connection not established!");
     }
 
-    if (mysql_real_query(reinterpret_cast<MYSQL*>(conn__), statement.c_str(), statement.length())) {
-        auto errn = mysql_errno(reinterpret_cast<MYSQL*>(conn__));
-        const char* errmsg = mysql_error(reinterpret_cast<MYSQL*>(conn__));
+    if (mysql_real_query(MYSQL_CONNECTION_HANDLE, statement.c_str(), statement.length())) {
+        auto errn = mysql_errno(MYSQL_CONNECTION_HANDLE);
+        const char* errmsg = mysql_error(MYSQL_CONNECTION_HANDLE);
 
         if (errn == CR_SERVER_GONE_ERROR || errn == CR_SERVER_LOST) {
             /* connection lost */
@@ -223,27 +168,50 @@ void mysql_session::query(const std::string& statement)
     }
 }
 
-
-void mysql_session::query(dbm::kind::prepared_statement& stmt)
+void mysql_session::init_prepared_statement(kind::prepared_statement& stmt)
 {
-    MYSQL_STMT* stmt_handle = mysql_stmt_init(reinterpret_cast<MYSQL*>(conn__));
-    auto result = mysql_stmt_prepare(stmt_handle, stmt.statement().c_str(), stmt.statement().size());
+    if (stmt.native_handle())
+        return;
 
-    MYSQL_BIND bind[stmt.size()];
-    my_bool isNull[stmt.size()];
-    memset(bind, 0, sizeof(MYSQL_BIND) * stmt.size());
+    if (prepared_stm_handle_.find(stmt.statement()) != prepared_stm_handle_.end()) {
+        kind::prepared_statement_manipulator(stmt).set_native_handle(prepared_stm_handle_[stmt.statement()]);
+        return;
+    }
 
-    for (auto i = 0u; i < stmt.size(); ++i)
-    {
-        auto& p = stmt.param(i);
+    auto stmt_handle = mysql_stmt_init(MYSQL_CONNECTION_HANDLE);
+    if (!stmt_handle)
+        throw_exception("MySql init statement failed + " + last_mysql_error());
+
+    prepared_stm_handle_[stmt.statement()] = (stmt_handle);
+    kind::prepared_statement_manipulator(stmt).set_native_handle(stmt_handle);
+
+    if (mysql_stmt_prepare(stmt_handle, stmt.statement().c_str(), stmt.statement().length()))
+        throw_exception("MySql prepare statement failed : " + last_mysql_error());
+}
+
+void mysql_session::query(kind::prepared_statement& stmt)
+{
+    if (!stmt.native_handle())
+        init_prepared_statement(stmt);
+
+    auto handle = reinterpret_cast<MYSQL_STMT*>(stmt.native_handle());
+
+    auto nparams = stmt.size();
+    MYSQL_BIND bind[nparams];
+    std::remove_pointer<decltype(MYSQL_BIND::is_null)>::type isNull[nparams];
+    memset(bind, 0, sizeof(MYSQL_BIND) * nparams);
+
+    for (auto i = 0u; i < nparams; ++i) {
+
+        container* p = stmt.param(i);
         MYSQL_BIND& b = bind[i];
+        isNull[i] = p->is_null();
 
-        b.buffer = p.buffer();
-
-        isNull[i] = p.is_null();
+        b.buffer = p->buffer();
         b.is_null = &isNull[i];
+        b.buffer_length = 0;
 
-        switch (p.type()) {
+        switch (p->type()) {
             case dbm::kind::data_type::Nullptr:
                 b.buffer_type = MYSQL_TYPE_NULL;
                 break;
@@ -275,14 +243,151 @@ void mysql_session::query(dbm::kind::prepared_statement& stmt)
                 b.buffer_type = MYSQL_TYPE_DOUBLE;
                 break;
             case dbm::kind::data_type::String:
+                b.buffer = (void*)reinterpret_cast<std::string*>(p->buffer())->c_str();
                 b.buffer_type = MYSQL_TYPE_STRING;
+                b.buffer_length = p->length();
                 break;
             default:
-                throw_exception("Type not supported"); // TODO: handle other types
+                throw_exception("MySql prepared statement type not supported"); // TODO: handle other types
+        }
+    }
+
+    if (mysql_stmt_bind_param(handle, bind))
+        throw_exception("MySql prepared statement bind param failed : " + last_mysql_error());
+
+    if (mysql_stmt_execute(handle))
+        throw_exception("MySql prepared statement execute failed : " + last_mysql_error());
+
+    /* store result should be performed before executing new query only if we are retrieving result (select ...) */
+    if (mysql_stmt_store_result(handle))
+        throw_exception("MySql prepared statement store result failed : " + last_mysql_error());
+}
+
+std::vector<std::vector<container_ptr>> mysql_session::select_prepared_statement(dbm::kind::prepared_statement& stmt)
+{
+    if (!stmt.native_handle())
+        init_prepared_statement(stmt);
+
+    auto handle = reinterpret_cast<MYSQL_STMT*>(stmt.native_handle());
+
+    MYSQL_BIND bind[stmt.size()];
+    std::remove_pointer<decltype(MYSQL_BIND::is_null)>::type isNull[stmt.size()];
+    memset(bind, 0, sizeof(MYSQL_BIND) * stmt.size());
+
+    std::vector<size_t> string_column;
+    std::vector<std::string*> string_buffer;
+    std::vector< std::remove_pointer<decltype(MYSQL_BIND::length)>::type> string_len;
+
+    for (auto i = 0u; i < stmt.size(); ++i)
+    {
+        auto p = stmt.param(i);
+        MYSQL_BIND& b = bind[i];
+        isNull[i] = p->is_null();
+
+        b.buffer = p->buffer();
+        b.is_null = &isNull[i];
+        b.buffer_length = 0;
+
+        switch (p->type()) {
+            case dbm::kind::data_type::Nullptr:
+                b.buffer_type = MYSQL_TYPE_NULL;
+                break;
+            case dbm::kind::data_type::Bool:
+                b.buffer_type = MYSQL_TYPE_TINY;
+                break;
+            case dbm::kind::data_type::Int32:
+                b.buffer_type = MYSQL_TYPE_LONG;
+                break;
+            case dbm::kind::data_type::Int16:
+                b.buffer_type = MYSQL_TYPE_SHORT;
+                break;
+            case dbm::kind::data_type::Int64:
+                b.buffer_type = MYSQL_TYPE_LONGLONG;
+                break;
+            case dbm::kind::data_type::UInt32:
+                b.buffer_type = MYSQL_TYPE_LONG;
+                b.is_unsigned = true;
+                break;
+            case dbm::kind::data_type::UInt16:
+                b.buffer_type = MYSQL_TYPE_SHORT;
+                b.is_unsigned = true;
+                break;
+            case dbm::kind::data_type::UInt64:
+                b.buffer_type = MYSQL_TYPE_LONGLONG;
+                b.is_unsigned = true;
+                break;
+            case dbm::kind::data_type::Double:
+                b.buffer_type = MYSQL_TYPE_DOUBLE;
+                break;
+            case dbm::kind::data_type::String:
+                string_column.push_back(i);
+                string_buffer.push_back(reinterpret_cast<std::string*>(p->buffer()));
+                string_len.push_back(0);
+
+                b.buffer = nullptr;
+                b.buffer_type = MYSQL_TYPE_STRING;
+                b.buffer_length = 0;
+                b.length = &string_len.back();
+                break;
+            default:
+                throw_exception("MySql prepared statement type not supported"); // TODO: handle other types
+        }
+    }
+
+    if (mysql_stmt_bind_result(handle, bind))
+        throw_exception("MySql prepared statement bind param failed : " + last_mysql_error());
+
+    if (mysql_stmt_execute(handle))
+        throw_exception("MySql prepared statement execute failed : " + last_mysql_error());
+
+    // TODO: store result optional?
+    /*
+    if (mysql_stmt_store_result(handle))
+        throw_exception("MySql prepared statement store result failed : " + last_mysql_error());
+    */
+
+    std::vector<std::vector<container_ptr>> rows;
+
+    while(true) {
+        int result = mysql_stmt_fetch(handle);
+
+        if (result == MYSQL_NO_DATA)
+            break;
+
+        for (auto i = 0u; i < string_column.size(); i++) {
+            auto col = string_column[i];
+            auto* buf = string_buffer[i];
+
+            buf->resize(string_len[i]);
+            bind[col].buffer = buf->data();
+            bind[col].buffer_length = buf->length();
+
+            if (mysql_stmt_fetch_column(handle, &bind[col], col, 0))
+                throw_exception("MySql prepared statement fetch column failed : " + last_mysql_error());
+
+            bind[col].buffer = nullptr;
+            bind[col].buffer_length = 0;
         }
 
+        std::vector<container_ptr> row;
 
+        for (auto i = 0u; i < stmt.size(); ++i) {
+            auto* srcp = stmt.param(i);
+            srcp->set_null(isNull[i]);
+            row.push_back(local_container_factory(srcp->type()));
+            if (isNull[i]) {
+                row.back()->set_null(true);
+            }
+            else {
+                row.back()->set_null(false);
+                row.back()->set(srcp->get());
+            }
+        }
+
+        rows.push_back(std::move(row));
     }
+
+    return rows;
 }
 
 kind::sql_rows mysql_session::select_rows(const std::string& statement)
@@ -297,25 +402,25 @@ kind::sql_rows mysql_session::select_rows(const std::string& statement)
     query(statement);
 
     /* grab the result */
-    res_set__ = mysql_store_result(reinterpret_cast<MYSQL*>(conn__));
-    if (!res_set__) {
-        if (mysql_field_count(reinterpret_cast<MYSQL*>(conn__)) > 0) {
-            throw_exception<std::runtime_error>(std::string("Error processing result set : ") + mysql_error(reinterpret_cast<MYSQL*>(conn__)) + last_statement_info());
+    res_set_ = mysql_store_result(MYSQL_CONNECTION_HANDLE);
+    if (!res_set_) {
+        if (mysql_field_count(MYSQL_CONNECTION_HANDLE) > 0) {
+            throw_exception<std::runtime_error>(std::string("Error processing result set : ") + mysql_error(MYSQL_CONNECTION_HANDLE) + last_statement_info());
         }
         else {
-            throw_exception<std::runtime_error>(std::string("Error rows affected : ") + mysql_error(reinterpret_cast<MYSQL*>(conn__)) + last_statement_info());
+            throw_exception<std::runtime_error>(std::string("Error rows affected : ") + mysql_error(MYSQL_CONNECTION_HANDLE) + last_statement_info());
         }
     }
 
     /* field names */
     {
-        mysql_field_seek(reinterpret_cast<MYSQL_RES*>(res_set__), 0);
-        num_fields = mysql_num_fields(reinterpret_cast<MYSQL_RES*>(res_set__));
+        mysql_field_seek(MYSQL_RES_HANDLE, 0);
+        num_fields = mysql_num_fields(MYSQL_RES_HANDLE);
         kind::sql_fields fields_tmp;
         fields_tmp.reserve(num_fields);
 
         for (unsigned i = 0; i < num_fields; i++) {
-            MYSQL_FIELD* field = mysql_fetch_field(reinterpret_cast<MYSQL_RES*>(res_set__));
+            MYSQL_FIELD* field = mysql_fetch_field(MYSQL_RES_HANDLE);
             fields_tmp.push_back(field->name);
         }
 
@@ -325,13 +430,13 @@ kind::sql_rows mysql_session::select_rows(const std::string& statement)
 
     /* fetch rows */
     MYSQL_ROW mysql_row;
-    while ((mysql_row = mysql_fetch_row(reinterpret_cast<MYSQL_RES*>(res_set__))) != nullptr) {
+    while ((mysql_row = mysql_fetch_row(MYSQL_RES_HANDLE)) != nullptr) {
 
         kind::sql_row& r = rows.emplace_back();
         r.set_fields(&rows.field_names(), &rows.field_map());
         r.reserve(num_fields);
 
-        unsigned long* lenghts = mysql_fetch_lengths(reinterpret_cast<MYSQL_RES*>(res_set__));
+        unsigned long* lenghts = mysql_fetch_lengths(MYSQL_RES_HANDLE);
 
         for (unsigned i = 0; i < num_fields; i++) {
             r.emplace_back(mysql_row[i], lenghts[i]);
@@ -339,7 +444,7 @@ kind::sql_rows mysql_session::select_rows(const std::string& statement)
     }
 
     /* check error */
-    if (mysql_errno(reinterpret_cast<MYSQL*>(conn__)) != 0) {
+    if (mysql_errno(MYSQL_CONNECTION_HANDLE) != 0) {
         throw_exception<std::runtime_error>("Fetch row error");
     }
 
@@ -389,10 +494,18 @@ void mysql_session::transaction_rollback()
 
 void mysql_session::free_result_set()
 {
-    if (res_set__) {
-        mysql_free_result(reinterpret_cast<MYSQL_RES*>(res_set__));
-        res_set__ = nullptr;
+    if (res_set_) {
+        mysql_free_result(MYSQL_RES_HANDLE);
+        res_set_ = nullptr;
     }
+}
+
+std::string mysql_session::last_mysql_error() const
+{
+    if (MYSQL_CONNECTION_HANDLE)
+        return { mysql_error(MYSQL_CONNECTION_HANDLE) };
+
+    return {};
 }
 
 }// namespace dbm
