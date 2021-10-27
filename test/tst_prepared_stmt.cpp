@@ -92,17 +92,12 @@ BOOST_AUTO_TEST_CASE(prepared_stmt_insert)
 
     // another instance with identical statement should reuse existing handle
     {
-        dbm::prepared_stmt stmt2 ("INSERT INTO test_prepared_stmt (name, age, weight) VALUES(?, ?, ?)");
-        stmt2.push(&m.at(1).get_container());
-        stmt2.push(&m.at(2).get_container());
-        stmt2.push(&m.at(3).get_container());
-
         // 4
-        person.name = "Alien";
-        person.age = 99;
-        m.at("weight").set_value(100); // should reset null
+        dbm::prepared_stmt stmt2 ("INSERT INTO test_prepared_stmt (name, age, weight) VALUES(?, ?, ?)");
+        stmt2.push(dbm::local<std::string>("Alien"));
+        stmt2.push(dbm::local(99));
+        stmt2.push(dbm::local(100.0));
         session->query(stmt2);
-
         BOOST_TEST(session->prepared_statement_handles().size() == 1);
     }
 
@@ -164,7 +159,7 @@ BOOST_AUTO_TEST_CASE(prepared_stmt_upsert)
     auto m = get_person_model(person);
 
     std::string_view upsert_statement =
-    R"(CREATE OR REPLACE FUNCTION upsert_test_prepared_stmt(pid INT, pname Varchar(50), page int, pweight DOUBLE)
+    R"(CREATE FUNCTION upsert_test_prepared_stmt(pid INT, pname Varchar(50), page int, pweight DOUBLE)
 RETURNS INT DETERMINISTIC
 BEGIN
 	INSERT INTO test_prepared_stmt (id, name, age, weight)
@@ -179,6 +174,7 @@ END)";
         m.at("weight").set_value(-1);
     };
 
+    session->query("DROP FUNCTION IF EXISTS upsert_test_prepared_stmt");
     session->query(upsert_statement.data());
 
     dbm::prepared_stmt stmt ("SELECT upsert_test_prepared_stmt(?, ?, ?, ?)");

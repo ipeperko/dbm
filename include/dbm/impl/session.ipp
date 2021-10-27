@@ -106,6 +106,13 @@ DBM_INLINE kind::sql_rows session::select(const detail::statement& q)
     return select(q.get());
 }
 
+DBM_INLINE void session::remove_prepared_statement(std::string const& s)
+{
+    auto p = prepared_stm_handle_.find(s);
+    if (p != prepared_stm_handle_.end())
+        prepared_stm_handle_.erase(p);
+}
+
 DBM_INLINE void session::create_database(const std::string& db_name, bool if_not_exists)
 {
     std::string q = "CREATE DATABASE ";

@@ -11,40 +11,25 @@ class prepared_statement
 {
     friend class prepared_statement_manipulator;
 public:
-//    prepared_statement() = default;
 
     explicit prepared_statement(std::string stmt)
         : stmt_(std::move(stmt))
     {
-//        prepare();
     }
 
     ~prepared_statement() = default;
 
-//    void set_statement(std::string stmt)
-//    {
-//        stmt_ = std::move(stmt);
-//        parms_.clear();
-//    }
-
-//    void query();
-//
-//    kind::sql_rows select();
-
     auto const& statement() const { return stmt_; }
-
-//    auto& get_model() { return model_; }
-//
-//    auto const& get_model() const { return model_; }
-//
-//    auto& get_session() { return session_; }
-//
-//    auto const& get_session() const { return session_; }
-
 
     void push(container* p)
     {
         parms_.push_back(p);
+    }
+
+    void push(container_ptr&& p)
+    {
+        parms_.push_back(p.get());
+        parms_local_.push_back(std::move(p));
     }
 
     auto& parms() { return parms_; }
@@ -65,16 +50,10 @@ public:
 
     auto native_handle() { return native_handle_; }
 
-//    void set_native_handle(void* p) { native_handle_ = p; } // TODO: hide this
-
 private:
-//    void prepare();
-
-//    model& model_;
-//    session& session_;
     std::string stmt_; // TODO: std::shared_ptr<std::string const>
     std::vector<container*> parms_;
-    //std::vector<container_ptr> parms_local_; // TODO: local storage optional
+    std::vector<container_ptr> parms_local_; // TODO: local storage optional
     void* native_handle_ {nullptr};
 };
 

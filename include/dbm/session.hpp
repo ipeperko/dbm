@@ -40,6 +40,7 @@ public:
     kind::sql_rows select(const detail::statement& q);
 
     virtual void init_prepared_statement(dbm::kind::prepared_statement& stmt) {}
+    void remove_prepared_statement(std::string const& s);
     virtual void query(kind::prepared_statement& stmt) {}
     virtual std::vector<std::vector<container_ptr>> select_prepared_statement(kind::prepared_statement& stmt) { return {}; }
 

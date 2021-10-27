@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(dbm VERSION 0.0.32 DESCRIPTION "Database table models with serialization " LANGUAGES CXX)
+project(dbm VERSION 0.0.34 DESCRIPTION "Database table models with serialization " LANGUAGES CXX)
 
 option(BUILD_TESTS "Build dbm tests" OFF)
 option(DBM_BUILD_TESTS "Build dbm tests - DEPRECATED" OFF)

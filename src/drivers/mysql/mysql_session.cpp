@@ -152,6 +152,10 @@ void mysql_session::query(const std::string& statement)
         throw_exception<std::runtime_error>("MySQL connection not established!");
     }
 
+    /* free result set if it holds any data */
+    free_result_set();
+
+    /* query */
     if (mysql_real_query(MYSQL_CONNECTION_HANDLE, statement.c_str(), statement.length())) {
         auto errn = mysql_errno(MYSQL_CONNECTION_HANDLE);
         const char* errmsg = mysql_error(MYSQL_CONNECTION_HANDLE);
@@ -186,7 +190,7 @@ void mysql_session::init_prepared_statement(kind::prepared_statement& stmt)
     kind::prepared_statement_manipulator(stmt).set_native_handle(stmt_handle);
 
     if (mysql_stmt_prepare(stmt_handle, stmt.statement().c_str(), stmt.statement().length()))
-        throw_exception("MySql prepare statement failed : " + last_mysql_error());
+        throw_exception("MySql prepare statement failed : " + std::string() + mysql_stmt_error(stmt_handle));
 }
 
 void mysql_session::query(kind::prepared_statement& stmt)
@@ -195,6 +199,9 @@ void mysql_session::query(kind::prepared_statement& stmt)
         init_prepared_statement(stmt);
 
     auto handle = reinterpret_cast<MYSQL_STMT*>(stmt.native_handle());
+
+    /* free result set if it holds any data */
+    free_result_set();
 
     auto nparams = stmt.size();
     MYSQL_BIND bind[nparams];
@@ -253,14 +260,14 @@ void mysql_session::query(kind::prepared_statement& stmt)
     }
 
     if (mysql_stmt_bind_param(handle, bind))
-        throw_exception("MySql prepared statement bind param failed : " + last_mysql_error());
+        throw_exception("MySql prepared statement bind param failed : " + std::string() + mysql_stmt_error(handle));
 
     if (mysql_stmt_execute(handle))
-        throw_exception("MySql prepared statement execute failed : " + last_mysql_error());
+        throw_exception("MySql prepared statement execute failed (query) : " + std::string() + mysql_stmt_error(handle));
 
     /* store result should be performed before executing new query only if we are retrieving result (select ...) */
     if (mysql_stmt_store_result(handle))
-        throw_exception("MySql prepared statement store result failed : " + last_mysql_error());
+        throw_exception("MySql prepared statement store result failed : " + std::string() + mysql_stmt_error(handle));
 }
 
 std::vector<std::vector<container_ptr>> mysql_session::select_prepared_statement(dbm::kind::prepared_statement& stmt)
@@ -269,6 +276,9 @@ std::vector<std::vector<container_ptr>> mysql_session::select_prepared_statement
         init_prepared_statement(stmt);
 
     auto handle = reinterpret_cast<MYSQL_STMT*>(stmt.native_handle());
+
+    /* free result set if it holds any data */
+    free_result_set();
 
     MYSQL_BIND bind[stmt.size()];
     std::remove_pointer<decltype(MYSQL_BIND::is_null)>::type isNull[stmt.size()];
@@ -335,15 +345,15 @@ std::vector<std::vector<container_ptr>> mysql_session::select_prepared_statement
     }
 
     if (mysql_stmt_bind_result(handle, bind))
-        throw_exception("MySql prepared statement bind param failed : " + last_mysql_error());
+        throw_exception("MySql prepared statement bind param failed : " + std::string() + mysql_stmt_error(handle));
 
     if (mysql_stmt_execute(handle))
-        throw_exception("MySql prepared statement execute failed : " + last_mysql_error());
+        throw_exception("MySql prepared statement execute failed (select) : " + std::string() + mysql_stmt_error(handle));
 
     // TODO: store result optional?
     /*
     if (mysql_stmt_store_result(handle))
-        throw_exception("MySql prepared statement store result failed : " + last_mysql_error());
+        throw_exception("MySql prepared statement store result failed : " + std::string() + mysql_stmt_error(handle));
     */
 
     std::vector<std::vector<container_ptr>> rows;
@@ -363,7 +373,7 @@ std::vector<std::vector<container_ptr>> mysql_session::select_prepared_statement
             bind[col].buffer_length = buf->length();
 
             if (mysql_stmt_fetch_column(handle, &bind[col], col, 0))
-                throw_exception("MySql prepared statement fetch column failed : " + last_mysql_error());
+                throw_exception("MySql prepared statement fetch column failed : " + std::string() + mysql_stmt_error(handle));
 
             bind[col].buffer = nullptr;
             bind[col].buffer_length = 0;
@@ -394,9 +404,6 @@ kind::sql_rows mysql_session::select_rows(const std::string& statement)
 {
     kind::sql_rows rows;
     unsigned num_fields = 0;
-
-    /* free result set if it holds any data */
-    free_result_set();
 
     /* execute query */
     query(statement);
@@ -497,6 +504,10 @@ void mysql_session::free_result_set()
     if (res_set_) {
         mysql_free_result(MYSQL_RES_HANDLE);
         res_set_ = nullptr;
+
+        /* this should be called in case of procedures CALL (error 2014) */
+        // TODO: not tested
+        while (mysql_next_result(MYSQL_CONNECTION_HANDLE) == 0) {}
     }
 }
 
