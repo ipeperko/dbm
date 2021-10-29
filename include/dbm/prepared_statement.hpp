@@ -17,7 +17,11 @@ public:
     {
     }
 
+    prepared_statement(prepared_statement&&) = default;
+
     ~prepared_statement() = default;
+
+    prepared_statement& operator=(prepared_statement&&) = default;
 
     auto const& statement() const { return stmt_; }
 
@@ -53,7 +57,7 @@ public:
 private:
     std::string stmt_; // TODO: std::shared_ptr<std::string const>
     std::vector<container*> parms_;
-    std::vector<container_ptr> parms_local_; // TODO: local storage optional
+    std::vector<container_ptr> parms_local_;
     void* native_handle_ {nullptr};
 };
 

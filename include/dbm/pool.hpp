@@ -102,7 +102,7 @@ public:
     size_t num_idle_connections() const;
     size_t heartbeats_count() const { return heartbeat_counter_; }
 
-    void enable_debbug(bool enable) { debug_ = enable; }
+    void enable_debug(bool enable) { debug_ = enable; }
 
     auto debug_log() const
     {
