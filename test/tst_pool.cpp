@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(pool_connection_move)
             conn1 = std::move(conn2);
 
             // conn2 has been moved, should throw exception on get
-            BOOST_REQUIRE_THROW(conn2.get(), std::exception);
+            BOOST_REQUIRE_THROW(*conn2, std::exception);
         }
 
         BOOST_TEST(pool.num_connections() == 1);
@@ -180,7 +180,7 @@ class LoadTask
 {
 public:
 
-    LoadTask(dbm::pool& p)
+    explicit LoadTask(dbm::pool& p)
         : pool(p)
     {}
 

@@ -84,7 +84,7 @@ public:
         heartbeat_counter_ = 0;
     }
 
-    statistics stat()
+    statistics stat() const
     {
         statistics s;
         std::shared_lock lock(mtx_); // TODO: locking mutex is not the best way to get stat data

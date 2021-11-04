@@ -172,6 +172,65 @@ void mysql_session::query(const std::string& statement)
     }
 }
 
+kind::sql_rows mysql_session::select_rows(const std::string& statement)
+{
+    kind::sql_rows rows;
+    unsigned num_fields = 0;
+
+    /* execute query */
+    query(statement);
+
+    /* grab the result */
+    res_set_ = mysql_store_result(MYSQL_CONNECTION_HANDLE);
+    if (!res_set_) {
+        if (mysql_field_count(MYSQL_CONNECTION_HANDLE) > 0) {
+            throw_exception<std::runtime_error>(std::string("Error processing result set : ") + mysql_error(MYSQL_CONNECTION_HANDLE) + last_statement_info());
+        }
+        else {
+            throw_exception<std::runtime_error>(std::string("Error rows affected : ") + mysql_error(MYSQL_CONNECTION_HANDLE) + last_statement_info());
+        }
+    }
+
+    /* field names */
+    {
+        mysql_field_seek(MYSQL_RES_HANDLE, 0);
+        num_fields = mysql_num_fields(MYSQL_RES_HANDLE);
+        kind::sql_fields fields_tmp;
+        fields_tmp.reserve(num_fields);
+
+        for (unsigned i = 0; i < num_fields; i++) {
+            MYSQL_FIELD* field = mysql_fetch_field(MYSQL_RES_HANDLE);
+            fields_tmp.push_back(field->name);
+        }
+
+        /* setup rows object field names */
+        rows.set_field_names(std::move(fields_tmp));
+    }
+
+    /* fetch rows */
+    MYSQL_ROW mysql_row;
+    while ((mysql_row = mysql_fetch_row(MYSQL_RES_HANDLE)) != nullptr) {
+
+        kind::sql_row& r = rows.emplace_back();
+        r.set_fields(&rows.field_names(), &rows.field_map());
+        r.reserve(num_fields);
+
+        unsigned long* lenghts = mysql_fetch_lengths(MYSQL_RES_HANDLE);
+
+        for (unsigned i = 0; i < num_fields; i++) {
+            r.emplace_back(mysql_row[i], lenghts[i]);
+        }
+    }
+
+    /* check error */
+    if (mysql_errno(MYSQL_CONNECTION_HANDLE) != 0) {
+        throw_exception<std::runtime_error>("Fetch row error");
+    }
+
+    //    sql.check_errors();
+    return rows;
+}
+
 void mysql_session::init_prepared_statement(kind::prepared_statement& stmt)
 {
     if (stmt.native_handle())
@@ -400,65 +459,6 @@ std::vector<std::vector<container_ptr>> mysql_session::select_prepared_statement
     return rows;
 }
 
-kind::sql_rows mysql_session::select_rows(const std::string& statement)
-{
-    kind::sql_rows rows;
-    unsigned num_fields = 0;
-
-    /* execute query */
-    query(statement);
-
-    /* grab the result */
-    res_set_ = mysql_store_result(MYSQL_CONNECTION_HANDLE);
-    if (!res_set_) {
-        if (mysql_field_count(MYSQL_CONNECTION_HANDLE) > 0) {
-            throw_exception<std::runtime_error>(std::string("Error processing result set : ") + mysql_error(MYSQL_CONNECTION_HANDLE) + last_statement_info());
-        }
-        else {
-            throw_exception<std::runtime_error>(std::string("Error rows affected : ") + mysql_error(MYSQL_CONNECTION_HANDLE) + last_statement_info());
-        }
-    }
-
-    /* field names */
-    {
-        mysql_field_seek(MYSQL_RES_HANDLE, 0);
-        num_fields = mysql_num_fields(MYSQL_RES_HANDLE);
-        kind::sql_fields fields_tmp;
-        fields_tmp.reserve(num_fields);
-
-        for (unsigned i = 0; i < num_fields; i++) {
-            MYSQL_FIELD* field = mysql_fetch_field(MYSQL_RES_HANDLE);
-            fields_tmp.push_back(field->name);
-        }
-
-        /* setup rows object field names */
-        rows.set_field_names(std::move(fields_tmp));
-    }
-
-    /* fetch rows */
-    MYSQL_ROW mysql_row;
-    while ((mysql_row = mysql_fetch_row(MYSQL_RES_HANDLE)) != nullptr) {
-
-        kind::sql_row& r = rows.emplace_back();
-        r.set_fields(&rows.field_names(), &rows.field_map());
-        r.reserve(num_fields);
-
-        unsigned long* lenghts = mysql_fetch_lengths(MYSQL_RES_HANDLE);
-
-        for (unsigned i = 0; i < num_fields; i++) {
-            r.emplace_back(mysql_row[i], lenghts[i]);
-        }
-    }
-
-    /* check error */
-    if (mysql_errno(MYSQL_CONNECTION_HANDLE) != 0) {
-        throw_exception<std::runtime_error>("Fetch row error");
-    }
-
-    //    sql.check_errors();
-    return rows;
-}
-
 std::string mysql_session::write_model_query(const model& m) const
 {
     return detail::model_query_helper<detail::param_session_type_mysql>(m).write_query();
@@ -506,8 +506,13 @@ void mysql_session::free_result_set()
         res_set_ = nullptr;
 
         /* this should be called in case of procedures CALL (error 2014) */
-        // TODO: not tested
-        while (mysql_next_result(MYSQL_CONNECTION_HANDLE) == 0) {}
+        while (mysql_next_result(MYSQL_CONNECTION_HANDLE) == 0) {
+            res_set_ = mysql_store_result(MYSQL_CONNECTION_HANDLE);
+            if (res_set_) {
+                mysql_free_result(MYSQL_RES_HANDLE);
+                res_set_ = nullptr;
+            }
+        }
     }
 }
 

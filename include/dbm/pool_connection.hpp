@@ -41,7 +41,29 @@ public:
         return *p_;
     }
 
+    session const& get() const
+    {
+        if (!p_)
+            throw_exception("pool_connection::get session is null");
+        return *p_;
+    }
+
+    session& operator*()
+    {
+        return get();
+    }
+
+    session const& operator*() const
+    {
+        return get();
+    }
+
     bool is_valid() const
+    {
+        return p_ != nullptr;
+    }
+
+    operator bool() const
     {
         return p_ != nullptr;
     }
