@@ -75,12 +75,12 @@ public:
     {}
 
     // Construct by value type move
-    explicit named_type(value_type&& value)
+    explicit named_type(value_type&& value) noexcept
         : value_(std::move(value))
     {}
 
     // Move constructor
-    named_type(named_type&& oth)
+    named_type(named_type&& oth) noexcept
         : value_(std::move(oth.value_))
     {}
 
@@ -91,7 +91,7 @@ public:
     named_type& operator=(const named_type& oth) = default;
 
     // Move assignment
-    named_type& operator=(named_type&& oth) = default;
+    named_type& operator=(named_type&& oth) noexcept = default;
 
     // Comparison
     bool operator==(const named_type& oth) const

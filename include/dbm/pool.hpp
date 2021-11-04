@@ -84,7 +84,7 @@ public:
         heartbeat_counter_ = 0;
     }
 
-    statistics stat()
+    statistics stat() const
     {
         statistics s;
         std::shared_lock lock(mtx_); // TODO: locking mutex is not the best way to get stat data
@@ -102,7 +102,7 @@ public:
     size_t num_idle_connections() const;
     size_t heartbeats_count() const { return heartbeat_counter_; }
 
-    void enable_debbug(bool enable) { debug_ = enable; }
+    void enable_debug(bool enable) { debug_ = enable; }
 
     auto debug_log() const
     {

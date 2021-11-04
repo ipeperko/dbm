@@ -51,6 +51,8 @@ public:
 
     constexpr const kind::tag& tag() const noexcept;
 
+    container& get_container();
+
     const container& get_container() const;
 
     bool is_null() const noexcept;

@@ -6,17 +6,19 @@ find_package (Boost REQUIRED COMPONENTS unit_test_framework)
 
 add_executable(${BINARY}
     # common files
+    common.h
     db_settings.cpp
     db_settings.h
-    common.h
     no_driver_session.h
 
     # tests
     tst_basic_types.cpp
     tst_model.cpp
+    tst_mysql_pool_multi.cpp
+    tst_pool.cpp
+    tst_prepared_stmt.cpp
     tst_sql_types.cpp
     tst_xml.cpp
-    tst_pool.cpp
     )
 
 target_link_libraries(${BINARY}

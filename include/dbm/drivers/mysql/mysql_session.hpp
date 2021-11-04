@@ -25,9 +25,13 @@ public:
     void open() override;
     void close() override;
 
-    bool is_connected() const override { return conn__ != nullptr; }
+    bool is_connected() const override { return conn_ != nullptr; }
 
     void query(const std::string& statement) override;
+
+    void init_prepared_statement(kind::prepared_statement& stmt) override;
+    void query(kind::prepared_statement& stmt) override;
+    std::vector<std::vector<container_ptr>> select_prepared_statement(kind::prepared_statement& stmt) override;
 
     std::string write_model_query(const model& m) const override;
     std::string read_model_query(const model& m, const std::string& extra_condition) const override;
@@ -42,6 +46,7 @@ public:
 private:
     kind::sql_rows select_rows(const std::string& statement) override;
     void free_result_set();
+    std::string last_mysql_error() const;
 
     std::string opt_host_name;       /* server host (e.g.: localhost) */
     std::string opt_user_name;       /* username */
@@ -51,8 +56,8 @@ private:
     std::string opt_db_name;         /* database name (default=none) */
     unsigned int opt_flags{0};       /* connection flags (none) */
 
-    void* conn__{nullptr};    /* connection handler pointer */
-    void* res_set__{nullptr}; /* mysql result set */
+    void* conn_{nullptr};    /* connection handler pointer */
+    void* res_set_{nullptr}; /* mysql result set */
 };
 
 }// namespace dbm

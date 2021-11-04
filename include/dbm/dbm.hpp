@@ -6,6 +6,7 @@
 #include <dbm/model_item.hpp>
 #include <dbm/model.hpp>
 #include <dbm/session.hpp>
+#include <dbm/prepared_statement.hpp>
 #include <dbm/pool.hpp>
 #include <dbm/impl/model_item.ipp>
 #include <dbm/impl/model.ipp>
@@ -26,6 +27,7 @@ using direction = kind::direction;
 using defaultc = kind::defaultc;
 using valquotes = kind::valquotes;
 using custom_data_type = kind::custom_data_type;
+using prepared_stmt = kind::prepared_statement;
 
 #ifdef DBM_EXPERIMENTAL_BLOB
 using blob = kind::blob;
@@ -50,6 +52,6 @@ DBM_EXPORT inline std::string version()
     return std::to_string(DBM_VERSION_MAJOR) + "." + std::to_string(DBM_VERSION_MINOR) + "." + std::to_string(DBM_VERSION_PATCH);
 }
 
-}
+} // namespace dbm
 
 #endif //DBM_DBM_HPP

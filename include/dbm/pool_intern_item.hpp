@@ -19,14 +19,14 @@ public:
         canceled
     };
 
-    explicit pool_intern_item(std::shared_ptr<::dbm::session>&& s)
+    explicit pool_intern_item(std::shared_ptr<session>&& s)
         : session_(std::move(s))
     {
         state_ = state::active;
     }
 
     state state_ {state::idle};
-    std::shared_ptr<::dbm::session> session_;
+    std::shared_ptr<session> session_;
     clock_t::time_point heartbeat_time_;
 };
 

@@ -118,6 +118,10 @@ public:
         return static_cast<kind::data_type>(kind::detail::variant_index<unreferenced_type>());
     }
 
+    void* buffer() noexcept override { return &val_; }
+
+    size_t length() const noexcept;
+
 private:
     value_type val_;
     validator_fn validator_;

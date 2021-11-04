@@ -71,6 +71,10 @@ public:
 
     virtual kind::data_type type() const noexcept = 0;
 
+    virtual void* buffer() noexcept = 0;
+
+    virtual size_t length() const noexcept = 0; // valid only for strings and blob
+
 protected:
     bool is_null_ {true};
     bool defined_ {false};
@@ -242,6 +246,29 @@ template <typename... Args>
 auto timestamp(Args&&... args)
 {
     return local<kind::detail::timestamp2u_converter>(std::forward<Args>(args)...);
+}
+
+/**
+ * Runtime container factory
+ *
+ * @param type
+ * @return container unique pointer
+ */
+inline dbm::container_ptr local_container_factory(dbm::kind::data_type type)
+{
+    switch (type) {
+        case kind::data_type::Bool: return std::make_unique<detail::container_impl<bool>>();
+        case kind::data_type::Int32: return std::make_unique<detail::container_impl<int32_t>>();
+        case kind::data_type::Int16: return std::make_unique<detail::container_impl<int16_t>>();
+        case kind::data_type::Int64: return std::make_unique<detail::container_impl<int64_t>>();
+        case kind::data_type::UInt32: return std::make_unique<detail::container_impl<uint32_t>>();
+        case kind::data_type::UInt16: return std::make_unique<detail::container_impl<uint16_t>>();
+        case kind::data_type::UInt64: return std::make_unique<detail::container_impl<uint64_t>>();
+        case kind::data_type::Timestamp2u: return std::make_unique<detail::container_impl<kind::detail::timestamp2u_converter>>();
+        case kind::data_type::Double: return std::make_unique<detail::container_impl<double>>();
+        case kind::data_type::String: return std::make_unique<detail::container_impl<std::string>>();
+        default: return nullptr;
+    }
 }
 
 }// namespace dbm
