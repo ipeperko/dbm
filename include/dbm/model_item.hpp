@@ -51,9 +51,17 @@ public:
 
     constexpr const kind::tag& tag() const noexcept;
 
-    container& get_container();
+    container& get_container() __attribute_deprecated__;
 
-    const container& get_container() const;
+    const container& get_container() const __attribute_deprecated__;
+
+    container& get();
+
+    const container& get() const;
+
+    container& operator*();
+
+    container const& operator*() const;
 
     bool is_null() const noexcept;
 
@@ -113,13 +121,13 @@ private:
         *this = oth;
     }
 
-    void set_() {}
+    void set_helper() {}
 
     template<typename Head, typename... Tail>
-    void set_(Head&& head, Tail&&... tail)
+    void set_helper(Head&& head, Tail&&... tail)
     {
-        set(std::move(head));
-        set_(std::forward<Tail>(tail)...);
+        set(std::forward<Head>(head));
+        set_helper(std::forward<Tail>(tail)...);
     }
 
     void make_default_container();
@@ -231,7 +239,7 @@ public:
 template<typename... Args>
 model_item::model_item(Args&&... args)
 {
-    set_(std::forward<Args>(args)...);
+    set_helper(std::forward<Args>(args)...);
 
     if (!cont_) {
         make_default_container();

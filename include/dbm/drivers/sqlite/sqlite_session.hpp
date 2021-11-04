@@ -28,7 +28,10 @@ public:
 
     bool is_connected() const override { return db3 != nullptr; }
 
+    using session::query;
     void query(const std::string& statement) override;
+
+    using session::select;
 
     std::string write_model_query(const model& m) const override;
     std::string read_model_query(const model& m, const std::string& extra_condition) const override;

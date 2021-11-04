@@ -329,7 +329,7 @@ void mysql_session::query(kind::prepared_statement& stmt)
         throw_exception("MySql prepared statement store result failed : " + std::string() + mysql_stmt_error(handle));
 }
 
-std::vector<std::vector<container_ptr>> mysql_session::select_prepared_statement(dbm::kind::prepared_statement& stmt)
+std::vector<std::vector<container_ptr>> mysql_session::select(dbm::kind::prepared_statement& stmt)
 {
     if (!stmt.native_handle())
         init_prepared_statement(stmt);

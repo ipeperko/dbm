@@ -34,8 +34,6 @@ std::unique_ptr<dbm::session> get_test_session()
     return session;
 }
 
-
-
 auto get_person_model(Person& person)
 {
     return dbm::model {
@@ -62,10 +60,10 @@ BOOST_AUTO_TEST_CASE(prepared_stmt_insert)
     m.drop_table(*session);
     m.create_table(*session);
 
-    dbm::prepared_stmt stmt ("INSERT INTO test_prepared_stmt (name, age, weight) VALUES(?, ?, ?)");
-    stmt.push(&m.at(1).get_container());
-    stmt.push(&m.at(2).get_container());
-    stmt.push(&m.at(3).get_container());
+    dbm::prepared_stmt stmt ("INSERT INTO test_prepared_stmt (name, age, weight) VALUES(?, ?, ?)",
+                            &m.at(1).get(),
+                            &m.at(2).get(),
+                            &m.at(3).get());
     BOOST_TEST(session->prepared_statement_handles().size() == 0);
 
     // 1
@@ -93,10 +91,10 @@ BOOST_AUTO_TEST_CASE(prepared_stmt_insert)
     // another instance with identical statement should reuse existing handle
     {
         // 4
-        dbm::prepared_stmt stmt2 ("INSERT INTO test_prepared_stmt (name, age, weight) VALUES(?, ?, ?)");
-        stmt2.push(dbm::local<std::string>("Alien"));
-        stmt2.push(dbm::local(99));
-        stmt2.push(dbm::local(100.0));
+        dbm::prepared_stmt stmt2 ("INSERT INTO test_prepared_stmt (name, age, weight) VALUES(?, ?, ?)",
+                                 dbm::local<std::string>("Alien"),
+                                 dbm::local(99),
+                                 dbm::local(100.0));
         session->query(stmt2);
         BOOST_TEST(session->prepared_statement_handles().size() == 1);
     }
@@ -177,11 +175,11 @@ END)";
     session->query("DROP FUNCTION IF EXISTS upsert_test_prepared_stmt");
     session->query(upsert_statement.data());
 
-    dbm::prepared_stmt stmt ("SELECT upsert_test_prepared_stmt(?, ?, ?, ?)");
-    stmt.push(&m.at(0).get_container());
-    stmt.push(&m.at(1).get_container());
-    stmt.push(&m.at(2).get_container());
-    stmt.push(&m.at(3).get_container());
+    dbm::prepared_stmt stmt ("SELECT upsert_test_prepared_stmt(?, ?, ?, ?)",
+                            &m.at(0).get(),
+                            &m.at(1).get(),
+                            &m.at(2).get(),
+                            &m.at(3).get());
 
     person.id = 99;
     person.name = "ivo";
@@ -226,15 +224,16 @@ BOOST_AUTO_TEST_CASE(prepared_stmt_select)
     Person person;
     auto m = get_person_model(person);
 
-    dbm::prepared_stmt stmt ("SELECT * FROM test_prepared_stmt");
-    stmt.push(&m.at(0).get_container());
-    stmt.push(&m.at(1).get_container());
-    stmt.push(&m.at(2).get_container());
-    stmt.push(&m.at(3).get_container());
+    dbm::prepared_stmt stmt ("SELECT * FROM test_prepared_stmt",
+                            &*m.at(0),
+                            &*m.at(1),
+                            &*m.at(2),
+                            &*m.at(3)
+                            );
 
     person.id = 1;
 
-    auto res = session->select_prepared_statement(stmt);
+    auto res = session->select(stmt);
 
     BOOST_TEST(res.size() == 6);
     BOOST_TEST(!res[0][1]->is_null());
