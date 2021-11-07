@@ -73,6 +73,7 @@ set(HEADERS
 
     include/dbm/impl/model.ipp
     include/dbm/impl/model_item.ipp
+    include/dbm/impl/prepared_statement.ipp
     include/dbm/impl/serializer.ipp
     include/dbm/impl/session.ipp
 

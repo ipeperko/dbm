@@ -54,6 +54,8 @@ public:
 
     auto native_handle() { return native_handle_; }
 
+    prepared_statement& operator>>(session& s);
+
 private:
     std::string stmt_; // TODO: std::shared_ptr<std::string const>
     std::vector<container*> parms_;
@@ -74,6 +76,6 @@ private:
     prepared_statement& ps_;
 };
 
-} // namespace dbm
+} // namespace kind::dbm
 
 #endif //DBM_PREPARED_STATEMENT_HPP
