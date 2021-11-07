@@ -56,6 +56,8 @@ public:
 
     auto native_handle() { return native_handle_; }
 
+    prepared_statement& operator>>(session& s);
+
 private:
     void push_helper()
     {}
@@ -86,6 +88,6 @@ private:
     prepared_statement& ps_;
 };
 
-} // namespace dbm
+} // namespace kind::dbm
 
 #endif //DBM_PREPARED_STATEMENT_HPP

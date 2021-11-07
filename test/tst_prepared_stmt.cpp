@@ -70,14 +70,14 @@ BOOST_AUTO_TEST_CASE(prepared_stmt_insert)
     person.name = "Tarzan";
     person.age = 20;
     person.weight = 75.5;
-    session->query(stmt);
+    stmt >> *session;
     BOOST_TEST(session->prepared_statement_handles().size() == 1);
 
     // 2
     person.name = "Jane";
     person.age = 18;
     person.weight = 62;
-    session->query(stmt);
+    stmt >> *session;
     BOOST_TEST(session->prepared_statement_handles().size() == 1);
 
     // 3
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(prepared_stmt_insert)
     person.age = 8;
     person.weight = 51;
     stmt.param(2)->set_null(true);
-    session->query(stmt);
+    stmt >> *session;
     BOOST_TEST(session->prepared_statement_handles().size() == 1);
 
     // another instance with identical statement should reuse existing handle
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(prepared_stmt_insert)
                                  dbm::local<std::string>("Alien"),
                                  dbm::local(99),
                                  dbm::local(100.0));
-        session->query(stmt2);
+        stmt2 >> *session;
         BOOST_TEST(session->prepared_statement_handles().size() == 1);
     }
 
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(prepared_stmt_insert)
     m.at("name").set_value(nullptr);
     m.at("age").set_value(nullptr);
     m.at("weight").set_value(nullptr);
-    session->query(stmt);
+    stmt >> *session;
 
     // check entry 1
     person.reset(1);
@@ -186,21 +186,21 @@ END)";
     person.age = 40;
     person.weight = 80;
 
-    session->query(stmt);
+    stmt >> *session;
 
     person.reset(99);
     *session >> m;
     BOOST_TEST(m.at("name").value<std::string>() == "ivo");
 
     m.at("name").set_value(nullptr);
-    session->query(stmt);
+    stmt >> *session;
     reset_model();
     *session >> m;
     BOOST_TEST(m.at("name").is_null());
 
     m.at("name").set_value("ivo no age");
     m.at("age").set_value(nullptr);
-    session->query(stmt);
+    stmt >> *session;
     reset_model();
     *session >> m;
     BOOST_TEST(m.at("name").value<std::string>() == "ivo no age");
@@ -210,7 +210,7 @@ END)";
     m.at("name").set_value("ivo no weight");
     m.at("age").set_value(40);
     m.at("weight").set_value(nullptr);
-    session->query(stmt);
+    stmt >> *session;
     reset_model();
     *session >> m;
     BOOST_TEST(m.at("name").value<std::string>() == "ivo no weight");

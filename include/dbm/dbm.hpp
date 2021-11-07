@@ -10,6 +10,7 @@
 #include <dbm/pool.hpp>
 #include <dbm/impl/model_item.ipp>
 #include <dbm/impl/model.ipp>
+#include <dbm/impl/prepared_statement.ipp>
 #include <dbm/impl/session.ipp>
 #include <dbm/impl/serializer.ipp>
 
