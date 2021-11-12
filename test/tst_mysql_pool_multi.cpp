@@ -109,7 +109,7 @@ public:
 
 private:
     template<typename Func>
-    void run(Func&& fn)
+    void run(Func&& fn) const
     {
         auto thr = std::thread([f = std::forward<Func>(fn)] {
             std::random_device rd;
@@ -128,7 +128,7 @@ private:
 class WriteTask
 {
 public:
-    WriteTask(unsigned id)
+    explicit WriteTask(unsigned id)
         : id_(id)
     {
         switch(id_) {
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_SUITE(TstMysqlPoolMulti)
 
 BOOST_AUTO_TEST_CASE(pool_init)
 {
-    auto& pool = TstPool::instance();
+    auto const& pool = TstPool::instance();
     BOOST_TEST(pool.num_connections() == 1);
 }
 
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(pool_write_and_read_multi)
     for (auto i : boost::irange(0, 4))
         tasks.emplace_back(i);
 
-    for (auto i : boost::irange(0, 4)) {
+    for (auto i [[maybe_unused]] : boost::irange(0, 4)) {
         std::for_each(tasks.begin(), tasks.end(), [](WriteTask& t) {
             t.run();
         });
