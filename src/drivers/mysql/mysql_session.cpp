@@ -148,9 +148,8 @@ void mysql_session::query(const std::string& statement)
 {
     last_statement_ = statement;
 
-    if (!MYSQL_CONNECTION_HANDLE) {
+    if (!MYSQL_CONNECTION_HANDLE)
         throw_exception<std::runtime_error>("MySQL connection not established!");
-    }
 
     /* free result set if it holds any data */
     free_result_set();
@@ -245,7 +244,8 @@ void mysql_session::init_prepared_statement(kind::prepared_statement& stmt)
     if (!stmt_handle)
         throw_exception("MySql init statement failed + " + last_mysql_error());
 
-    prepared_stm_handle_[stmt.statement()] = (stmt_handle);
+    // TODO: should this be executed after mysql_stmt_prepare?
+    prepared_stm_handle_[stmt.statement()] = stmt_handle;
     kind::prepared_statement_manipulator(stmt).set_native_handle(stmt_handle);
 
     if (mysql_stmt_prepare(stmt_handle, stmt.statement().c_str(), stmt.statement().length()))
@@ -254,6 +254,11 @@ void mysql_session::init_prepared_statement(kind::prepared_statement& stmt)
 
 void mysql_session::query(kind::prepared_statement& stmt)
 {
+    using bool_type = std::remove_pointer<decltype(MYSQL_BIND::is_null)>::type;
+
+    if (!MYSQL_CONNECTION_HANDLE)
+        throw_exception<std::runtime_error>("MySQL connection not established!");
+
     if (!stmt.native_handle())
         init_prepared_statement(stmt);
 
@@ -264,51 +269,51 @@ void mysql_session::query(kind::prepared_statement& stmt)
 
     auto nparams = stmt.size();
     MYSQL_BIND bind[nparams];
-    std::remove_pointer<decltype(MYSQL_BIND::is_null)>::type isNull[nparams];
+    bool_type isNull[nparams];
     memset(bind, 0, sizeof(MYSQL_BIND) * nparams);
 
     for (auto i = 0u; i < nparams; ++i) {
 
         container* p = stmt.param(i);
         MYSQL_BIND& b = bind[i];
-        isNull[i] = p->is_null();
+        isNull[i] = static_cast<bool_type>(p->is_null());
 
         b.buffer = p->buffer();
         b.is_null = &isNull[i];
         b.buffer_length = 0;
 
         switch (p->type()) {
-            case dbm::kind::data_type::Nullptr:
+            case kind::data_type::Nullptr:
                 b.buffer_type = MYSQL_TYPE_NULL;
                 break;
-            case dbm::kind::data_type::Bool:
+            case kind::data_type::Bool:
                 b.buffer_type = MYSQL_TYPE_TINY;
                 break;
-            case dbm::kind::data_type::Int32:
+            case kind::data_type::Int32:
                 b.buffer_type = MYSQL_TYPE_LONG;
                 break;
-            case dbm::kind::data_type::Int16:
+            case kind::data_type::Int16:
                 b.buffer_type = MYSQL_TYPE_SHORT;
                 break;
-            case dbm::kind::data_type::Int64:
+            case kind::data_type::Int64:
                 b.buffer_type = MYSQL_TYPE_LONGLONG;
                 break;
-            case dbm::kind::data_type::UInt32:
+            case kind::data_type::UInt32:
                 b.buffer_type = MYSQL_TYPE_LONG;
                 b.is_unsigned = true;
                 break;
-            case dbm::kind::data_type::UInt16:
+            case kind::data_type::UInt16:
                 b.buffer_type = MYSQL_TYPE_SHORT;
                 b.is_unsigned = true;
                 break;
-            case dbm::kind::data_type::UInt64:
+            case kind::data_type::UInt64:
                 b.buffer_type = MYSQL_TYPE_LONGLONG;
                 b.is_unsigned = true;
                 break;
-            case dbm::kind::data_type::Double:
+            case kind::data_type::Double:
                 b.buffer_type = MYSQL_TYPE_DOUBLE;
                 break;
-            case dbm::kind::data_type::String:
+            case kind::data_type::String:
                 b.buffer = (void*)reinterpret_cast<std::string*>(p->buffer())->c_str();
                 b.buffer_type = MYSQL_TYPE_STRING;
                 b.buffer_length = p->length();
@@ -331,6 +336,12 @@ void mysql_session::query(kind::prepared_statement& stmt)
 
 std::vector<std::vector<container_ptr>> mysql_session::select(dbm::kind::prepared_statement& stmt)
 {
+    using bool_type = std::remove_pointer<decltype(MYSQL_BIND::is_null)>::type;
+    using string_length_type = std::remove_pointer<decltype(MYSQL_BIND::length)>::type;
+
+    if (!MYSQL_CONNECTION_HANDLE)
+        throw_exception<std::runtime_error>("MySQL connection not established!");
+
     if (!stmt.native_handle())
         init_prepared_statement(stmt);
 
@@ -340,55 +351,55 @@ std::vector<std::vector<container_ptr>> mysql_session::select(dbm::kind::prepare
     free_result_set();
 
     MYSQL_BIND bind[stmt.size()];
-    std::remove_pointer<decltype(MYSQL_BIND::is_null)>::type isNull[stmt.size()];
+    bool_type isNull[stmt.size()];
     memset(bind, 0, sizeof(MYSQL_BIND) * stmt.size());
 
     std::vector<size_t> string_column;
     std::vector<std::string*> string_buffer;
-    std::vector< std::remove_pointer<decltype(MYSQL_BIND::length)>::type> string_len;
+    std::vector<string_length_type> string_len;
 
     for (auto i = 0u; i < stmt.size(); ++i)
     {
         auto p = stmt.param(i);
         MYSQL_BIND& b = bind[i];
-        isNull[i] = p->is_null();
+        isNull[i] = static_cast<bool_type>(p->is_null());
 
         b.buffer = p->buffer();
         b.is_null = &isNull[i];
         b.buffer_length = 0;
 
         switch (p->type()) {
-            case dbm::kind::data_type::Nullptr:
+            case kind::data_type::Nullptr:
                 b.buffer_type = MYSQL_TYPE_NULL;
                 break;
-            case dbm::kind::data_type::Bool:
+            case kind::data_type::Bool:
                 b.buffer_type = MYSQL_TYPE_TINY;
                 break;
-            case dbm::kind::data_type::Int32:
+            case kind::data_type::Int32:
                 b.buffer_type = MYSQL_TYPE_LONG;
                 break;
-            case dbm::kind::data_type::Int16:
+            case kind::data_type::Int16:
                 b.buffer_type = MYSQL_TYPE_SHORT;
                 break;
-            case dbm::kind::data_type::Int64:
+            case kind::data_type::Int64:
                 b.buffer_type = MYSQL_TYPE_LONGLONG;
                 break;
-            case dbm::kind::data_type::UInt32:
+            case kind::data_type::UInt32:
                 b.buffer_type = MYSQL_TYPE_LONG;
                 b.is_unsigned = true;
                 break;
-            case dbm::kind::data_type::UInt16:
+            case kind::data_type::UInt16:
                 b.buffer_type = MYSQL_TYPE_SHORT;
                 b.is_unsigned = true;
                 break;
-            case dbm::kind::data_type::UInt64:
+            case kind::data_type::UInt64:
                 b.buffer_type = MYSQL_TYPE_LONGLONG;
                 b.is_unsigned = true;
                 break;
-            case dbm::kind::data_type::Double:
+            case kind::data_type::Double:
                 b.buffer_type = MYSQL_TYPE_DOUBLE;
                 break;
-            case dbm::kind::data_type::String:
+            case kind::data_type::String:
                 string_column.push_back(i);
                 string_buffer.push_back(reinterpret_cast<std::string*>(p->buffer()));
                 string_len.push_back(0);

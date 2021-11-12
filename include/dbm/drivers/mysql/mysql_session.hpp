@@ -19,7 +19,7 @@ public:
 
     void init(const std::string& host_name, const std::string& user, const std::string& pass, unsigned int port, const std::string& db_name, unsigned int flags = 0);
 
-    /* Set database name doesn't work if already connected! */
+    /* Note: set database name doesn't work if already connected! */
     void set_database_name(const std::string& name);
 
     void open() override;
