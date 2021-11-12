@@ -55,7 +55,7 @@ public:
             db_settings::instance().init_mysql_session(*db, db_settings::instance().test_db_name);
             db->open();
             db->create_database(db_settings::instance().test_db_name, true);
-            mysql_session = std::move(db);
+            mysql_session_ = std::move(db);
         }
 #endif
 #ifdef DBM_SQLITE3
@@ -63,7 +63,7 @@ public:
             auto db = std::make_unique<dbm::sqlite_session>();
             db->set_db_name(db_settings::instance().test_db_file_name);
             db->open();
-            sqlite_session = std::move(db);
+            sqlite_session_ = std::move(db);
         }
 #endif
     }
@@ -77,8 +77,12 @@ public:
     template<typename SessionType>
     void run(dbm::session& session);
 
-    std::unique_ptr<dbm::session> mysql_session;
-    std::unique_ptr<dbm::session> sqlite_session;
+    dbm::session& mysql_session() { return *mysql_session_; }
+    dbm::session& sqlite_session() { return *sqlite_session_; }
+
+private:
+    std::unique_ptr<dbm::session> mysql_session_;
+    std::unique_ptr<dbm::session> sqlite_session_;
 };
 
 void Test::insert_impl(dbm::session& session)
@@ -239,14 +243,14 @@ END)";
     BOOST_TEST(m.at("weight").is_null());
 }
 
-void Test::insert2_impl(dbm::session& db)
+void Test::insert2_impl(dbm::session& session)
 {
     // 6
     dbm::prepared_stmt stmt (original_insert_statement,
                             dbm::local<std::string>("Snoopy"),
                             dbm::local(11),
                             dbm::local(19));
-    stmt >> db;
+    stmt >> session;
 }
 
 void Test::select_impl(dbm::session& session)
@@ -283,6 +287,7 @@ void Test::close_impl(dbm::session& session)
                             dbm::local<int>(),
                             dbm::local<double>());
 
+    // 7
     // execute statement just to make sure this one works
     session.query(stmt);
 
@@ -320,11 +325,8 @@ void Test::run(dbm::session& session)
     BOOST_TEST_CHECKPOINT("insert2_impl");
     insert2_impl(session);
 
-    if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
-        BOOST_TEST_CHECKPOINT("select_impl");
-        select_impl(session);
-    }
-    // TODO: sqlite select
+    BOOST_TEST_CHECKPOINT("select_impl");
+    select_impl(session);
 
     BOOST_TEST_CHECKPOINT("close_impl");
     close_impl(session);
@@ -341,12 +343,12 @@ BOOST_AUTO_TEST_CASE(prepared_stmt_basic)
 
 #ifdef DBM_MYSQL
     BOOST_TEST_CHECKPOINT(__FUNCTION__ + std::string(" ... MySql"));
-    test.run<dbm::mysql_session>(*test.mysql_session);
+    test.run<dbm::mysql_session>(test.mysql_session());
 #endif
 
 #ifdef DBM_SQLITE3
     BOOST_TEST_CHECKPOINT(__FUNCTION__ + std::string(" ... SQLite"));
-    test.run<dbm::sqlite_session>(*test.sqlite_session);
+    test.run<dbm::sqlite_session>(test.sqlite_session());
 #endif
 }
 

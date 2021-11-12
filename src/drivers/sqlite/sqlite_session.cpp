@@ -15,36 +15,11 @@
 namespace dbm {
 
 namespace {
-class Stmt
+
+class error_message
 {
 public:
-    ~Stmt()
-    {
-        reset();
-    }
-
-    void reset()
-    {
-        if (s_) {
-            sqlite3_finalize(s_);
-            s_ = nullptr;
-        }
-    }
-
-    sqlite3_stmt** ptr()
-    {
-        return &s_;
-    }
-
-private:
-    sqlite3_stmt* s_ {nullptr};
-};
-
-
-class ErrMsg
-{
-public:
-    ~ErrMsg()
+    ~error_message()
     {
         reset();
     }
@@ -62,7 +37,7 @@ public:
         return &p_;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, ErrMsg const& msg)
+    friend std::ostream& operator<<(std::ostream& os, error_message const& msg)
     {
         os << msg.p_;
         return os;
@@ -144,7 +119,7 @@ void sqlite_session::close()
 
 void sqlite_session::query(const std::string& statement)
 {
-    ErrMsg zErrMsg;
+    error_message zErrMsg;
 
     last_statement_ = statement;
 
@@ -160,7 +135,7 @@ kind::sql_rows sqlite_session::select_rows(const std::string& statement)
     int rc;
     int nRow;
     int nColumn;
-    ErrMsg zErrMsg;
+    error_message zErrMsg;
     kind::sql_rows rows;
 
     last_statement_ = statement;
@@ -240,6 +215,8 @@ void sqlite_session::query(kind::prepared_statement& stmt)
     if (!db3_)
         throw_exception("SQLite connection is closed");
 
+    free_table();
+
     if (!stmt.native_handle())
         init_prepared_statement(stmt);
 
@@ -249,15 +226,12 @@ void sqlite_session::query(kind::prepared_statement& stmt)
         sqlite3_reset(handle);
     });
 
-    free_table();
-
-    int nparams = static_cast<int>(stmt.size());
+    int const nparams = static_cast<int>(stmt.size());
 
     for (int i = 0; i < nparams; ++i) {
 
         container* p = stmt.param(i);
         int rc = SQLITE_ERROR;
-
         int col_idx = i + 1;
 
         if (p->is_null()) {
@@ -311,6 +285,89 @@ void sqlite_session::query(kind::prepared_statement& stmt)
 
     if (rc != SQLITE_DONE)
         throw_exception("SQLite step error : " + std::string(sqlite3_errmsg(db3_)));
+}
+
+std::vector<std::vector<container_ptr>> sqlite_session::select(dbm::kind::prepared_statement& stmt)
+{
+    if (!db3_)
+        throw_exception("SQLite connection is closed");
+
+    free_table();
+
+    if (!stmt.native_handle())
+        init_prepared_statement(stmt);
+
+    auto handle = reinterpret_cast<sqlite3_stmt*>(stmt.native_handle());
+
+    utils::execute_at_exit finally([&handle] {
+        sqlite3_reset(handle);
+    });
+
+    std::vector<std::vector<container_ptr>> rows;
+    int const nparams = static_cast<int>(stmt.size());
+    int rc;
+
+    while (true) {
+        rc = sqlite3_step(handle);
+
+        if (rc == SQLITE_ROW) {
+            std::vector<container_ptr> row;
+
+            for (int i = 0; i < nparams; ++i) {
+
+                int col_idx = i;
+                container const* psrc = stmt.param(i);
+                row.push_back(local_container_factory(psrc->type()));
+                auto& pdest = row.back();
+
+                rc = sqlite3_column_type(handle, col_idx);
+
+                if (rc == SQLITE_NULL) {
+                    row.back()->set_null(true);
+                }
+                else {
+                    switch (psrc->type()) {
+                        //case kind::data_type::Nullptr:
+                            // TODO: ?
+                        //    break;
+                        case kind::data_type::Bool:
+                        case kind::data_type::Int32:
+                        case kind::data_type::Int16:
+                        case kind::data_type::UInt16:
+                            pdest->set(sqlite3_column_int(handle, col_idx));
+                            break;
+                        case kind::data_type::Int64:
+                        case kind::data_type::UInt32: // TODO: 32 or 64?
+                        case kind::data_type::UInt64:
+                            pdest->set(static_cast<int64_t>(sqlite3_column_int64(handle, col_idx)));
+                            break;
+                        case kind::data_type::Double:
+                            pdest->set(sqlite3_column_double(handle, col_idx));
+                            break;
+                        case kind::data_type::String:
+                        {
+                            //int bytes = sqlite3_column_bytes(handle, col_idx);
+                            auto* txt = reinterpret_cast<const char*>(sqlite3_column_text(handle, col_idx));
+                            pdest->set(txt);
+                        }
+                        break;
+                        default:
+                            throw_exception("SQLite prepared statement type not supported"); // TODO: handle other types
+                    }
+                }
+            }
+
+            rows.push_back(std::move(row));
+        }
+        else if (rc == SQLITE_DONE) {
+            break;
+        }
+        else {
+            throw_exception("SQLite step error : " + std::string(sqlite3_errmsg(db3_)));
+        }
+    }
+
+    return rows;
 }
 
 std::string sqlite_session::write_model_query(const model& m) const
