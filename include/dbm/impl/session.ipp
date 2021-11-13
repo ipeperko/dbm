@@ -44,6 +44,7 @@ DBM_INLINE session::session(const session& oth)
 
 DBM_INLINE session::session(session&& oth) noexcept
     : last_statement_(std::move(oth.last_statement_))
+    , prepared_stm_handle_(std::move(oth.prepared_stm_handle_))
 {
 }
 
@@ -59,6 +60,7 @@ DBM_INLINE session& session::operator=(session&& oth) noexcept
 {
     if (this != &oth) {
         last_statement_ = std::move(oth.last_statement_);
+        prepared_stm_handle_ = std::move(oth.prepared_stm_handle_);
     }
     return *this;
 }

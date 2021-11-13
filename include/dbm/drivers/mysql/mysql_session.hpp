@@ -19,7 +19,7 @@ public:
 
     void init(const std::string& host_name, const std::string& user, const std::string& pass, unsigned int port, const std::string& db_name, unsigned int flags = 0);
 
-    /* Set database name doesn't work if already connected! */
+    /* Note: set database name doesn't work if already connected! */
     void set_database_name(const std::string& name);
 
     void open() override;
@@ -27,11 +27,14 @@ public:
 
     bool is_connected() const override { return conn_ != nullptr; }
 
+    using session::query;
     void query(const std::string& statement) override;
+
+    using session::select;
 
     void init_prepared_statement(kind::prepared_statement& stmt) override;
     void query(kind::prepared_statement& stmt) override;
-    std::vector<std::vector<container_ptr>> select_prepared_statement(kind::prepared_statement& stmt) override;
+    std::vector<std::vector<container_ptr>> select(kind::prepared_statement& stmt) override;
 
     std::string write_model_query(const model& m) const override;
     std::string read_model_query(const model& m, const std::string& extra_condition) const override;

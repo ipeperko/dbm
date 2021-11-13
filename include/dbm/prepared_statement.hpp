@@ -12,9 +12,11 @@ class prepared_statement
     friend class prepared_statement_manipulator;
 public:
 
-    explicit prepared_statement(std::string stmt)
+    template<typename ...Args>
+    explicit prepared_statement(std::string stmt, Args&&... args)
         : stmt_(std::move(stmt))
     {
+        push_helper(std::forward<Args>(args)...);
     }
 
     prepared_statement(prepared_statement&&) = default;
@@ -57,7 +59,17 @@ public:
     prepared_statement& operator>>(session& s);
 
 private:
-    std::string stmt_; // TODO: std::shared_ptr<std::string const>
+    void push_helper()
+    {}
+
+    template<typename Head, typename... Tail>
+    void push_helper(Head&& head, Tail&&... tail)
+    {
+        push(std::forward<Head>(head));
+        push_helper(std::forward<Tail>(tail)...);
+    }
+
+    std::string stmt_; // TODO: std::shared_ptr<std::string const> ?
     std::vector<container*> parms_;
     std::vector<container_ptr> parms_local_;
     void* native_handle_ {nullptr};

@@ -35,14 +35,14 @@ public:
 
     virtual void query(const std::string& statement); // TODO: string_view
     virtual void query(const detail::statement& q);
-    kind::sql_rows select(const std::string& statement); // TODO: string_view
-    kind::sql_rows select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria="");
-    kind::sql_rows select(const detail::statement& q);
+    virtual kind::sql_rows select(const std::string& statement); // TODO: string_view
+    virtual kind::sql_rows select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria="");
+    virtual kind::sql_rows select(const detail::statement& q);
 
     virtual void init_prepared_statement(dbm::kind::prepared_statement& stmt) {}
     void remove_prepared_statement(std::string const& s);
     virtual void query(kind::prepared_statement& stmt) {}
-    virtual std::vector<std::vector<container_ptr>> select_prepared_statement(kind::prepared_statement& stmt) { return {}; }
+    virtual std::vector<std::vector<container_ptr>> select(kind::prepared_statement& stmt) { return {}; }
 
     virtual std::string write_model_query(const model& m) const = 0;
     virtual std::string read_model_query(const model& m, const std::string& extra_condition="") const = 0;

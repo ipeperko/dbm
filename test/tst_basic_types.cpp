@@ -13,7 +13,7 @@ std::ostream& boost_test_print_type(std::ostream& os, const dbm::model_item& ite
 {
     os << "key: '" << item.key().get() << "' tag: '" << item.tag().get() << "'";
     os << " value: ";
-    if (item.get_container().is_null()) {
+    if (item.get().is_null()) {
         os << "NULL";
     }
     else {
@@ -647,9 +647,9 @@ BOOST_AUTO_TEST_CASE(item_test)
     dbm::model_item mitem_int(dbm::local<int>(), dbm::tag("mitem_int_tag"), dbm::key("mitem_int"));
     BOOST_TEST(mitem_int.key().get() == "mitem_int");
     BOOST_TEST(mitem_int.tag().get() == "mitem_int_tag");
-    BOOST_TEST(mitem_int.get_container().is_null());
+    BOOST_TEST(mitem_int.get().is_null());
     mitem_int.set_value(13);
-    BOOST_TEST(!mitem_int.get_container().is_null());
+    BOOST_TEST(!mitem_int.get().is_null());
     BOOST_TEST(mitem_int.value<int>() == 13);
     BOOST_TEST(std::get<int>(mitem_int.value()) == 13);
     mitem_int.from_string("1234");

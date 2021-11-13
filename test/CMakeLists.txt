@@ -15,9 +15,11 @@ add_executable(${BINARY}
     tst_basic_types.cpp
     tst_model.cpp
     tst_mysql_pool_multi.cpp
+    tst_mysql_procedure.cpp
     tst_pool.cpp
     tst_prepared_stmt.cpp
     tst_sql_types.cpp
+    tst_sqlite_pool.cpp
     tst_xml.cpp
     )
 

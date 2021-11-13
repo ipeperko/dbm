@@ -51,6 +51,26 @@ DBM_INLINE const container& model_item::get_container() const
     return *cont_;
 }
 
+DBM_INLINE container& model_item::get()
+{
+    return *cont_;
+}
+
+DBM_INLINE const container& model_item::get() const
+{
+    return *cont_;
+}
+
+DBM_INLINE container& model_item::operator*()
+{
+    return *cont_;
+}
+
+DBM_INLINE container const& model_item::operator*() const
+{
+    return *cont_;
+}
+
 DBM_INLINE bool model_item::is_null() const noexcept
 {
     return !cont_ || cont_->is_null();

@@ -9,6 +9,7 @@
 #include <atomic>
 
 using namespace boost::unit_test;
+using namespace std::chrono_literals;
 
 namespace{
 void setup_pool(dbm::pool& pool)
@@ -75,14 +76,14 @@ BOOST_AUTO_TEST_CASE(pool_acquire_release)
     BOOST_TEST(pool.num_idle_connections() == 2);
 
     {
-        // Acquire third connection (should reuse existing)
+        // Acquire third connection (should reuse an existing one)
         auto conn3 = pool.acquire();
         BOOST_TEST(pool.num_connections() == 2);
         BOOST_TEST(pool.num_active_connections() == 1);
         BOOST_TEST(pool.num_idle_connections() == 1);
     }
 
-    // conn3 is out of scope so it should be released
+    // conn3 is out of scope, so the connection should be released
     BOOST_TEST(pool.num_connections() == 2);
     BOOST_TEST(pool.num_active_connections() == 0);
     BOOST_TEST(pool.num_idle_connections() == 2);
@@ -126,7 +127,7 @@ BOOST_AUTO_TEST_CASE(pool_acquire_timeout_exception)
     dbm::pool pool;
     setup_pool(pool);
     pool.set_max_connections(1);
-    pool.set_acquire_timeout(std::chrono::seconds(2));
+    pool.set_acquire_timeout(2s);
     BOOST_TEST(pool.num_connections() == 0);
 
     std::thread t1([&] {
@@ -137,20 +138,20 @@ BOOST_AUTO_TEST_CASE(pool_acquire_timeout_exception)
 
         auto rows = conn1.get().select("SELECT 1");
         BOOST_TEST(rows.size() == 1);
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        std::this_thread::sleep_for(3s);
         rows.clear();
         rows = conn1.get().select("SELECT 1");
         BOOST_TEST(rows.size() == 1);
     });
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(1s);
 
     auto tp1 = std::chrono::steady_clock::now();
     BOOST_REQUIRE_THROW(pool.acquire(), std::exception);
     auto tp2 = std::chrono::steady_clock::now();
     std::chrono::duration<double, std::milli> dt = tp2 - tp1;
-    BOOST_TEST(dt.count() >= 2000);
-    BOOST_TEST(dt.count() < 2100);
+    BOOST_TEST((dt >= 2000ms));
+    BOOST_TEST((dt < 2100ms));
 
     t1.join();
 }
@@ -159,20 +160,20 @@ BOOST_AUTO_TEST_CASE(pool_heartbeat_error)
 {
     dbm::pool pool;
     setup_pool(pool);
-    pool.set_heartbeat_interval(std::chrono::seconds(1));
+    pool.set_heartbeat_interval(1s);
     BOOST_TEST(pool.num_connections() == 0);
 
     auto conn = pool.acquire();
     auto* db = &conn.get();
     conn.release();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+    std::this_thread::sleep_for(2500ms);
     BOOST_TEST(pool.heartbeats_count() == 2);
 
     db->close(); // manually close connection
 
     // verify connection has been removed
-    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+    std::this_thread::sleep_for(1500ms);
     BOOST_TEST(pool.num_connections() == 0);
 }
 
@@ -202,7 +203,7 @@ public:
               auto num_active_connections = pool.num_connections();
               update_stat(num_active_connections);
 
-              std::this_thread::sleep_for(std::chrono::milliseconds(100));
+              std::this_thread::sleep_for(100ms);
           }
           catch(std::exception& e) {
               ++num_exceptions;
@@ -242,7 +243,7 @@ public:
     {
         setup_pool(pool);
         pool.set_max_connections(n_conn);
-        pool.set_acquire_timeout(std::chrono::seconds(5));
+        pool.set_acquire_timeout(5s);
         BOOST_TEST(pool.num_connections() == 0);
     }
 
@@ -280,7 +281,7 @@ public:
     PoolVariableload()
     {
         setup_pool(pool);
-        pool.set_heartbeat_interval(std::chrono::seconds(1));
+        pool.set_heartbeat_interval(1s);
         BOOST_TEST(pool.num_connections() == 0);
     }
 
@@ -293,7 +294,7 @@ public:
 
         auto side_thr = std::thread([&] {
             while (run) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                std::this_thread::sleep_for(250ms);
                 task.pool.num_connections();
                 task.pool.num_idle_connections();
                 task.pool.num_active_connections();
@@ -313,7 +314,7 @@ public:
         task.run(5);
         BOOST_TEST(task.num_exceptions == 0);
         BOOST_TEST(task.total_rows == 5);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(500ms);
 
         // run another 5 threads - all connections must be reused
         BOOST_TEST_MESSAGE("Pool connecting 5 threads");
@@ -321,7 +322,7 @@ public:
         task.run(5);
         BOOST_TEST(task.num_exceptions == 0);
         BOOST_TEST(task.total_rows == 5);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(500ms);
 
         // run 8 threads
         BOOST_TEST_MESSAGE("Pool connecting 8 threads");
@@ -329,7 +330,7 @@ public:
         task.run(8);
         BOOST_TEST(task.num_exceptions == 0);
         BOOST_TEST(task.total_rows == 8);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(500ms);
 
         // run 20 threads
         BOOST_TEST_MESSAGE("Pool connecting 20 threads");
@@ -338,7 +339,7 @@ public:
         BOOST_TEST(task.num_exceptions == 0);
         BOOST_TEST(task.total_rows == 20);
         pool.reset_heartbeats_counter();
-        std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+        std::this_thread::sleep_for(2500ms);
         BOOST_TEST(pool.heartbeats_count() >= 10); // normally 20 but side thread might block the process
         BOOST_TEST(pool.heartbeats_count() <= 30); // normally 20 but sometimes might the process delay while heartbeat still in progress
 
@@ -349,7 +350,7 @@ public:
         BOOST_TEST(task.num_exceptions == 0);
         BOOST_TEST(task.total_rows == 5);
         pool.reset_heartbeats_counter();
-        std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+        std::this_thread::sleep_for(2500ms);
         BOOST_TEST(pool.heartbeats_count() >= 10); // normally 20 but side thread might block the process
         BOOST_TEST(pool.heartbeats_count() <= 30); // normally 20 but sometimes might the process delay while heartbeat still in progress
 

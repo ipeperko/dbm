@@ -178,7 +178,7 @@ public:
         if (item.is_null()) {
             s = "NULL";
         }
-        else if (item.get_container().type() == kind::data_type::Timestamp2u) DBM_UNLIKELY {
+        else if (item.get().type() == kind::data_type::Timestamp2u) DBM_UNLIKELY {
             if (is_SQlite()) {
                 s += "datetime(" + item.to_string() + ", 'unixepoch')";
             }
@@ -203,7 +203,7 @@ public:
     {
         std::string key;
 
-        if (item.get_container().type() == kind::data_type::Timestamp2u) DBM_UNLIKELY {
+        if (item.get().type() == kind::data_type::Timestamp2u) DBM_UNLIKELY {
             if (is_SQlite()) {
                 key += "strftime('%s'," + item.key().get() + ") AS " + item.key().get();
             }
@@ -410,7 +410,7 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
             }
             else DBM_LIKELY {
                 // Standard type
-                keys += value_type_string(it.get_container().type());
+                keys += value_type_string(it.get().type());
 
                 // Not null constraint
                 if (it.conf().not_null()) {
@@ -423,7 +423,7 @@ std::string model_query_helper<SessionType>::create_table_query(bool if_not_exis
                         keys += " DEFAULT NULL";
                     }
                     else {
-                        if (it.get_container().type() == kind::data_type::String) {
+                        if (it.get().type() == kind::data_type::String) {
                             keys += " DEFAULT '" + it.conf().default_constraint().string_value() + "'";
                         }
                         else {
