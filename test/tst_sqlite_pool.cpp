@@ -109,6 +109,76 @@ BOOST_AUTO_TEST_CASE(pool_acquire_timeout_exception)
     t1.join();
 }
 
+class MultipleWriters
+{
+    dbm::pool pool_;
+    static constexpr unsigned n_tasks_ {10};
+    static constexpr unsigned n_rec_ {100};
+public:
+
+    MultipleWriters()
+    {
+        setup_pool(pool_);
+        pool_.set_acquire_timeout(10s);
+
+        auto session = pool_.acquire();
+        auto m = get_model();
+        m.drop_table(*session);
+        m.create_table(*session);
+    }
+
+    dbm::model get_model()
+    {
+        return dbm::model ("test_pool",
+                     {
+                         { dbm::key("id"), dbm::local<int>(), dbm::primary(true), dbm::not_null(true) },
+                         { dbm::key("thread_id"), dbm::local<int>() },
+                         { dbm::key("value"), dbm::local<int>() }
+                     });
+    }
+
+    void run()
+    {
+        std::array<std::thread, n_tasks_> thr;
+
+        for (auto i = 0u; i < n_tasks_; ++i) {
+            thr[i] = std::thread([this, i]{ inserter(i); });
+        }
+
+        for (auto& it : thr) {
+            it.join();
+        }
+
+        check_inserted();
+    }
+
+    void inserter(unsigned thread_id)
+    {
+        auto session = pool_.acquire();
+        dbm::prepared_stmt stmt("INSERT INTO test_pool (thread_id, value) VALUES (?, ?)",
+                                dbm::local(thread_id),
+                                dbm::local<unsigned>());
+
+        for (auto i = thread_id * n_rec_; i < (thread_id + 1) * n_rec_; ++i) {
+            stmt.param(1)->set(i + 1);
+            stmt >> *session;
+        }
+    }
+
+    void check_inserted()
+    {
+        auto session = pool_.acquire();
+        auto n = session.get().select("SELECT COUNT(*) FROM test_pool").at(0).at(0).get<unsigned>();
+        BOOST_TEST(n == n_tasks_ * n_rec_);
+    }
+};
+
+BOOST_AUTO_TEST_CASE(pool_multiple_threads)
+{
+    MultipleWriters test;
+    test.run();
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 #endif
