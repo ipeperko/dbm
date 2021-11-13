@@ -134,6 +134,7 @@ void Test::insert_impl(dbm::session& session)
 
     BOOST_TEST(session.prepared_statement_handles().size() == 1);
 
+    // 5
     // write null values
     m.at("name").set_value(nullptr);
     m.at("age").set_value(nullptr);
@@ -211,6 +212,7 @@ END)";
     person.age = 40;
     person.weight = 80;
 
+    // 6
     stmt >> session;
 
     person.reset(99);
@@ -245,7 +247,7 @@ END)";
 
 void Test::insert2_impl(dbm::session& session)
 {
-    // 6
+    // 7
     dbm::prepared_stmt stmt (original_insert_statement,
                             dbm::local<std::string>("Snoopy"),
                             dbm::local(11),
@@ -287,9 +289,12 @@ void Test::close_impl(dbm::session& session)
                             dbm::local<int>(),
                             dbm::local<double>());
 
-    // 7
+    // 8
     // execute statement just to make sure this one works
     session.query(stmt);
+
+    int nrows = session.select(dbm::statement() << "SELECT count(*) AS count FROM test_prepared_stmt").at(0).at("count").get<int>();
+    BOOST_TEST(nrows == 8);
 
     // should close all handles on close
     session.close();
@@ -310,6 +315,7 @@ void Test::run(dbm::session& session)
         upsert_impl(session);
     }
     else if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
+        // 6
         // SQLite has no stored procedures support.
         // We will just insert data required for the next test.
         dbm::prepared_stmt stmt ("INSERT INTO test_prepared_stmt (id, name, age, weight) VALUES(?, ?, ?, ?)",
