@@ -2,9 +2,12 @@
 #define DBM_DB_SETTINGS_H
 
 #include <string>
+#include <memory>
 
 namespace dbm {
+class session;
 class mysql_session;
+class sqlite_session;
 }
 
 class db_settings
@@ -18,6 +21,9 @@ public:
     static db_settings& instance();
 
     void init_mysql_session(dbm::mysql_session& session, std::string const& db_name);
+
+    std::unique_ptr<dbm::session> get_mysql_session();
+    std::unique_ptr<dbm::session> get_sqlite_session();
 
     std::string mysql_host {"127.0.0.1"};
     std::string mysql_username;
