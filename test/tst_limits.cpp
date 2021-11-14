@@ -19,35 +19,14 @@ using values_t =
         uint64_t,
         double>;
 
-struct SetMax
+struct Max
 {
     template<typename T>
-    explicit SetMax(T& val)
+    static constexpr void set(T& val)
     {
         val = std::numeric_limits<T>::max();
     }
-};
 
-struct SetMin
-{
-    template<typename T>
-    explicit SetMin(T& val)
-    {
-        val = std::numeric_limits<T>::min();
-    }
-};
-
-template<typename MinMax, size_t Index=0>
-void set_values(values_t& t)
-{
-    MinMax(std::get<Index>(t));
-    if constexpr (Index < std::tuple_size_v<values_t> - 1) {
-        set_values<MinMax, Index + 1>(t);
-    }
-}
-
-struct Max
-{
     template<typename T>
     static constexpr T get()
     {
@@ -58,15 +37,33 @@ struct Max
 struct Min
 {
     template<typename T>
+    static constexpr void set(T& val)
+    {
+        val = std::numeric_limits<T>::min();
+    }
+
+    template<typename T>
     static constexpr T get()
     {
         return std::numeric_limits<T>::min();
     }
 };
 
+
+template<typename MinMax, size_t Index=0>
+void set_values(values_t& t)
+{
+    using SelectedType = std::tuple_element_t<Index, values_t>;
+
+    MinMax::template set<SelectedType>(std::get<Index>(t));
+
+    if constexpr (Index < std::tuple_size_v<values_t> - 1) {
+        set_values<MinMax, Index + 1>(t);
+    }
+}
+
 template<typename MinMax, typename FilterType=void, size_t Index=0>
-void
-check_values(values_t& t)
+void check_values(values_t& t)
 {
     using SelectedType = std::tuple_element_t<Index, values_t>;
 
@@ -76,6 +73,21 @@ check_values(values_t& t)
 
     if constexpr (Index < std::tuple_size_v<values_t> - 1) {
         check_values<MinMax, FilterType, Index + 1>(t);
+    }
+}
+
+template<size_t Index=0>
+void from_container_vector(values_t& t, std::vector<std::unique_ptr<dbm::container>> const& v)
+{
+    using SelectedType = std::tuple_element_t<Index, values_t>;
+
+    if (std::tuple_size_v<values_t> + 1 != v.size())
+        throw std::domain_error("vector size error");
+
+    std::get<Index>(t) = v[Index + 1]->get<SelectedType>();
+
+    if constexpr (Index < std::tuple_size_v<values_t> - 1) {
+        from_container_vector<Index + 1>(t, v);
     }
 }
 
@@ -108,11 +120,11 @@ void init(dbm::session& db)
 void insert_model_limits(dbm::session& db)
 {
     values_t lm {};
-    set_values<SetMax>(lm);
+    set_values<Max>(lm);
     auto m = get_model(lm, "model max");
     m >> db;
 
-    set_values<SetMin>(lm);
+    set_values<Min>(lm);
     m.at("descr").set_value("model min");
     m >> db;
 }
@@ -143,47 +155,24 @@ void insert_prepared_stmt_limits(dbm::session& db)
                        dbm::binding(std::get<double>(lm))
                        );
 
-    set_values<SetMax>(lm);
+    set_values<Max>(lm);
     stmt >> db;
 
     stmt.param(0)->set("stmt min");
-    set_values<SetMin>(lm);
+    set_values<Min>(lm);
     stmt >> db;
 }
 
-
-void check_prepared_stmt_limits_max(dbm::session& db, bool check_uint64)
+template<typename MinMax, typename Filter=void>
+void check_prepared_stmt_limits(dbm::session& db)
 {
-    dbm::prepared_stmt stmt("SELECT * FROM test_limits WHERE descr='stmt max'",
-                            dbm::local<std::string>(),
-                            dbm::local<bool>(),
-                            dbm::local<int32_t>(),
-                            dbm::local<int16_t>(),
-                            dbm::local<int64_t>(),
-                            dbm::local<uint32_t>(),
-                            dbm::local<uint16_t>(),
-                            dbm::local<uint64_t>(),
-                            dbm::local<double>()
-                            );
+    std::string descr;
+    if constexpr (std::is_same_v<MinMax, Max>)
+        descr = "stmt max";
+    else if constexpr (std::is_same_v<MinMax, Min>)
+        descr = "stmt min";
 
-    auto rows = db.select(stmt);
-    auto& row = rows.at(0);
-
-    BOOST_TEST(row.at(1)->get<bool>() == std::numeric_limits<bool>::max());
-    BOOST_TEST(row.at(2)->get<int32_t>() == std::numeric_limits<int32_t>::max());
-    BOOST_TEST(row.at(3)->get<int16_t>() == std::numeric_limits<int16_t>::max());
-    BOOST_TEST(row.at(4)->get<int64_t>() == std::numeric_limits<int64_t>::max());
-    BOOST_TEST(row.at(5)->get<uint32_t>() == std::numeric_limits<uint32_t>::max());
-    BOOST_TEST(row.at(6)->get<uint16_t>() == std::numeric_limits<uint16_t>::max());
-    if (check_uint64) {
-        BOOST_TEST(row.at(7)->get<uint64_t>() == std::numeric_limits<uint64_t>::max());
-    }
-    BOOST_TEST(row.at(8)->get<double>() == std::numeric_limits<double>::max());
-}
-
-void check_prepared_stmt_limits_min(dbm::session& db)
-{
-    dbm::prepared_stmt stmt("SELECT * FROM test_limits WHERE descr='stmt min'",
+    dbm::prepared_stmt stmt("SELECT * FROM test_limits WHERE descr='" + descr + "'",
                             dbm::local<std::string>(),
                             dbm::local<bool>(),
                             dbm::local<int32_t>(),
@@ -198,34 +187,29 @@ void check_prepared_stmt_limits_min(dbm::session& db)
     auto rows = db.select(stmt);
     auto& row = rows.at(0);
 
-    BOOST_TEST(row.at(1)->get<bool>() == std::numeric_limits<bool>::min());
-    BOOST_TEST(row.at(2)->get<int32_t>() == std::numeric_limits<int32_t>::min());
-    BOOST_TEST(row.at(3)->get<int16_t>() == std::numeric_limits<int16_t>::min());
-    BOOST_TEST(row.at(4)->get<int64_t>() == std::numeric_limits<int64_t>::min());
-    BOOST_TEST(row.at(5)->get<uint32_t>() == std::numeric_limits<uint32_t>::min());
-    BOOST_TEST(row.at(6)->get<uint16_t>() == std::numeric_limits<uint16_t>::min());
-    BOOST_TEST(row.at(7)->get<uint64_t>() == std::numeric_limits<uint64_t>::min());
-    BOOST_TEST(row.at(8)->get<double>() == std::numeric_limits<double>::min());
+    values_t lm {};
+    from_container_vector(lm, row);
+
+    check_values<MinMax, Filter>(lm);
 }
 
-void check_limits_impl(dbm::session& db, bool check_uint64=true)
+template<typename Filter=void>
+void check_limits_impl(dbm::session& db)
 {
     init(db);
 
     insert_model_limits(db);
     BOOST_TEST_CHECKPOINT("model max limits");
-    if (check_uint64)
-        check_model_limits<Max>(db, "model max");
-    else
-        check_model_limits<Max, uint64_t>(db, "model max");
+    check_model_limits<Max, Filter>(db, "model max");
     BOOST_TEST_CHECKPOINT("model min limits");
     check_model_limits<Min>(db, "model min");
 
     insert_prepared_stmt_limits(db);
     BOOST_TEST_CHECKPOINT("prepared statement max limits");
-    check_prepared_stmt_limits_max(db, check_uint64);
+    check_prepared_stmt_limits<Max, Filter>(db);
+
     BOOST_TEST_CHECKPOINT("prepared statement min limits");
-    check_prepared_stmt_limits_min(db);
+    check_prepared_stmt_limits<Min>(db);
 }
 
 } // namespace
@@ -241,7 +225,7 @@ BOOST_AUTO_TEST_CASE(check_limits, * tolerance(0.00001))
 #ifdef DBM_SQLITE3
     BOOST_TEST_CHECKPOINT("check limits SQLite");
     // uint64 will be filtered out from checks
-    check_limits_impl(*db_settings::instance().get_sqlite_session(), false);
+    check_limits_impl<uint64_t>(*db_settings::instance().get_sqlite_session());
 #endif
 }
 
