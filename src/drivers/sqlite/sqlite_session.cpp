@@ -255,7 +255,7 @@ void sqlite_session::query(kind::prepared_statement& stmt)
                     rc = sqlite3_bind_int64(handle, col_idx, p->get<int64_t>());
                     break;
                 case kind::data_type::UInt32:
-                    rc = sqlite3_bind_int(handle, col_idx, p->get<uint32_t>()); // TODO: bind 64 ?
+                    rc = sqlite3_bind_int(handle, col_idx, p->get<uint32_t>());
                     break;
                 case kind::data_type::UInt16:
                     rc = sqlite3_bind_int(handle, col_idx, p->get<uint16_t>());
@@ -273,7 +273,7 @@ void sqlite_session::query(kind::prepared_statement& stmt)
                     }
                     break;
                 default:
-                    throw_exception("SQLite prepared statement type not supported"); // TODO: handle other types
+                    throw_exception("SQLite prepared statement type not supported");
             }
         }
 
@@ -327,17 +327,14 @@ std::vector<std::vector<container_ptr>> sqlite_session::select(dbm::kind::prepar
                 }
                 else {
                     switch (psrc->type()) {
-                        //case kind::data_type::Nullptr:
-                            // TODO: ?
-                        //    break;
                         case kind::data_type::Bool:
                         case kind::data_type::Int32:
                         case kind::data_type::Int16:
                         case kind::data_type::UInt16:
+                        case kind::data_type::UInt32: // TODO: 32 or 64?
                             pdest->set(sqlite3_column_int(handle, col_idx));
                             break;
                         case kind::data_type::Int64:
-                        case kind::data_type::UInt32: // TODO: 32 or 64?
                         case kind::data_type::UInt64:
                             pdest->set(static_cast<int64_t>(sqlite3_column_int64(handle, col_idx)));
                             break;
@@ -345,14 +342,14 @@ std::vector<std::vector<container_ptr>> sqlite_session::select(dbm::kind::prepar
                             pdest->set(sqlite3_column_double(handle, col_idx));
                             break;
                         case kind::data_type::String:
-                        {
-                            //int bytes = sqlite3_column_bytes(handle, col_idx);
-                            auto* txt = reinterpret_cast<const char*>(sqlite3_column_text(handle, col_idx));
-                            pdest->set(txt);
-                        }
-                        break;
+                            {
+                                //int bytes = sqlite3_column_bytes(handle, col_idx);
+                                auto* txt = reinterpret_cast<const char*>(sqlite3_column_text(handle, col_idx));
+                                pdest->set(txt);
+                            }
+                            break;
                         default:
-                            throw_exception("SQLite prepared statement type not supported"); // TODO: handle other types
+                            throw_exception("SQLite prepared statement type not supported");
                     }
                 }
             }

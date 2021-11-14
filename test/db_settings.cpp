@@ -2,6 +2,9 @@
 #ifdef DBM_MYSQL
 #include <dbm/drivers/mysql/mysql_session.hpp>
 #endif
+#ifdef DBM_SQLITE3
+#include <dbm/drivers/sqlite/sqlite_session.hpp>
+#endif
 
 #include <boost/test/unit_test.hpp>
 
@@ -22,6 +25,25 @@ db_settings& db_settings::instance()
 void db_settings::init_mysql_session(dbm::mysql_session& session, std::string const& db_name)
 {
     session.init(mysql_host, mysql_username, mysql_password, mysql_port, db_name);
+}
+
+std::unique_ptr<dbm::session> db_settings::get_mysql_session()
+{
+    auto db = std::make_unique<dbm::mysql_session>();
+    db_settings::instance().init_mysql_session(*db, db_settings::instance().test_db_name);
+    db->open();
+    db->create_database(db_settings::instance().test_db_name, true);
+    return db;
+}
+#endif
+
+#ifdef DBM_SQLITE3
+std::unique_ptr<dbm::session> db_settings::get_sqlite_session()
+{
+    auto db = std::make_unique<dbm::sqlite_session>();
+    db->set_db_name(db_settings::instance().test_db_file_name);
+    db->open();
+    return db;
 }
 #endif
 

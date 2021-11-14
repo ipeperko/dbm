@@ -1,12 +1,7 @@
 #include "dbm/dbm.hpp"
 #include "db_settings.h"
 #include "common.h"
-#ifdef DBM_MYSQL
-#include <dbm/drivers/mysql/mysql_session.hpp>
-#endif
-#ifdef DBM_SQLITE3
-#include <dbm/drivers/sqlite/sqlite_session.hpp>
-#endif
+
 #include <atomic>
 
 using namespace boost::unit_test;
@@ -51,19 +46,12 @@ public:
     {
 #ifdef DBM_MYSQL
         {
-            auto db = std::make_unique<dbm::mysql_session>();
-            db_settings::instance().init_mysql_session(*db, db_settings::instance().test_db_name);
-            db->open();
-            db->create_database(db_settings::instance().test_db_name, true);
-            mysql_session_ = std::move(db);
+            mysql_session_ = db_settings::instance().get_mysql_session();
         }
 #endif
 #ifdef DBM_SQLITE3
         {
-            auto db = std::make_unique<dbm::sqlite_session>();
-            db->set_db_name(db_settings::instance().test_db_file_name);
-            db->open();
-            sqlite_session_ = std::move(db);
+            sqlite_session_ = db_settings::instance().get_sqlite_session();
         }
 #endif
     }
@@ -348,12 +336,12 @@ BOOST_AUTO_TEST_CASE(prepared_stmt_basic)
     Test test;
 
 #ifdef DBM_MYSQL
-    BOOST_TEST_CHECKPOINT(__FUNCTION__ + std::string(" ... MySql"));
+    BOOST_TEST_CHECKPOINT("prepared statement basic MySql");
     test.run<dbm::mysql_session>(test.mysql_session());
 #endif
 
 #ifdef DBM_SQLITE3
-    BOOST_TEST_CHECKPOINT(__FUNCTION__ + std::string(" ... SQLite"));
+    BOOST_TEST_CHECKPOINT("prepared statement basic SQLite");
     test.run<dbm::sqlite_session>(test.sqlite_session());
 #endif
 }
