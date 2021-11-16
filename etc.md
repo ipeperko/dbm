@@ -89,7 +89,7 @@ Some ideas how to deal with relations:
 
 ### To do
 
-- time_t may not be portable - not necessary long int
-- indexes
+- transaction sqlite, unit test
 - binary, blob support
+- pool, prepared statement, transaction docs
 - Postgres
