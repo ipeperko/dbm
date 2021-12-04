@@ -18,8 +18,8 @@ db_settings::db_settings()
 
 db_settings& db_settings::instance()
 {
-    static db_settings *inst = new db_settings;
-    return *inst;
+    static db_settings inst;
+    return inst;
 }
 
 #ifdef DBM_MYSQL
