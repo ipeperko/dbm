@@ -3,6 +3,7 @@ set(BINARY ${CMAKE_PROJECT_NAME}_test_manual)
 find_package (Boost REQUIRED COMPONENTS unit_test_framework)
 
 add_executable(${BINARY}
+    ../common.h
     ../db_settings.cpp
     ../db_settings.h
 

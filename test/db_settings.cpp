@@ -1,3 +1,4 @@
+#include "dbm/dbm.hpp"
 #include "db_settings.h"
 #ifdef DBM_MYSQL
 #include <dbm/drivers/mysql/mysql_session.hpp>
