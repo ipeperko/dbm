@@ -43,9 +43,9 @@ public:
     std::string create_table_query(const model& m, bool if_not_exists) const override;
     std::string drop_table_query(const model& m, bool if_exists) const override;
 
-    void transaction_begin() override { throw_exception<std::domain_error>("TODO sqlite transaction"); }
-    void transaction_commit() override { throw_exception<std::domain_error>("TODO sqlite transaction"); }
-    void transaction_rollback() override { throw_exception<std::domain_error>("TODO sqlite transaction"); }
+    void transaction_begin() override;
+    void transaction_commit() override;
+    void transaction_rollback() override;
 
 private:
     kind::sql_rows select_rows(const std::string& statement) override;

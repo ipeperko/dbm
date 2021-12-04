@@ -21,6 +21,7 @@ add_executable(${BINARY}
     tst_prepared_stmt.cpp
     tst_sql_types.cpp
     tst_sqlite_pool.cpp
+    tst_transaction.cpp
     tst_xml.cpp
     )
 

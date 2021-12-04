@@ -392,6 +392,21 @@ std::string sqlite_session::drop_table_query(const model& m, bool if_exists) con
     return detail::model_query_helper<detail::param_session_type_sqlite>(m).drop_table_query(if_exists);
 }
 
+void sqlite_session::transaction_begin()
+{
+    query("BEGIN");
+}
+
+void sqlite_session::transaction_commit()
+{
+    query("COMMIT");
+}
+void sqlite_session::transaction_rollback()
+{
+    query("ROLLBACK");
+}
+
+
 void sqlite_session::free_table()
 {
     if (azResult) {

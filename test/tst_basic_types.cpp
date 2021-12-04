@@ -347,11 +347,10 @@ BOOST_AUTO_TEST_CASE(container_test_string_type)
     BOOST_TEST(cont->get<std::string>() == "bstring");
 }
 
-std::function<bool(const int&)> int_validator()
-{
-    return [](const int& val) {
-        return val > 0;
-    };
+namespace {
+auto int_validator = [](const int& val) {
+    return val > 0;
+};
 }
 
 BOOST_AUTO_TEST_CASE(container_test_validator)
@@ -366,8 +365,8 @@ BOOST_AUTO_TEST_CASE(container_test_validator)
     BOOST_REQUIRE_THROW(local_int->set(20), std::exception);
     BOOST_TEST(local_int->is_null());
 
-    dbm::local<int>(int_validator());
-    dbm::local<int>(1, int_validator());
+    dbm::local<int>(int_validator);
+    dbm::local<int>(1, int_validator);
 
     // string container
     auto local_string = dbm::local<std::string>([](const std::string& s) { return s == "xxx"; });
