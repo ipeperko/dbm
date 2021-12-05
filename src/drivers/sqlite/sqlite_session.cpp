@@ -86,7 +86,7 @@ sqlite_session::~sqlite_session()
 std::unique_ptr<session> sqlite_session::clone() const
 {
     return std::make_unique<sqlite_session>(*this);
-};
+}
 
 void sqlite_session::set_db_name(std::string_view file_name)
 {
@@ -331,7 +331,7 @@ std::vector<std::vector<container_ptr>> sqlite_session::select(dbm::kind::prepar
                         case kind::data_type::Int32:
                         case kind::data_type::Int16:
                         case kind::data_type::UInt16:
-                        case kind::data_type::UInt32: // TODO: 32 or 64?
+                        case kind::data_type::UInt32:
                             pdest->set(sqlite3_column_int(handle, col_idx));
                             break;
                         case kind::data_type::Int64:
