@@ -89,7 +89,6 @@ Some ideas how to deal with relations:
 
 ### To do
 
-- transaction sqlite, unit test
 - binary, blob support
 - pool, prepared statement, transaction docs
 - Postgres
