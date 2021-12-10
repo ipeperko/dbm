@@ -10,22 +10,25 @@ namespace dbm::xml {
 class deserializer : public dbm::deserializer
 {
 public:
-
+    // local xml object will be created
     deserializer()
         : dbm::deserializer()
-        , b_(std::make_unique<xml::node>("xml"))
-        , root_(*b_)
+        , buffer_(std::make_unique<xml::node>("xml"))
+        , root_(*buffer_)
     {}
 
+    // using external xml object
     explicit deserializer(node const& root)
         : root_(root)
     {}
 
+    // get object (makes sense only if used with local xml object)
     xml::node const& object()
     {
         return root_;
     }
 
+    // const version
     xml::node const& object() const
     {
         return root_;
@@ -72,41 +75,34 @@ private:
         return error;
     }
 
-    std::unique_ptr<xml::node> b_;
+    std::unique_ptr<xml::node> buffer_;
     const xml::node& root_;
 };
 
 class serializer : public dbm::serializer
 {
 public:
+    // local xml object will be created
     serializer()
         : dbm::serializer()
-        , b_(std::make_unique<xml::node>("xml"))
-        , root_(*b_)
+        , buffer_(std::make_unique<xml::node>("xml"))
+        , root_(*buffer_)
         , dser_(root_)
     {}
 
+    // using external xml object
     explicit serializer(node& root)
         : root_(root)
         , dser_(root_)
     {}
 
-    void deserialize(dbm::model& m) override
-    {
-        dser_ >> m;
-    }
-
-    template <typename T>
-    void set(std::string_view k, const T& val)
-    {
-        root_.set(k, val);
-    }
-
+    // get object (makes sense only if used with local xml object)
     xml::node& object()
     {
         return root_;
     }
 
+    // const version
     xml::node const& object() const
     {
         return root_;
@@ -127,7 +123,13 @@ public:
 #endif
 
 private:
-    std::unique_ptr<xml::node> b_;
+    // method is required for deserializing via serializer
+    void deserialize(dbm::model& m) override
+    {
+        dser_ >> m;
+    }
+
+    std::unique_ptr<xml::node> buffer_;
     xml::node& root_;
     deserializer dser_;
 };

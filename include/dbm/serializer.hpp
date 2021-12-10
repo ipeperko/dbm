@@ -49,9 +49,6 @@ public:
         return std::move(m);
     }
 
-    virtual void deserialize(dbm::model&)
-    {}
-
     /*
      * All methods should be pure virtual in order to force
      * implementation to handle all types
@@ -80,6 +77,10 @@ public:
 #ifdef DBM_EXPERIMENTAL_BLOB
     virtual void serialize(std::string_view, const kind::blob&) = 0;
 #endif
+
+protected:
+    virtual void deserialize(dbm::model&)
+    {}
 };
 
 class deserializer

@@ -113,21 +113,21 @@ m.erase("name"); // same as m.erase(key("name"))
 
 ##### Model item parameters overview
 
-Type | Default | Description
---- | --- | ---
-key | | Database column name
-tag | | Optional tag for serialization. If not defined it will be serialized with same name as 'key'.
-primary | false | Field primary key constraint.
-taggable | true | Determines if Field will be serialized.
-required | false | Determines if value should be defined when writing to db or serializing. Otherwise exception is thrown.
-direction | bidirectional | Field configuration for database write/read (bidirectional, read_only, write_only)
-not_null | false | Field not null constraint (only relevant for table creation - has nothing to do with container state null).
-defaultc | std::nullopt | Field default constraint (only relevant for table creation). Possible values are std::nullopt (no default constraint), nullptr (default NULL), any valid expression 
-auto_increment | false | Field auto increment feature (only relevant for table creation).
-create | true | Determines if field will be created (only relevant for table creation). 
-local | | Value container with local storage of any supported type.
-binding | | Value container with binding.
-timestamp | | Special container with unix time to timestamp conversion
+| Type           | Default       | Description                                                                                                                                                         |
+|----------------|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| key            |               | Database column name                                                                                                                                                |
+| tag            |               | Optional tag for serialization. If not defined it will be serialized with same name as 'key'.                                                                       |
+| primary        | false         | Field primary key constraint.                                                                                                                                       |
+| taggable       | true          | Determines if Field will be serialized.                                                                                                                             |
+| required       | false         | Determines if value should be defined when writing to db or serializing. Otherwise exception is thrown.                                                             |
+| direction      | bidirectional | Field configuration for database write/read (bidirectional, read_only, write_only)                                                                                  |
+| not_null       | false         | Field not null constraint (only relevant for table creation - has nothing to do with container state null).                                                         |
+| defaultc       | std::nullopt  | Field default constraint (only relevant for table creation). Possible values are std::nullopt (no default constraint), nullptr (default NULL), any valid expression |
+| auto_increment | false         | Field auto increment feature (only relevant for table creation).                                                                                                    |
+| create         | true          | Determines if field will be created (only relevant for table creation).                                                                                             |
+| local          |               | Value container with local storage of any supported type.                                                                                                           |
+| binding        |               | Value container with binding.                                                                                                                                       |
+| timestamp      |               | Special container with unix time to timestamp conversion                                                                                                            |
 
 #### Value container
 
@@ -172,15 +172,15 @@ Parameter 'defined' determines if value has been set. If false it won't be writt
 
 Parameter 'null' determines if value is null.
 
-Storage type        | null      | defined 
-----                | ----      | ---- 
-Local storage | null      | not defined  
-Local storage with value | not null      | defined
-Binding             | not null  | defined
-Value set success           | null / not null  | defined
-Value set failed            | null      | not defined
-From string succeeded    | not null  | defined
-From string failed          | null      | not defined
+| Storage type             | null            | defined     |
+|--------------------------|-----------------|-------------|
+| Local storage            | null            | not defined |
+| Local storage with value | not null        | defined     |
+| Binding                  | not null        | defined     |
+| Value set success        | null / not null | defined     |
+| Value set failed         | null            | not defined |
+| From string succeeded    | not null        | defined     |
+| From string failed       | null            | not defined |
 
 ```c++
 local<int>();                               // null, not defined
@@ -225,6 +225,39 @@ sql_rows_dump data = rows;          // store data
 sql_rows rows2 = data.restore();    // restore data
 ```
 
+#### Prepared statements
+
+Library supports prepared statements. When prepared_stmt object  
+
+Write example:
+```c++
+int age = 42;
+auto weight = dbm::local(66.6);
+prepared_stmt stmt ("INSERT INTO person (name, age, weight) VALUES(?, ?, ?)",
+                         dbm::local<std::string>("Alien"),      // internal local container
+                         dbm::binding(age),                     // internal binding container
+                         weight.get());                         // pointer to external container
+ 
+// first insert
+stmt >> session;        // writes query, same as session.query(stmt)
+                        // prepared statement handle created
+ 
+// second insert 
+weight->set(77.7);
+stmt >> session;       // prepared statement handle reused
+```
+
+Read example:
+```c++
+prepared_stmt stmt ("SELECT * FROM person",
+                    local<int>(),               
+                    local<std::string>(),
+                    local<int>(),
+                    local<double>());   // containers only determine data type
+
+auto res = session.select(stmt);        // returns vector of container unique pointers
+```
+
 ##### Create and drop table
 
 Basic usage:
@@ -236,18 +269,18 @@ m.drop_table(session);                  // drops table if exists
 
 Table field data types are created based on container type and constraints (e.g. not null, auto increment, defaultc etc).
 
-Container type | MySQL | SQLite
----- | ---- | ----
-bool | TINYINT | INTEGER
-int16_t | SHORTINT | INTEGER
-int32_t | INT | INTEGER
-int64_t | BIGINT | INTEGER
-uint16_t | SHORTINT UNSIGNED | INTEGER
-uint32_t | INT UNSIGNED | INTEGER
-uint64_t | BIGINT UNSIGNED | INTEGER
-double | DOUBLE | REAL
-std::string | TEXT | TEXT
-timestamp * | TIMESTAMP | TIMESTAMP
+| Container type | MySQL             | SQLite    |
+|----------------|-------------------|-----------|
+| bool           | TINYINT           | INTEGER   |
+| int16_t        | SHORTINT          | INTEGER   |
+| int32_t        | INT               | INTEGER   |
+| int64_t        | BIGINT            | INTEGER   |
+| uint16_t       | SHORTINT UNSIGNED | INTEGER   |
+| uint32_t       | INT UNSIGNED      | INTEGER   |
+| uint64_t       | BIGINT UNSIGNED   | INTEGER   |
+| double         | DOUBLE            | REAL      |
+| std::string    | TEXT              | TEXT      |
+| timestamp *    | TIMESTAMP         | TIMESTAMP |
 
 (*) See timestamp section
 
@@ -297,8 +330,46 @@ timestanp(my_time); // Holds reference to my_time variable
 
 ### Thread safety
 
-dbm classes are not thread safe and should not be used concurrently. 
-One solution is to use separate model and session objects for each thread.
+dbm classes are not thread safe and should not be used concurrently.
+For multithreaded applications pool can be used ([see instructions below](#Pool)).
+One solution is also to use separate model and session objects for each thread.
+
+### Pool
+
+Example:
+
+```c++
+pool p
+p.set_max_connections(10);
+p.set_acquire_timeout(std::chrono::seconds(5));
+p.set_heartbeat_interval(std::chrono::milliseconds(5000));
+p.set_heartbeat_query("SELECT 1");
+p.set_session_initializer([] {
+    auto conn = std::make_shared<dbm::mysql_session>();
+    conn.init("localhost", "username", "password", 3306, "dbname");
+    conn->open();
+    return conn;
+});
+
+auto conn1 = p.acquire();       // creates a new connection
+conn1.get()->query("....");
+
+{
+    auto conn2 = p.acquire();   // creates a new connection
+    conn2.get()->query("....");
+    // conn2 automatically released
+}
+
+{
+    auto conn3 = p.acquire();   // existing idle connection reused (released by conn2)
+    conn3.get()->query("....");
+    // conn3 automatically released
+}
+
+conn1.release();                // connection released
+
+// at this point there are 2 opened idle connections which can be reused
+```
 
 ### Build
 

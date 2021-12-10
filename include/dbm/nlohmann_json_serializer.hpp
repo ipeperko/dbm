@@ -14,7 +14,7 @@ public:
         , root_(root)
     {}
 
-#define DBM_JSON_DESERIALIZE_TEMPLATE(Type)                                      \
+#define DBM_JSON_DESERIALIZE_TEMPLATE(Type)                                     \
     parse_result deserialize(std::string_view tag, Type& val) const override {  \
         return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);       \
     }
@@ -72,11 +72,6 @@ public:
         , dser_((root_))
     {}
 
-    void deserialize(dbm::model& m) override
-    {
-        dser_ >> m;
-    }
-
 #define DBM_JSON_SERIALIZE_TEMPLATE(Type)                                       \
     void serialize(std::string_view tag, Type val) override {                   \
         root_[tag.data()] = val;                                                \
@@ -92,6 +87,11 @@ public:
 #endif
 
 private:
+    void deserialize(dbm::model& m) override
+    {
+        dser_ >> m;
+    }
+
     json& root_;
     deserializer dser_;
 };

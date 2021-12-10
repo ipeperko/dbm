@@ -526,7 +526,7 @@ void test_model()
     }
 
     // change value in xml object
-    xml_serializer.set("tag_text_not_null", "iii");
+    xml_serializer.serialize("tag_text_not_null", "iii");
     xml_serializer >> model;
     BOOST_TEST(model.at(dbm::key("text_not_null")).value<std::string>() == "iii");
     model >> session;
@@ -543,7 +543,7 @@ void test_model()
     }
 
     // reset value in xml object and write record
-    xml_serializer.set("tag_text_not_null", "ivo");
+    xml_serializer.serialize("tag_text_not_null", "ivo");
     xml_serializer >> model;
     BOOST_TEST(model.at(dbm::key("text_not_null")).value<std::string>() == "ivo");
     model >> session;
