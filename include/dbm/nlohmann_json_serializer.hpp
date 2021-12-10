@@ -10,45 +10,16 @@ class deserializer : public dbm::deserializer
 {
 public:
     explicit deserializer(const json& root)
-        : root_(root)
+        : dbm::deserializer()
+        , root_(root)
     {}
 
-    parse_result deserialize(std::string_view tag, bool& val) const override
-    {
-        return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
+#define DBM_JSON_DESERIALIZE_TEMPLATE(Type)                                      \
+    parse_result deserialize(std::string_view tag, Type& val) const override {  \
+        return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);       \
     }
-    parse_result deserialize(std::string_view tag, int32_t& val) const override
-    {
-        return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
-    }
-    parse_result deserialize(std::string_view tag, int16_t& val) const override
-    {
-        return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
-    }
-    parse_result deserialize(std::string_view tag, int64_t& val) const override
-    {
-        return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
-    }
-    parse_result deserialize(std::string_view tag, uint32_t& val) const override
-    {
-        return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
-    }
-    parse_result deserialize(std::string_view tag, uint16_t& val) const override
-    {
-        return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
-    }
-    parse_result deserialize(std::string_view tag, uint64_t& val) const override
-    {
-        return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
-    }
-    parse_result deserialize(std::string_view tag, double& val) const override
-    {
-        return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
-    }
-    parse_result deserialize(std::string_view tag, std::string& val) const override
-    {
-        return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);
-    }
+
+    DBM_DESERIALIZE_GENERIC_FUNC(DBM_JSON_DESERIALIZE_TEMPLATE)
 
 #ifdef DBM_EXPERIMENTAL_BLOB
     parse_result deserialize(std::string_view tag, dbm::kind::blob& val) const override
@@ -92,76 +63,26 @@ private:
     json const& root_;
 };
 
-template <bool enable_string_to_number = false>
 class serializer : public dbm::serializer
 {
 public:
     explicit serializer(json& root)
-        : root_(root)
+        : dbm::serializer()
+        , root_(root)
         , dser_((root_))
     {}
 
-    dbm::model& operator>>(dbm::model& m)
+    void deserialize(dbm::model& m) override
     {
         dser_ >> m;
-        return m;
     }
 
-    dbm::model&& operator>>(dbm::model&& m)
-    {
-        dser_ >> m;
-        return std::move(m);
+#define DBM_JSON_SERIALIZE_TEMPLATE(Type)                                       \
+    void serialize(std::string_view tag, Type val) override {                   \
+        root_[tag.data()] = val;                                                \
     }
 
-    void serialize(std::string_view tag, std::nullptr_t) override
-    {
-        root_[tag.data()] = nullptr;
-    }
-
-    void serialize(std::string_view tag, bool val) override
-    {
-        root_[tag.data()] = val;
-    }
-
-    void serialize(std::string_view tag, int32_t val) override
-    {
-        root_[tag.data()] = val;
-    }
-
-    void serialize(std::string_view tag, int16_t val) override
-    {
-        root_[tag.data()] = val;
-    }
-
-    void serialize(std::string_view tag, int64_t val) override
-    {
-        root_[tag.data()] = val;
-    }
-
-    void serialize(std::string_view tag, uint32_t val) override
-    {
-        root_[tag.data()] = val;
-    }
-
-    void serialize(std::string_view tag, uint16_t val) override
-    {
-        root_[tag.data()] = val;
-    }
-
-    void serialize(std::string_view tag, uint64_t val) override
-    {
-        root_[tag.data()] = val;
-    }
-
-    void serialize(std::string_view tag, double val) override
-    {
-        root_[tag.data()] = val;
-    }
-
-    void serialize(std::string_view tag, const std::string& val) override
-    {
-        root_[tag.data()] = val;
-    }
+    DBM_SERIALIZE_GENERIC_FUNC(DBM_JSON_SERIALIZE_TEMPLATE)
 
 #ifdef DBM_EXPERIMENTAL_BLOB
     void serialize(std::string_view tag, const dbm::kind::blob& blob) override

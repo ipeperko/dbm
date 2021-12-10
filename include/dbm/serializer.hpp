@@ -3,6 +3,31 @@
 
 #include <dbm/dbm_common.hpp>
 
+#define DBM_SERIALIZE_GENERIC_FUNC(GenericFunc)  \
+    GenericFunc(std::nullptr_t)             \
+    GenericFunc(bool)                       \
+    GenericFunc(int32_t)                    \
+    GenericFunc(int16_t)                    \
+    GenericFunc(int64_t)                    \
+    GenericFunc(uint32_t)                   \
+    GenericFunc(uint16_t)                   \
+    GenericFunc(uint64_t)                   \
+    GenericFunc(double)                     \
+    GenericFunc(std::string const&)
+
+
+#define DBM_DESERIALIZE_GENERIC_FUNC(GenericFunc) \
+    GenericFunc(bool)                       \
+    GenericFunc(int32_t)                    \
+    GenericFunc(int16_t)                    \
+    GenericFunc(int64_t)                    \
+    GenericFunc(uint32_t)                   \
+    GenericFunc(uint16_t)                   \
+    GenericFunc(uint64_t)                   \
+    GenericFunc(double)                     \
+    GenericFunc(std::string)
+
+
 namespace dbm {
 
 class model;
@@ -11,6 +36,21 @@ class serializer
 {
 public:
     virtual ~serializer() = default;
+
+    dbm::model& operator>>(dbm::model& m)
+    {
+        deserialize(m);
+        return m;
+    }
+
+    dbm::model&& operator>>(dbm::model&& m)
+    {
+        deserialize(m);
+        return std::move(m);
+    }
+
+    virtual void deserialize(dbm::model&)
+    {}
 
     /*
      * All methods should be pure virtual in order to force
