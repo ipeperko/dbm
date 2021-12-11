@@ -258,6 +258,26 @@ prepared_stmt stmt ("SELECT * FROM person",
 auto res = session.select(stmt);        // returns vector of container unique pointers
 ```
 
+##### Transactions
+
+Example:
+
+```c++
+{
+    session::transaction tr(*db);   
+    db.query("....")
+    tr.commit();        // transaction committed, data written to the database
+}
+
+{
+    session::transaction tr(*db);   
+    db.query("....")
+    // transaction rolled backed as we didn't commit, all data erased
+    // transaction can be also manually rolled back:
+    // tr.rollback();
+}
+```
+
 ##### Create and drop table
 
 Basic usage:
