@@ -13,7 +13,6 @@ namespace {
 void setup_pool(dbm::pool& pool)
 {
     pool.set_max_connections(1);
-    //pool.enable_debbug(true);
     pool.set_session_initializer([]() {
         auto conn = std::make_shared<dbm::sqlite_session>();
         conn->set_db_name(db_settings::instance().test_db_file_name);
@@ -119,7 +118,7 @@ public:
     MultipleWriters()
     {
         setup_pool(pool_);
-        pool_.set_acquire_timeout(10s);
+        pool_.set_acquire_timeout(20s);
 
         auto session = pool_.acquire();
         auto m = get_model();
@@ -154,7 +153,9 @@ public:
 
     void inserter(unsigned thread_id)
     {
+        //std::cout << "Inserter start " << thread_id << std::endl;
         auto session = pool_.acquire();
+        //std::cout << "Inserter acquired " << thread_id << std::endl;
         dbm::prepared_stmt stmt("INSERT INTO test_pool (thread_id, value) VALUES (?, ?)",
                                 dbm::local(thread_id),
                                 dbm::local<unsigned>());
@@ -163,13 +164,17 @@ public:
             stmt.param(1)->set(i + 1);
             stmt >> *session;
         }
+        //std::cout << "Inserter finish " << thread_id << std::endl;
     }
 
     void check_inserted()
     {
+        //std::cout << "Reader start" << std::endl;
         auto session = pool_.acquire();
+        //std::cout << "Reader acquired" << std::endl;
         auto n = session.get().select("SELECT COUNT(*) FROM test_pool").at(0).at(0).get<unsigned>();
         BOOST_TEST(n == n_tasks_ * n_rec_);
+        //std::cout << "Reader finish" << std::endl;
     }
 };
 

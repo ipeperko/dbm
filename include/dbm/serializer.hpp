@@ -3,6 +3,9 @@
 
 #include <dbm/dbm_common.hpp>
 
+#define DBM_USING_SERIALIZE using dbm::serializer::serialize
+#define DBM_USING_DESERIALIZE using dbm::deserializer::deserialize
+
 #define DBM_SERIALIZE_GENERIC_FUNC(GenericFunc)  \
     GenericFunc(std::nullptr_t)             \
     GenericFunc(bool)                       \
@@ -15,6 +18,10 @@
     GenericFunc(double)                     \
     GenericFunc(std::string const&)
 
+#define DBM_SERIALIZE_GENERIC_FUNC_ALL_STRING(GenericFunc) \
+    DBM_SERIALIZE_GENERIC_FUNC(GenericFunc)                \
+    GenericFunc(const char*)                               \
+    GenericFunc(std::string_view)
 
 #define DBM_DESERIALIZE_GENERIC_FUNC(GenericFunc) \
     GenericFunc(bool)                       \
@@ -73,6 +80,16 @@ public:
     virtual void serialize(std::string_view, double) = 0;
 
     virtual void serialize(std::string_view, const std::string&) = 0;
+
+    virtual void serialize(std::string_view key, const char* val)
+    {
+        serialize(key, std::string(val));
+    }
+
+    virtual void serialize(std::string_view key, std::string_view val)
+    {
+        serialize(key, std::string(val));
+    }
 
 #ifdef DBM_EXPERIMENTAL_BLOB
     virtual void serialize(std::string_view, const kind::blob&) = 0;

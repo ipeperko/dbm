@@ -88,6 +88,31 @@ BOOST_AUTO_TEST_CASE(xml_test_parent_pointer)
     BOOST_TEST(xml2.at(1).parent() == &xml2);
 }
 
+BOOST_AUTO_TEST_CASE(xml_set_null)
+{
+    xml::node xml("xml");
+    xml.set("init_to_null", nullptr);
+
+    BOOST_TEST((xml.find("init_to_null") != xml.end()));
+    BOOST_TEST((xml.find("init_to_null")->value() == ""));
+
+    xml.set("change_to_null", 123);
+    BOOST_TEST((xml.find("change_to_null")->value() == "123"));
+    xml.set("change_to_null", nullptr);
+    BOOST_TEST((xml.find("change_to_null") != xml.end()));
+    BOOST_TEST((xml.find("change_to_null")->value() == ""));
+
+    std::nullptr_t null {};
+    xml.set("null_ref", null);
+    BOOST_TEST((xml.find("null_ref") != xml.end()));
+    BOOST_TEST((xml.find("null_ref")->value() == ""));
+
+    xml.set("set_value", 123);
+    BOOST_TEST((xml.find("set_value")->value() == "123"));
+    xml.find("set_value")->set_value(nullptr);
+    BOOST_TEST((xml.find("set_value")->value() == ""));
+}
+
 enum class MyEnum : int
 {
     one=1,

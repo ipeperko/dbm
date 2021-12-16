@@ -110,15 +110,15 @@ public:
 
 #define DBM_XML_SERIALIZE_TEMPLATE(Type)                                        \
     void serialize(std::string_view tag, Type val) override {                   \
-        root_.add(tag, val);                                                    \
+        root_.set(tag, val);                                                    \
     }
 
-    DBM_SERIALIZE_GENERIC_FUNC(DBM_XML_SERIALIZE_TEMPLATE)
+    DBM_SERIALIZE_GENERIC_FUNC_ALL_STRING(DBM_XML_SERIALIZE_TEMPLATE)
 
 #ifdef DBM_EXPERIMENTAL_BLOB
     void serialize(std::string_view tag, const dbm::kind::blob& blob) override
     {
-        root_.add(tag, dbm::utils::b64_encode(blob.data(), blob.size()));
+        root_.set(tag, dbm::utils::b64_encode(blob.data(), blob.size()));
     }
 #endif
 

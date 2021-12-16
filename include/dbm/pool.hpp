@@ -20,6 +20,8 @@ public:
         size_t n_conn {0};
         size_t n_active_conn {0};
         size_t n_idle_conn {0};
+        size_t n_max_conn {0};
+        size_t n_timeouts {0};
         size_t n_heartbeats {0};
     };
 
@@ -91,6 +93,8 @@ public:
         s.n_conn = sessions_idle_.size() + sessions_active_.size();
         s.n_active_conn = sessions_active_.size();
         s.n_idle_conn = sessions_idle_.size();
+        s.n_max_conn = stat_max_conn_;
+        s.n_timeouts = stat_n_timeouts_;
         s.n_heartbeats = heartbeat_counter_;
         return s;
     }
@@ -102,16 +106,14 @@ public:
     size_t num_idle_connections() const;
     size_t heartbeats_count() const { return heartbeat_counter_; }
 
-    void enable_debug(bool enable) { debug_ = enable; }
-
     auto debug_log() const
     {
-        return utils::debug_logger(utils::debug_logger::level::Debug, debug_);
+        return utils::debug_logger(utils::debug_logger::level::Debug);
     }
 
     auto error_log() const
     {
-        return utils::debug_logger(utils::debug_logger::level::Error, debug_);
+        return utils::debug_logger(utils::debug_logger::level::Error);
     }
 
 private:
@@ -131,10 +133,11 @@ private:
     std::chrono::milliseconds heartbeat_interval_ {5000};
     std::thread thr_;
     std::atomic<bool> do_run_ {false};
-    bool debug_ {false};
 
     std::unordered_map<::dbm::session*, std::unique_ptr<pool_intern_item>> sessions_active_;
     std::unordered_map<::dbm::session*, std::unique_ptr<pool_intern_item>> sessions_idle_;
+    size_t stat_n_timeouts_ {0};
+    size_t stat_max_conn_ {0};
 };
 
 DBM_INLINE pool::pool()
@@ -146,7 +149,7 @@ DBM_INLINE pool::pool()
 
 DBM_INLINE pool::~pool()
 {
-    debug_log() << "Exit pool begin";
+    debug_log() << "dbm::pool : Exit pool begin";
 
     do_run_ = false;
 
@@ -159,7 +162,7 @@ DBM_INLINE pool::~pool()
         if (sessions_active_.empty() && sessions_idle_.empty())
             break;
 
-        debug_log() << "Exit pool : waiting connections to close";
+        debug_log() << "dbm::pool : Exit pool : waiting connections to close";
 
         if (!sessions_idle_.empty()) {
             sessions_idle_.clear();
@@ -170,7 +173,7 @@ DBM_INLINE pool::~pool()
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    debug_log() << "Exit pool end";
+    debug_log() << "dbm::pool : Exit pool end";
 }
 
 DBM_INLINE pool_connection pool::acquire()
@@ -195,10 +198,12 @@ DBM_INLINE pool_connection pool::acquire()
         if (it_available != sessions_idle_.end()) {
             // Idle connection will be reused
             auto& session = it_available->second->session_;
-            debug_log() << "Activating idle session " << session.get();
+            debug_log() << "dbm::pool : Activating idle session " << session.get();
             it_available->second->state_ = pool_intern_item::state::active;
             sessions_active_[it_available->first] = std::move(it_available->second);
             sessions_idle_.erase(it_available);
+            if (sessions_active_.size() > stat_max_conn_)
+                stat_max_conn_ = sessions_active_.size();
             return pool_connection(session, [this, ptr = session.get()]() {
                 release(ptr);
             });
@@ -208,8 +213,10 @@ DBM_INLINE pool_connection pool::acquire()
         if (sessions_active_.size() + sessions_idle_.size() >= max_conn_) {
 
             // Check timeout
-            if (clock_t::now() - started > acquire_timeout_)
+            if (clock_t::now() - started > acquire_timeout_) {
+                stat_n_timeouts_++;
                 throw_exception("Connection acquire timeout");
+            }
 
             // Wait for a free connection with timeout
             std::unique_lock cv_lk(cv_mtx_);
@@ -225,8 +232,10 @@ DBM_INLINE pool_connection pool::acquire()
         auto* new_intern_item = new pool_intern_item(make_session_());
         auto* ptr = new_intern_item->session_.get();
         sessions_active_[ptr] = std::unique_ptr<pool_intern_item>(new_intern_item);
+        if (sessions_active_.size() > stat_max_conn_)
+            stat_max_conn_ = sessions_active_.size();
 
-        debug_log() << "Creating session " << ptr;
+        debug_log() << "dbm::pool : Creating session " << ptr;
 
         // Return pool_connection
         return pool_connection(new_intern_item->session_, [this, ptr]() {
@@ -237,7 +246,7 @@ DBM_INLINE pool_connection pool::acquire()
 
 DBM_INLINE void pool::release(session* s)
 {
-    debug_log() << "Release session " << s;
+    debug_log() << "dbm::pool : Release session " << s;
 
     std::unique_lock lock(mtx_);
 
@@ -320,7 +329,7 @@ DBM_INLINE void pool::heartbeat_task()
 
             for (auto* it : items) {
                 try {
-                    debug_log() << "Performing heartbeat session " << it->session_.get();
+                    debug_log() << "dbm::pool : Performing heartbeat session " << it->session_.get();
                     if (!it->session_->select(heartbeat_query_).empty()) {
                         it->heartbeat_time_ = clock_t::now();
                         it->state_ = pool_intern_item::state::idle;
@@ -328,7 +337,7 @@ DBM_INLINE void pool::heartbeat_task()
                     }
                 }
                 catch (std::exception& e) {
-                    error_log() << "Heartbeat error session " << it->session_.get() << " : " << e.what();
+                    error_log() << "dbm::pool : Heartbeat error session " << it->session_.get() << " : " << e.what();
                     it->state_ = pool_intern_item::state::canceled;
                     items_failed.push_back(it);
                 }
@@ -339,7 +348,7 @@ DBM_INLINE void pool::heartbeat_task()
                 mtx_.lock();
 
                 for (auto* it : items_failed) {
-                    debug_log() << "Remove session " << it->session_.get();
+                    debug_log() << "dbm::pool : Remove session " << it->session_.get();
                     sessions_idle_.erase(it->session_.get());
                 }
 

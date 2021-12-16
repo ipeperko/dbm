@@ -95,7 +95,7 @@ public:
     DBM_EXPORT node& add(node&& oth);
 
     template<typename T>
-    node& add(string_view name, T val)
+    node& add(string_view name, T&& val)
     {
         std::ostringstream ss;
         ss << val;
@@ -120,6 +120,8 @@ public:
 
     DBM_EXPORT void set_value(string_view str);
 
+    DBM_EXPORT void set_value(std::nullptr_t) { set_value(""); }
+
     template<typename T>
     typename std::enable_if_t<not utils::is_string_type<T>::value, void>
     set_value(const T& val)
@@ -138,6 +140,17 @@ public:
         }
         else {
             n->set_value(val);
+        }
+    }
+
+    DBM_EXPORT void set(string_view key, std::nullptr_t)
+    {
+        auto n = find(key);
+        if (n == end()) {
+            add(key, nullptr);
+        }
+        else {
+            n->set_value(nullptr);
         }
     }
 

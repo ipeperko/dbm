@@ -72,6 +72,9 @@ public:
         , dser_((root_))
     {}
 
+    // visible const char* and std::string overloads
+    DBM_USING_SERIALIZE;
+
 #define DBM_JSON_SERIALIZE_TEMPLATE(Type)                                       \
     void serialize(std::string_view tag, Type val) override {                   \
         root_[tag.data()] = val;                                                \

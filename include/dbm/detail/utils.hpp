@@ -127,42 +127,45 @@ public:
         Error
     };
 
-    explicit debug_logger(level lv, bool enable)
-        : lv_(lv), enabled_(enable)
+    explicit debug_logger(level lv)
+        : lv_(lv)
     {
     }
 
     ~debug_logger()
     {
-#ifndef NDEBUG
-        if (enabled_) {
-            if (lv_ == level::Debug) {
-                std::cout << os_.str() << std::endl;
-            }
-            else {
-                std::cerr << os_.str() << std::endl;
-            }
+        if (writer) {
+            writer(lv_, os_.str());
         }
-#endif
     }
-
-    void enable(bool val) { enabled_ = val; }
 
     template<typename T>
     debug_logger& operator<<([[maybe_unused]] T const& val)
     {
-#ifndef NDEBUG
-        if (enabled_) {
+        if (writer) {
             os_ << val;
         }
-#endif
+
         return *this;
     }
 
+    static std::function<void(level, std::string&&)> writer;
+    static std::function<void(level, std::string&&)> const stdout_writer;
+
 private:
     std::ostringstream os_;
-    bool enabled_{false};
     level lv_;
+};
+
+inline std::function<void(debug_logger::level, std::string&&)> debug_logger::writer;
+
+inline std::function<void(debug_logger::level, std::string&&)> const debug_logger::stdout_writer = [](debug_logger::level lv, std::string&& msg) {
+    if (lv < level::Error) {
+        std::cout << msg << std::endl;
+    }
+    else {
+        std::cerr << msg << std::endl;
+    }
 };
 
 } // namespase utils
