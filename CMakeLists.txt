@@ -28,6 +28,16 @@ else ()
     message("libmysqlclient not found")
 endif()
 
+# MySQL library
+find_library(POSTGRES_LIB pq)
+if (POSTGRES_LIB)
+    message("found libpq")
+    add_definitions("-DDBM_POSTGRES")
+    list(APPEND LIBS "pq")
+else ()
+    message("libpq not found")
+endif()
+
 # SQLite library
 find_library(SQLITE3_LIB sqlite3)
 if (SQLITE3_LIB)
@@ -46,6 +56,7 @@ set(SOURCES
     src/xml.cpp
     src/drivers/mysql/mysql_session.cpp
     src/drivers/sqlite/sqlite_session.cpp
+    src/drivers/postgres/postgres_session.cpp
     )
 
 # Headers
@@ -90,6 +101,7 @@ set(HEADERS
 
     include/dbm/drivers/mysql/mysql_session.hpp
     include/dbm/drivers/sqlite/sqlite_session.hpp
+    include/dbm/drivers/postgres/postgres_session.hpp
     )
 
 # Objects

@@ -28,6 +28,8 @@ public:
 
     bool is_connected() const override { return db3_ != nullptr; }
 
+    void* native_handle() const override { return db3_; }
+
     using session::query;
     void query(const std::string& statement) override;
 

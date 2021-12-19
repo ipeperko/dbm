@@ -8,6 +8,9 @@ namespace dbm::detail {
 struct param_session_type_mysql
 {};
 
+struct param_session_type_postgres
+{};
+
 struct param_session_type_sqlite
 {};
 
@@ -48,14 +51,19 @@ class model_query_helper
     : public model_query_helper_base
 #endif
 {
-    static constexpr bool is_SQlite()
-    {
-        return std::is_same_v<SessionType, param_session_type_sqlite>;
-    }
-
     static constexpr bool is_MySql()
     {
         return std::is_same_v<SessionType, param_session_type_mysql>;
+    }
+
+    static constexpr bool is_Postgres()
+    {
+        return std::is_same_v<SessionType, param_session_type_postgres>;
+    }
+
+    static constexpr bool is_SQlite()
+    {
+        return std::is_same_v<SessionType, param_session_type_sqlite>;
     }
 
 #ifdef DBM_MODEL_QUERY_HELPER_RTTI
@@ -76,7 +84,7 @@ class model_query_helper
     const model& model_;
 
 public:
-    static_assert(is_MySql() || is_SQlite(), "Unsupported session type");
+    static_assert(is_MySql() || is_Postgres() || is_SQlite(), "Unsupported session type");
 
     explicit model_query_helper(const model& m)
         :
@@ -110,6 +118,9 @@ public:
         else if constexpr (is_MySql()) {
             return " AUTO_INCREMENT";
         }
+        else if constexpr (is_Postgres()) {
+            return " AUTO_INCREMENT";
+        }
     }
 
     [[nodiscard]] constexpr std::string_view value_type_string(kind::data_type t) const
@@ -139,6 +150,34 @@ public:
             }
         }
         else if constexpr (is_MySql()) {
+            switch (t) {
+                case data_type::Bool:
+                    return "BOOL";
+                case data_type::Int32:
+                    return "INT";
+                case data_type::Int16:
+                    return "SMALLINT";
+                case data_type::Int64:
+                    return "BIGINT";
+                case data_type::Timestamp2u:
+                    return "TIMESTAMP";
+                case data_type::Double:
+                    return "DOUBLE";
+                case data_type::String:
+                    return "TEXT";
+                case data_type::UInt32:
+                    return "INT UNSIGNED";
+                case data_type::UInt16:
+                    return "SMALLINT UNSIGNED";
+                case data_type::UInt64:
+                    return "BIGINT UNSIGNED";
+                case data_type::Nullptr:
+                case data_type::Char_ptr:
+                case data_type::String_view:
+                default:;
+            }
+        }
+        else if constexpr (is_Postgres()) {
             switch (t) {
                 case data_type::Bool:
                     return "BOOL";

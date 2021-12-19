@@ -27,6 +27,8 @@ public:
 
     bool is_connected() const override { return conn_ != nullptr; }
 
+    void* native_handle() const override { return conn_; }
+
     using session::query;
     void query(const std::string& statement) override;
 

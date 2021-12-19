@@ -89,5 +89,6 @@ Some ideas how to deal with relations:
 
 ### To do
 
+- db schema create files
 - binary, blob support
 - Postgres

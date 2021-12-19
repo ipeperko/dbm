@@ -33,6 +33,8 @@ public:
 
     virtual bool is_connected() const = 0;
 
+    virtual void* native_handle() const = 0;
+
     virtual void query(const std::string& statement); // TODO: string_view
     virtual void query(const detail::statement& q);
     virtual kind::sql_rows select(const std::string& statement); // TODO: string_view
