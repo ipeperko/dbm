@@ -4,6 +4,7 @@
 #include "pool_intern_item.hpp"
 #include "pool_connection.hpp"
 #include <vector>
+#include <map>
 #include <numeric>
 #include <shared_mutex>
 #include <atomic>
@@ -20,9 +21,13 @@ public:
         size_t n_conn {0};
         size_t n_active_conn {0};
         size_t n_idle_conn {0};
+        size_t n_acquired {0};
+        size_t n_acquiring {0};
+        size_t n_acquiring_waiting {0};
         size_t n_max_conn {0};
         size_t n_timeouts {0};
         size_t n_heartbeats {0};
+        std::map<long, size_t> acquire_stat;
     };
 
 
@@ -80,6 +85,12 @@ public:
         heartbeat_query_ = std::move(query);
     }
 
+    void reset_stat()
+    {
+        std::lock_guard lock(mtx_);
+        stat_ = {};
+    }
+
     void reset_heartbeats_counter()
     {
         std::lock_guard lock(mtx_);
@@ -90,11 +101,10 @@ public:
     {
         statistics s;
         std::shared_lock lock(mtx_); // TODO: locking mutex is not the best way to get stat data
+        s = stat_;
         s.n_conn = sessions_idle_.size() + sessions_active_.size();
         s.n_active_conn = sessions_active_.size();
         s.n_idle_conn = sessions_idle_.size();
-        s.n_max_conn = stat_max_conn_;
-        s.n_timeouts = stat_n_timeouts_;
         s.n_heartbeats = heartbeat_counter_;
         return s;
     }
@@ -120,6 +130,7 @@ private:
     void release(session* s);
     void notify_release();
     void heartbeat_task();
+    void calculate_wait_time(pool_intern_item::clock_t::time_point tp1, pool_intern_item::clock_t::time_point tp2);
 
     size_t max_conn_ {10};
     MakeSessionFn make_session_;
@@ -127,7 +138,6 @@ private:
     std::condition_variable cv_;
     std::mutex mutable cv_mtx_; // mutex protecting cv_
     std::chrono::milliseconds acquire_timeout_ {5000};
-    std::atomic<size_t> n_acquiring_;
     std::atomic<size_t> heartbeat_counter_ {0};
     std::string heartbeat_query_ {"SELECT 1" };
     std::chrono::milliseconds heartbeat_interval_ {5000};
@@ -136,8 +146,8 @@ private:
 
     std::unordered_map<::dbm::session*, std::unique_ptr<pool_intern_item>> sessions_active_;
     std::unordered_map<::dbm::session*, std::unique_ptr<pool_intern_item>> sessions_idle_;
-    size_t stat_n_timeouts_ {0};
-    size_t stat_max_conn_ {0};
+    std::chrono::milliseconds stat_wait_step_ {100};
+    statistics stat_;
 };
 
 DBM_INLINE pool::pool()
@@ -181,14 +191,21 @@ DBM_INLINE pool_connection pool::acquire()
     using clock_t = pool_intern_item::clock_t;
     auto started = clock_t::now();
     auto expires = started + acquire_timeout_;
+    bool first_time_in_loop = true;
 
-    ++n_acquiring_;
-    utils::execute_at_exit atexit([this]{ --n_acquiring_; });
+    utils::execute_at_exit atexit([this]{ --stat_.n_acquiring; });
 
     while (true) {
 
         // Lock mutex
         std::unique_lock lock(mtx_);
+
+        if (first_time_in_loop) {
+            first_time_in_loop = false;
+            ++stat_.n_acquiring;
+            if (stat_.n_acquiring > stat_.n_acquiring_waiting)
+                stat_.n_acquiring_waiting = stat_.n_acquiring;
+        }
 
         // Check existing connections
         auto it_available = std::find_if(sessions_idle_.begin(), sessions_idle_.end(), [](auto const& it) {
@@ -202,8 +219,10 @@ DBM_INLINE pool_connection pool::acquire()
             it_available->second->state_ = pool_intern_item::state::active;
             sessions_active_[it_available->first] = std::move(it_available->second);
             sessions_idle_.erase(it_available);
-            if (sessions_active_.size() > stat_max_conn_)
-                stat_max_conn_ = sessions_active_.size();
+            if (sessions_active_.size() > stat_.n_max_conn)
+                stat_.n_max_conn = sessions_active_.size();
+            ++stat_.n_acquired;
+            calculate_wait_time(started, clock_t::now());
             return pool_connection(session, [this, ptr = session.get()]() {
                 release(ptr);
             });
@@ -214,7 +233,7 @@ DBM_INLINE pool_connection pool::acquire()
 
             // Check timeout
             if (clock_t::now() - started > acquire_timeout_) {
-                stat_n_timeouts_++;
+                stat_.n_timeouts++;
                 throw_exception("Connection acquire timeout");
             }
 
@@ -232,10 +251,11 @@ DBM_INLINE pool_connection pool::acquire()
         auto* new_intern_item = new pool_intern_item(make_session_());
         auto* ptr = new_intern_item->session_.get();
         sessions_active_[ptr] = std::unique_ptr<pool_intern_item>(new_intern_item);
-        if (sessions_active_.size() > stat_max_conn_)
-            stat_max_conn_ = sessions_active_.size();
-
+        if (sessions_active_.size() > stat_.n_max_conn)
+            stat_.n_max_conn = sessions_active_.size();
+        ++stat_.n_acquired;
         debug_log() << "dbm::pool : Creating session " << ptr;
+        calculate_wait_time(started, clock_t::now());
 
         // Return pool_connection
         return pool_connection(new_intern_item->session_, [this, ptr]() {
@@ -365,6 +385,17 @@ DBM_INLINE void pool::heartbeat_task()
             sleep_time = std::chrono::milliseconds(100);
         }
     }
+}
+
+DBM_INLINE void pool::calculate_wait_time(pool_intern_item::clock_t::time_point tp1, pool_intern_item::clock_t::time_point tp2)
+{
+    long dur = std::chrono::duration_cast<std::chrono::milliseconds>(tp2 - tp1).count();
+    long range = dur / stat_wait_step_.count();
+    long rem = dur % stat_wait_step_.count();
+    range *= stat_wait_step_.count();
+    if (rem)
+        range += stat_wait_step_.count();
+    stat_.acquire_stat[range]++;
 }
 
 }
