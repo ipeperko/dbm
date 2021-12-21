@@ -23,7 +23,7 @@ public:
         size_t n_idle_conn {0};
         size_t n_acquired {0};
         size_t n_acquiring {0};
-        size_t n_acquiring_waiting {0};
+        size_t n_acquiring_max {0};
         size_t n_max_conn {0};
         size_t n_timeouts {0};
         size_t n_heartbeats {0};
@@ -203,8 +203,8 @@ DBM_INLINE pool_connection pool::acquire()
         if (first_time_in_loop) {
             first_time_in_loop = false;
             ++stat_.n_acquiring;
-            if (stat_.n_acquiring > stat_.n_acquiring_waiting)
-                stat_.n_acquiring_waiting = stat_.n_acquiring;
+            if (stat_.n_acquiring > stat_.n_acquiring_max)
+                stat_.n_acquiring_max = stat_.n_acquiring;
         }
 
         // Check existing connections
