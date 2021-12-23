@@ -17,7 +17,6 @@ BOOST_AUTO_TEST_CASE(test1)
 {
     dbm::mysql_session session;
     db_settings::instance().init_mysql_session(session, db_settings::instance().test_db_name);
-    session.open();
 
     BOOST_TEST(session.is_connected());
     BOOST_TEST(session.select("SELECT 1").size() == 1);

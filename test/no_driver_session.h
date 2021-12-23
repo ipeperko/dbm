@@ -8,7 +8,6 @@ namespace dbm {
 class no_driver_session : public session
 {
 public:
-    void open() override {}
     void close() override {}
 
     std::string write_model_query(const model& m) const override { throw std::domain_error("write query not available from no_driver_session"); };

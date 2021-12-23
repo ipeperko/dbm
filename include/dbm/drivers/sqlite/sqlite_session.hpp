@@ -10,20 +10,14 @@ namespace dbm {
 class DBM_EXPORT sqlite_session : public session
 {
 public:
-    sqlite_session();
-    explicit sqlite_session(std::string_view db_name);
+    sqlite_session() = default;
     sqlite_session(const sqlite_session& oth);
     sqlite_session(sqlite_session&& oth) = delete;
     sqlite_session& operator=(const sqlite_session& oth);
     sqlite_session& operator=(sqlite_session&& oth) = delete;
     ~sqlite_session() override;
 
-    std::unique_ptr<session> clone() const override;
-
-    void set_db_name(std::string_view file_name);
-    std::string_view db_name() const;
-
-    void open() override;
+    void connect(std::string_view db_file_name);
     void close() override;
 
     bool is_connected() const override { return db3_ != nullptr; }
@@ -52,7 +46,7 @@ private:
     void free_table();
     void destroy_prepared_stmt_handles();
 
-    std::string db_name_;       // database file name
+//    std::string db_name_;       // database file name
     sqlite3* db3_{nullptr};      // database handle
     char** azResult{nullptr};   // results of the query
 };

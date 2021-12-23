@@ -8,21 +8,22 @@ namespace dbm {
 class DBM_EXPORT mysql_session : public session
 {
 public:
-    mysql_session();
+    mysql_session() = default;
     mysql_session(const mysql_session& oth);
     mysql_session(mysql_session&& oth) noexcept;
     mysql_session& operator=(const mysql_session& oth);
     mysql_session& operator=(mysql_session&& oth) noexcept;
     ~mysql_session() override;
 
-    std::unique_ptr<session> clone() const override;
+    void connect(
+        std::optional<std::string_view> host,
+        std::optional<std::string_view> user,
+        std::optional<std::string_view> passwd,
+        std::optional<std::string_view> db,
+        unsigned int port = 0,
+        std::optional<std::string_view> unix_socket = std::nullopt,
+        unsigned long client_flag = 0);
 
-    void init(const std::string& host_name, const std::string& user, const std::string& pass, unsigned int port, const std::string& db_name, unsigned int flags = 0);
-
-    /* Note: set database name doesn't work if already connected! */
-    void set_database_name(const std::string& name);
-
-    void open() override;
     void close() override;
 
     bool is_connected() const override { return conn_ != nullptr; }
@@ -50,14 +51,6 @@ private:
     kind::sql_rows select_rows(const std::string& statement) override;
     void free_result_set();
     std::string last_mysql_error() const;
-
-    std::string opt_host_name;       /* server host (e.g.: localhost) */
-    std::string opt_user_name;       /* username */
-    std::string opt_password;        /* password */
-    unsigned int opt_port_num{3306}; /* port number */
-    char* opt_socket_name{nullptr};  /* socket name (NULL = use built-in value) */
-    std::string opt_db_name;         /* database name (default=none) */
-    unsigned int opt_flags{0};       /* connection flags (none) */
 
     void* conn_{nullptr};    /* connection handler pointer */
     void* res_set_{nullptr}; /* mysql result set */

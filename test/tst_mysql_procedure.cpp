@@ -15,8 +15,7 @@ constexpr int n_inserts_pre_iter = 100;
 std::unique_ptr<dbm::session> get_session()
 {
     auto conn = std::make_unique<dbm::mysql_session>();
-    db_settings::instance().init_mysql_session(*conn, db_settings::instance().test_db_name);
-    conn->open();
+    db_settings::instance().init_mysql_session(*conn);
     return conn;
 }
 

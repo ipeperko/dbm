@@ -392,20 +392,16 @@ void test_table()
 
         SessionType tmp_session;
         db_sett.init_mysql_session(tmp_session, "");
-        tmp_session.open();
         tmp_session.create_database(db_name, true);
-
         db_sett.init_mysql_session(session, db_name);
     }
 #endif
 #ifdef DBM_SQLITE3
     if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
         BOOST_TEST_MESSAGE("SQLite test\n");
-        session.set_db_name(db_sett.test_db_file_name);
+        session.connect(db_sett.test_db_file_name);
     }
 #endif
-
-    session.open();
 
     dbm::model model = get_test_model<SessionType>();
     model.drop_table(session);
@@ -483,23 +479,9 @@ void test_model()
 
     SessionType session;
     auto& db_sett = db_settings::instance();
-    const std::string db_name = db_sett.test_db_name;
+    db_sett.template init_session<SessionType>(session);
+
     const std::string tbl_name = db_sett.test_table_name;
-
-#ifdef DBM_MYSQL
-    if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
-        BOOST_TEST_MESSAGE("MySQL model test\n");
-        db_sett.init_mysql_session(session, db_name);
-    }
-#endif
-#ifdef DBM_SQLITE3
-    if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
-        BOOST_TEST_MESSAGE("SQLite model test\n");
-        session.set_db_name(db_sett.test_db_file_name);
-    }
-#endif
-
-    session.open();
 
     dbm::xml::node xml("xml");
     nlohmann::json json;
@@ -534,8 +516,8 @@ void test_model()
     // delete record
     model.delete_record(session);
     {
-        SessionType s2(session);
-        s2.open();
+        SessionType s2;
+        db_sett.template init_session<SessionType>(s2);
         dbm::statement q;
         q << "SELECT * FROM " << tbl_name << " WHERE id=" << data_fields.id;
         auto rows = s2.select(q);
@@ -568,8 +550,8 @@ void test_model()
     // delete record
     model.delete_record(session);
     {
-        SessionType s2(session);
-        s2.open();
+        SessionType s2;
+        db_sett.template init_session<SessionType>(s2);
         dbm::statement q;
         q << "SELECT * FROM " << tbl_name << " WHERE id=" << data_fields.id;
         auto rows = s2.select(q);
@@ -583,8 +565,8 @@ void test_model()
     model >> session;
 
     {
-        SessionType s2(session);
-        s2.open();
+        SessionType s2;
+        db_sett.template init_session<SessionType>(s2);
         dbm::statement q;
         q << "SELECT * FROM " << tbl_name << " WHERE id=" << data_fields.id;
         auto rows = s2.select(q);
@@ -768,22 +750,9 @@ void test_model_with_timestamp()
 
     SessionType session;
     auto& db_sett = db_settings::instance();
+    db_sett.template init_session<SessionType>(session);
 
-#ifdef DBM_MYSQL
-    if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
-        BOOST_TEST_MESSAGE("MySQL test_model_with_timestamp");
-        db_sett.init_mysql_session(session, db_sett.test_db_name);
-    }
-#endif
-#ifdef DBM_SQLITE3
-    if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
-        BOOST_TEST_MESSAGE("SQLite test_model_with_timestamp");
-        session.set_db_name(db_sett.test_db_file_name);
-    }
-#endif
-
-    // Open session and create table
-    session.open();
+    // Create table
     m.drop_table(session);
     m.create_table(session);
 
@@ -851,22 +820,9 @@ void test_model_timestamp2u()
 
     SessionType session;
     auto& db_sett = db_settings::instance();
+    db_sett.template init_session<SessionType>(session);
 
-#ifdef DBM_MYSQL
-    if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
-        BOOST_TEST_MESSAGE("MySQL test_model_with_timestamp");
-        db_sett.init_mysql_session(session, db_sett.test_db_name);
-    }
-#endif
-#ifdef DBM_SQLITE3
-    if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
-        BOOST_TEST_MESSAGE("SQLite test_model_with_timestamp");
-        session.set_db_name(db_sett.test_db_file_name);
-    }
-#endif
-
-    // Open session and create table
-    session.open();
+    // Create table
     m.drop_table(session);
     m.create_table(session);
 

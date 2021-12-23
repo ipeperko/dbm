@@ -54,18 +54,8 @@ private:
 
 }// namespace
 
-sqlite_session::sqlite_session()
-{
-}
-
-sqlite_session::sqlite_session(std::string_view db_name)
-    : db_name_(db_name)
-{
-}
-
 sqlite_session::sqlite_session(const sqlite_session& oth)
     : session(oth)
-    , db_name_(oth.db_name_)
 {
 }
 
@@ -73,7 +63,6 @@ sqlite_session& sqlite_session::operator=(const sqlite_session& oth)
 {
     if (this != &oth) {
         session::operator=(oth);
-        db_name_ = oth.db_name_;
     }
     return *this;
 }
@@ -83,26 +72,11 @@ sqlite_session::~sqlite_session()
     sqlite_session::close();
 }
 
-std::unique_ptr<session> sqlite_session::clone() const
+void sqlite_session::connect(std::string_view db_file_name)
 {
-    return std::make_unique<sqlite_session>(*this);
-}
-
-void sqlite_session::set_db_name(std::string_view file_name)
-{
-    db_name_ = file_name;
-}
-
-std::string_view sqlite_session::db_name() const
-{
-    return db_name_;
-}
-
-void sqlite_session::open()
-{
-    int rc = sqlite3_open(db_name_.c_str(), &db3_);
+    int rc = sqlite3_open(db_file_name.data(), &db3_);
     if (rc) {
-        throw_exception<std::runtime_error>("SQLite can't open database " + db_name_);
+        throw_exception<std::runtime_error>("SQLite can't open database " + std::string(db_file_name));
     }
 }
 

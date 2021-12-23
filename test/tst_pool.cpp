@@ -17,8 +17,7 @@ void setup_pool(dbm::pool& pool)
     pool.set_max_connections(10);
     pool.set_session_initializer([]() {
         auto conn = std::make_shared<dbm::mysql_session>();
-        db_settings::instance().init_mysql_session(*conn, db_settings::instance().test_db_name);
-        conn->open();
+        db_settings::instance().init_mysql_session(*conn);
         return conn;
     });
 }

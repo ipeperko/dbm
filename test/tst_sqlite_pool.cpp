@@ -15,8 +15,7 @@ void setup_pool(dbm::pool& pool)
     pool.set_max_connections(1);
     pool.set_session_initializer([]() {
         auto conn = std::make_shared<dbm::sqlite_session>();
-        conn->set_db_name(db_settings::instance().test_db_file_name);
-        conn->open();
+        db_settings::instance().init_sqlite_session(*conn);
         return conn;
     });
 }

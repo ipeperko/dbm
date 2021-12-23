@@ -25,10 +25,6 @@
 
 namespace dbm {
 
-mysql_session::mysql_session()
-{
-}
-
 mysql_session::mysql_session(const mysql_session& oth)
     : session(oth)
 {
@@ -43,13 +39,6 @@ mysql_session::mysql_session(mysql_session&& oth) noexcept
 mysql_session& mysql_session::operator=(const mysql_session& oth)
 {
     if (this != &oth) {
-        opt_host_name = oth.opt_host_name;
-        opt_user_name = oth.opt_user_name;
-        opt_password = oth.opt_password;
-        opt_port_num = oth.opt_port_num;
-        opt_socket_name = oth.opt_socket_name;
-        opt_db_name = oth.opt_db_name;
-        opt_flags = oth.opt_flags;
         // __conn cannot copy
         session::operator=(oth);
     }
@@ -59,13 +48,6 @@ mysql_session& mysql_session::operator=(const mysql_session& oth)
 mysql_session& mysql_session::operator=(mysql_session&& oth) noexcept
 {
     if (this != &oth) {
-        opt_host_name = std::move(oth.opt_host_name);
-        opt_user_name = std::move(oth.opt_user_name);
-        opt_password = std::move(oth.opt_password);
-        opt_port_num = oth.opt_port_num;
-        opt_socket_name = oth.opt_socket_name;
-        opt_db_name = std::move(oth.opt_db_name);
-        opt_flags = oth.opt_flags;
         close();
         conn_ = oth.conn_;
         oth.conn_ = nullptr;
@@ -79,28 +61,14 @@ mysql_session::~mysql_session()
     mysql_session::close();
 }
 
-std::unique_ptr<session> mysql_session::clone() const
-{
-    return std::make_unique<mysql_session>(*this);
-}
-
-void mysql_session::init(const std::string& host_name, const std::string& user, const std::string& pass, unsigned int port,
-                         const std::string& db_name, unsigned int flags)
-{
-    opt_host_name = host_name;
-    opt_user_name = user;
-    opt_password = pass;
-    opt_port_num = port;
-    opt_db_name = db_name;
-    opt_flags = flags;
-}
-
-void mysql_session::set_database_name(const std::string& name)
-{
-    opt_db_name = name;
-}
-
-void mysql_session::open()
+void mysql_session::connect(
+    std::optional<std::string_view> host,
+    std::optional<std::string_view> user,
+    std::optional<std::string_view> passwd,
+    std::optional<std::string_view> db,
+    unsigned int port,
+    std::optional<std::string_view> unix_socket,
+    unsigned long client_flag)
 {
     if (conn_) {
         return;
@@ -115,16 +83,16 @@ void mysql_session::open()
 
     /* connect to server */
     MYSQL* s = mysql_real_connect(MYSQL_CONNECTION_HANDLE,
-                                  opt_host_name.c_str(),
-                                  opt_user_name.c_str(),
-                                  opt_password.c_str(),
-                                  opt_db_name.empty() ? nullptr : opt_db_name.c_str(),
-                                  opt_port_num,
-                                  opt_socket_name,
-                                  opt_flags);
+                                  host ? host.value().data() : nullptr,
+                                  user ? user.value().data() : nullptr,
+                                  passwd ? passwd.value().data() : nullptr,
+                                  db ? db.value().data() : nullptr,
+                                  port,
+                                  unix_socket ? unix_socket.value().data() : nullptr,
+                                  client_flag);
     if (s == nullptr) {
         conn_ = nullptr;
-        throw_exception<std::runtime_error>("MySql cannot connect to database " + opt_db_name);
+        throw_exception<std::runtime_error>("MySql cannot connect to database " + std::string(db ? db.value().data() : ""));
     }
 }
 

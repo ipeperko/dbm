@@ -25,25 +25,38 @@ db_settings& db_settings::instance()
 #ifdef DBM_MYSQL
 void db_settings::init_mysql_session(dbm::mysql_session& session, std::string const& db_name)
 {
-    session.init(mysql_host, mysql_username, mysql_password, mysql_port, db_name);
+    session.connect(mysql_host, mysql_username, mysql_password, db_name, mysql_port, std::nullopt, 0);
+}
+
+void db_settings::init_mysql_session(dbm::session& session, std::string const& db_name)
+{
+    init_mysql_session(dynamic_cast<dbm::mysql_session&>(session), db_name);
 }
 
 std::unique_ptr<dbm::session> db_settings::get_mysql_session()
 {
     auto db = std::make_unique<dbm::mysql_session>();
-    db_settings::instance().init_mysql_session(*db, db_settings::instance().test_db_name);
-    db->open();
-    db->create_database(db_settings::instance().test_db_name, true);
+    db_settings::instance().init_mysql_session(*db, test_db_name);
+    db->create_database(test_db_name, true);
     return db;
 }
 #endif
 
 #ifdef DBM_SQLITE3
+void db_settings::init_sqlite_session(dbm::sqlite_session& session)
+{
+    session.connect(test_db_file_name);
+}
+
+void db_settings::init_sqlite_session(dbm::session& session)
+{
+    init_sqlite_session(dynamic_cast<dbm::sqlite_session&>(session));
+}
+
 std::unique_ptr<dbm::session> db_settings::get_sqlite_session()
 {
     auto db = std::make_unique<dbm::sqlite_session>();
-    db->set_db_name(db_settings::instance().test_db_file_name);
-    db->open();
+    db->connect(test_db_file_name);
     return db;
 }
 #endif
