@@ -175,6 +175,59 @@ BOOST_AUTO_TEST_CASE(pool_heartbeat_error)
     BOOST_TEST(pool.num_connections() == 0);
 }
 
+BOOST_AUTO_TEST_CASE(pool_acquire_order)
+{
+    dbm::pool pool;
+    size_t const pool_size = 5;
+    size_t const nconn = 100;
+
+    setup_pool(pool);
+    pool.set_heartbeat_interval(0s);
+    pool.set_max_connections(pool_size);
+    pool.set_acquire_timeout(15s);
+
+    std::vector<dbm::pool_connection> conn_active;
+    conn_active.reserve(pool_size);
+
+    std::vector<std::thread> thr_waiting;
+    thr_waiting.reserve(nconn);
+    std::vector<dbm::pool_connection> conn_waiting;
+    conn_waiting.reserve(nconn);
+
+    for (auto i = 0u; i < pool_size; i++) {
+        conn_active.emplace_back(pool.acquire());
+    }
+
+    BOOST_TEST(pool.num_active_connections() == pool_size);
+
+    for (auto i = 0u; i < nconn; i++) {
+        thr_waiting.emplace_back([&] {
+            auto con = pool.acquire();
+            std::this_thread::sleep_for(200ms);
+        });
+    }
+
+    std::this_thread::sleep_for(1s);
+    std::vector<dbm::pool::id_t> acquired;
+    pool.set_event_callback([&](dbm::pool_event event, dbm::pool::id_t id) {
+        if (event == dbm::pool_event::acquired) {
+            acquired.push_back(id);
+        }
+    });
+
+    conn_active.clear();
+
+    for (auto i = 0u; i < nconn; i++) {
+        thr_waiting[i].join();
+    }
+
+    BOOST_TEST(acquired.size() == nconn);
+
+    for (auto i = 1u; i < nconn; i++) {
+        BOOST_TEST(acquired[i-1] < acquired[i]);
+    }
+}
+
 class LoadTask
 {
 public:
@@ -256,8 +309,8 @@ public:
         BOOST_TEST(pool.num_idle_connections() == n_conn);
     }
 
-    size_t n_conn = 10;
-    size_t n_threads = 300;
+    size_t const n_conn = 10;
+    size_t const n_threads = 300;
     dbm::pool pool;
 };
 

@@ -132,6 +132,8 @@ public:
     {
     }
 
+    debug_logger(debug_logger&&) = default;
+
     ~debug_logger()
     {
         if (writer) {
