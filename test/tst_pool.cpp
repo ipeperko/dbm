@@ -165,8 +165,9 @@ BOOST_AUTO_TEST_CASE(pool_heartbeat_error)
     auto* db = &conn.get();
     conn.release();
 
-    std::this_thread::sleep_for(2500ms);
-    BOOST_TEST(pool.heartbeats_count() == 2);
+    std::this_thread::sleep_for(2800ms);
+    BOOST_TEST(pool.heartbeats_count() >= 1); // expected 2 but may be less on slower systems
+    BOOST_TEST(pool.heartbeats_count() <= 2);
 
     db->close(); // manually close connection
 
@@ -180,6 +181,8 @@ BOOST_AUTO_TEST_CASE(pool_acquire_order)
     dbm::pool pool;
     size_t const pool_size = 5;
     size_t const nconn = 100;
+
+    //dbm::utils::debug_logger::writer = dbm::utils::debug_logger::stdout_writer;
 
     setup_pool(pool);
     pool.set_heartbeat_interval(0s);
@@ -208,12 +211,15 @@ BOOST_AUTO_TEST_CASE(pool_acquire_order)
     }
 
     std::this_thread::sleep_for(1s);
+    std::mutex mtx;
     std::vector<dbm::pool::id_t> acquired;
     pool.set_event_callback([&](dbm::pool_event event, dbm::pool::id_t id) {
+        dbm::utils::debug_logger(dbm::utils::debug_logger::level::Debug) << "pool event #" << id << " " << dbm::to_string(event);
         if (event == dbm::pool_event::acquired) {
+            std::lock_guard lck(mtx);
             acquired.push_back(id);
         }
-    });
+    }, false); // set to blocking event in order to properly check handover order
 
     conn_active.clear();
 

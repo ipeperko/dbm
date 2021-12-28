@@ -29,6 +29,7 @@ DBM_INLINE std::string to_string(pool_event event)
         case pool_event::timeout:           return "timeout";
         case pool_event::heartbeat_success: return "heartbeat_success";
         case pool_event::heartbeat_fail:    return "heartbeat_fail";
+        default:                            return "unknown";
     }
 }
 
@@ -97,10 +98,11 @@ public:
         make_session_ = fn;
     }
 
-    void set_event_callback(EventCallback&& cb)
+    void set_event_callback(EventCallback&& cb, bool async = true)
     {
         std::lock_guard lock(mtx_);
         event_cb_ = std::move(cb);
+        event_cb_async_ = async;
     }
 
     void set_heartbeat_interval(std::chrono::milliseconds ms)
@@ -194,6 +196,7 @@ private:
 
     MakeSessionFn make_session_;
     EventCallback event_cb_;
+    bool event_cb_async_ {true};
     size_t max_conn_ {10};
     std::chrono::milliseconds acquire_timeout_ {5000};
     std::chrono::milliseconds stat_wait_step_ {100};
@@ -553,9 +556,14 @@ DBM_INLINE void pool::remove_acquiring(id_t id)
 DBM_INLINE void pool::send_event(pool_event event, id_t id)
 {
     if (event_cb_) {
-        std::thread([event, id, cb = event_cb_] {
-            cb(event, id);
-        }).detach();
+        if (event_cb_async_) {
+            std::thread([event, id, cb = event_cb_] {
+                cb(event, id);
+            }).detach();
+        }
+        else {
+            event_cb_(event, id);
+        }
     }
 }
 
