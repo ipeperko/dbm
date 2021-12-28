@@ -135,6 +135,7 @@ public:
         s.n_conn = sessions_idle_.size() + sessions_active_.size();
         s.n_active_conn = sessions_active_.size();
         s.n_idle_conn = sessions_idle_.size();
+        s.n_acquiring = acquiring_.size();
         s.n_heartbeats = heartbeat_counter_;
         return s;
     }
@@ -242,8 +243,6 @@ DBM_INLINE pool_connection pool::acquire()
     auto expires = started + acquire_timeout_;
     id_t acquire_id;
 
-    utils::execute_at_exit atexit([this]{ --stat_.n_acquiring; });
-
     // Lock mutex
     std::unique_lock lock(mtx_);
 
@@ -253,11 +252,10 @@ DBM_INLINE pool_connection pool::acquire()
         sid++;
     acquire_id = sid++;
     acquiring_.push_back(acquire_id);
-    ++stat_.n_acquiring;
-    if (stat_.n_acquiring > stat_.n_acquiring_max)
-        stat_.n_acquiring_max = stat_.n_acquiring;
+    if (acquiring_.size() > stat_.n_acquiring_max)
+        stat_.n_acquiring_max = acquiring_.size();
 
-    debug_log() << "acquiring #" << acquire_id << " total acquiring : " << stat_.n_acquiring;
+    debug_log() << "acquiring #" << acquire_id << " total acquiring : " << acquiring_.size();
 
     // Check existing connections
     auto it_available = std::find_if(sessions_idle_.begin(), sessions_idle_.end(), [](auto const& it) {
