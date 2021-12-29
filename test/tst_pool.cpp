@@ -176,6 +176,23 @@ BOOST_AUTO_TEST_CASE(pool_heartbeat_error)
     BOOST_TEST(pool.num_connections() == 0);
 }
 
+BOOST_AUTO_TEST_CASE(pool_no_handover_if_connection_closed)
+{
+    dbm::pool pool;
+    setup_pool(pool);
+    pool.set_max_connections(1);
+    pool.set_heartbeat_interval(1s);
+
+    {
+        auto conn = pool.acquire();
+        BOOST_TEST(pool.num_connections() == 1);
+        conn.get().close();
+    }
+
+    // when a closed connection is released it should not be moved to the idle session list
+    BOOST_TEST(pool.num_connections() == 0);
+}
+
 BOOST_AUTO_TEST_CASE(pool_acquire_order)
 {
     dbm::pool pool;
