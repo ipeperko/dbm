@@ -10,14 +10,9 @@ using namespace std::chrono_literals;
 
 namespace {
 
-void setup_pool(dbm::pool& pool)
+void setup_pool(SQLitePool& pool)
 {
     pool.set_max_connections(1);
-    pool.set_session_initializer([]() {
-        auto conn = std::make_shared<dbm::sqlite_session>();
-        db_settings::instance().init_sqlite_session(*conn);
-        return conn;
-    });
 }
 
 } // namespace
@@ -26,14 +21,14 @@ BOOST_AUTO_TEST_SUITE(TstSQLitePool)
 
 BOOST_AUTO_TEST_CASE(pool_init)
 {
-    dbm::pool pool;
+    SQLitePool pool;
     setup_pool(pool);
     BOOST_TEST(pool.num_connections() == 0);
 }
 
 BOOST_AUTO_TEST_CASE(pool_acquire_release)
 {
-    dbm::pool pool;
+    SQLitePool pool;
     setup_pool(pool);
     BOOST_TEST(pool.num_connections() == 0);
 
@@ -76,7 +71,7 @@ BOOST_AUTO_TEST_CASE(pool_acquire_release)
 
 BOOST_AUTO_TEST_CASE(pool_acquire_timeout_exception)
 {
-    dbm::pool pool;
+    SQLitePool pool;
     setup_pool(pool);
     pool.set_acquire_timeout(2s);
     BOOST_TEST(pool.num_connections() == 0);
@@ -109,7 +104,7 @@ BOOST_AUTO_TEST_CASE(pool_acquire_timeout_exception)
 
 class MultipleWriters
 {
-    dbm::pool pool_;
+    SQLitePool pool_;
     static constexpr unsigned n_tasks_ {10};
     static constexpr unsigned n_rec_ {100};
 public:

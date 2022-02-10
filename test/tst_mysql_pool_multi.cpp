@@ -18,9 +18,10 @@ std::mutex mtx_readers;
 std::list<std::thread> reader_threads;
 constexpr unsigned thread_sleep_time = 20;
 
-class TstPool : public dbm::pool
+class TstPool : public MySqlPool
 {
     TstPool()
+        : MySqlPool()
     {
         setup_pool();
         create_schema();
@@ -36,11 +37,6 @@ private:
     void setup_pool()
     {
         set_max_connections(10);
-        set_session_initializer([]() {
-            auto conn = std::make_shared<dbm::mysql_session>();
-            db_settings::instance().init_mysql_session(*conn);
-            return conn;
-        });
     }
 
     void create_schema()

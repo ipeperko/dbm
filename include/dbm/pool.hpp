@@ -33,12 +33,12 @@ DBM_INLINE std::string to_string(pool_event event)
     }
 }
 
+template<typename SessionInitializer>
 class DBM_EXPORT pool
 {
 public:
 
     using id_t = size_t;
-    using MakeSessionFn = std::function<std::shared_ptr<session>()>;
     using EventCallback = std::function<void(pool_event, id_t)>;
 
     struct statistics
@@ -56,13 +56,18 @@ public:
     };
 
 
-    pool();
+    explicit pool(SessionInitializer&& session_init)
+        : make_session_(std::move(session_init))
+    {
+        do_run_ = true;
+        thr_ = std::thread([this]{ heartbeat_task(); });
+    }
 
     pool(pool const&) = delete;
 
     pool(pool&&) = delete;
 
-    ~pool();
+    virtual ~pool();
 
     pool& operator=(pool const&) = delete;
 
@@ -90,12 +95,6 @@ public:
     {
         std::lock_guard lock(mtx_);
         acquire_timeout_ = to;
-    }
-
-    void set_session_initializer(MakeSessionFn&& fn)
-    {
-        std::lock_guard lock(mtx_);
-        make_session_ = fn;
     }
 
     void set_event_callback(EventCallback&& cb, bool async = true)
@@ -144,10 +143,28 @@ public:
 
     pool_connection acquire();
 
-    size_t num_connections() const;
-    size_t num_active_connections() const;
-    size_t num_idle_connections() const;
-    size_t heartbeats_count() const { return heartbeat_counter_; }
+    size_t num_connections() const
+    {
+        std::shared_lock lock(mtx_);
+        return sessions_active_.size() + sessions_idle_.size();
+    }
+
+    size_t num_active_connections() const
+    {
+        std::shared_lock lock(mtx_);
+        return sessions_active_.size();
+    }
+
+    size_t num_idle_connections() const
+    {
+        std::shared_lock lock(mtx_);
+        return sessions_idle_.size();
+    }
+
+    size_t heartbeats_count() const
+    {
+        return heartbeat_counter_;
+    }
 
     utils::debug_logger debug_log() const
     {
@@ -194,7 +211,7 @@ private:
     std::string heartbeat_query_ {"SELECT 1" };
     std::chrono::milliseconds heartbeat_interval_ {5000};
 
-    MakeSessionFn make_session_;
+    SessionInitializer make_session_;
     EventCallback event_cb_;
     bool event_cb_async_ {true};
     size_t max_conn_ {10};
@@ -203,14 +220,8 @@ private:
     statistics stat_;
 };
 
-DBM_INLINE pool::pool()
-{
-    do_run_ = true;
-    thr_ = std::thread([this]{ heartbeat_task(); });
-}
-
-
-DBM_INLINE pool::~pool()
+template<typename SessionInitializer>
+pool<SessionInitializer>::~pool()
 {
     debug_log() << "Exit pool begin";
 
@@ -239,7 +250,8 @@ DBM_INLINE pool::~pool()
     debug_log() << "Exit pool end";
 }
 
-DBM_INLINE pool_connection pool::acquire()
+template<typename SessionInitializer>
+pool_connection pool<SessionInitializer>::acquire()
 {
     using clock_t = pool_intern_item::clock_t;
     auto started = clock_t::now();
@@ -342,10 +354,6 @@ DBM_INLINE pool_connection pool::acquire()
 
     Make_new_session:
 
-    // No idle connection available - make connection instance
-    if (!make_session_)
-        throw_exception("Session initializer function not defined");
-
     // Create session
     auto* new_intern_item = new pool_intern_item(make_session_());
     auto* ptr = new_intern_item->session_.get();
@@ -356,7 +364,8 @@ DBM_INLINE pool_connection pool::acquire()
     return make_pool_connection_instance(new_intern_item->session_, acquire_id, true, started);
 }
 
-DBM_INLINE pool_connection pool::make_pool_connection_instance(std::shared_ptr<session> const& session, id_t acquire_id, bool remove, pool_intern_item::clock_t::time_point started)
+template<typename SessionInitializer>
+pool_connection pool<SessionInitializer>::make_pool_connection_instance(std::shared_ptr<session> const& session, id_t acquire_id, bool remove, pool_intern_item::clock_t::time_point started)
 {
     if (sessions_active_.size() > stat_.n_max_conn)
         stat_.n_max_conn = sessions_active_.size();
@@ -372,7 +381,8 @@ DBM_INLINE pool_connection pool::make_pool_connection_instance(std::shared_ptr<s
             }};
 }
 
-DBM_INLINE void pool::release(session* s)
+template<typename SessionInitializer>
+void pool<SessionInitializer>::release(session* s)
 {
     std::unique_lock lck(mtx_, std::defer_lock);
     std::unique_lock lck_ho_begin(mtx_cv_ho_begin_, std::defer_lock);
@@ -419,25 +429,8 @@ DBM_INLINE void pool::release(session* s)
     }
 }
 
-DBM_INLINE size_t pool::num_connections() const
-{
-    std::shared_lock lock(mtx_);
-    return sessions_active_.size() + sessions_idle_.size();
-}
-
-DBM_INLINE size_t pool::num_active_connections() const
-{
-    std::shared_lock lock(mtx_);
-    return sessions_active_.size();
-}
-
-DBM_INLINE size_t pool::num_idle_connections() const
-{
-    std::shared_lock lock(mtx_);
-    return sessions_idle_.size();
-}
-
-DBM_INLINE void pool::heartbeat_task()
+template<typename SessionInitializer>
+void pool<SessionInitializer>::heartbeat_task()
 {
     using clock_t = pool_intern_item::clock_t;
 
@@ -468,7 +461,7 @@ DBM_INLINE void pool::heartbeat_task()
                 return sessions_idle_.end();
             };
 
-            decltype(sessions_idle_)::iterator iter;
+            typename decltype(sessions_idle_)::iterator iter;
 
             while ((iter = heartbeat_candidate()) != sessions_idle_.end()) {
                 auto* s = iter->first;
@@ -532,7 +525,8 @@ DBM_INLINE void pool::heartbeat_task()
     }
 }
 
-DBM_INLINE void pool::calculate_wait_time(pool_intern_item::clock_t::time_point tp1, pool_intern_item::clock_t::time_point tp2)
+template<typename SessionInitializer>
+void pool<SessionInitializer>::calculate_wait_time(pool_intern_item::clock_t::time_point tp1, pool_intern_item::clock_t::time_point tp2)
 {
     long dur = std::chrono::duration_cast<std::chrono::milliseconds>(tp2 - tp1).count();
     long range = dur / stat_wait_step_.count();
@@ -543,7 +537,8 @@ DBM_INLINE void pool::calculate_wait_time(pool_intern_item::clock_t::time_point 
     stat_.acquire_stat[range]++;
 }
 
-DBM_INLINE void pool::remove_acquiring(id_t id)
+template<typename SessionInitializer>
+void pool<SessionInitializer>::remove_acquiring(id_t id)
 {
     for (auto it = acquiring_.begin(); it != acquiring_.end(); ++it) {
         if (*it == id) {
@@ -553,7 +548,8 @@ DBM_INLINE void pool::remove_acquiring(id_t id)
     }
 }
 
-DBM_INLINE void pool::send_event(pool_event event, id_t id)
+template<typename SessionInitializer>
+void pool<SessionInitializer>::send_event(pool_event event, id_t id)
 {
     if (event_cb_) {
         if (event_cb_async_) {
