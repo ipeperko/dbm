@@ -54,37 +54,21 @@ private:
 };
 
 #ifdef DBM_MYSQL
-class MakeMySqlSession
+struct MakeMySqlSession
 {
-public:
     std::shared_ptr<dbm::mysql_session> operator()();
 };
 
-class MySqlPool : public dbm::pool<MakeMySqlSession>
-{
-public:
-    MySqlPool()
-        : dbm::pool<MakeMySqlSession>(MakeMySqlSession())
-    {
-    }
-};
+using MySqlPool = dbm::pool<MakeMySqlSession>;
 #endif
 
 #ifdef DBM_SQLITE3
-class MakeSQLiteSession
+struct MakeSQLiteSession
 {
-public:
     std::shared_ptr<dbm::sqlite_session> operator()();
 };
 
-class SQLitePool : public dbm::pool<MakeSQLiteSession>
-{
-public:
-    SQLitePool()
-        : dbm::pool<MakeSQLiteSession>(MakeSQLiteSession())
-    {
-    }
-};
+using SQLitePool = dbm::pool<MakeSQLiteSession>;
 #endif
 
 #endif //DBM_DB_SETTINGS_H

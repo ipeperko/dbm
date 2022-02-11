@@ -56,7 +56,7 @@ public:
     };
 
 
-    explicit pool(SessionInitializer&& session_init)
+    explicit pool(SessionInitializer&& session_init = SessionInitializer())
         : make_session_(std::move(session_init))
     {
         do_run_ = true;
