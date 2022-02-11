@@ -1,8 +1,7 @@
 #ifndef DBM_DB_SETTINGS_H
 #define DBM_DB_SETTINGS_H
 
-#include <string>
-#include <memory>
+#include <dbm/dbm.hpp>
 
 namespace dbm {
 class session;
@@ -53,5 +52,23 @@ private:
     db_settings();
     void initialize();
 };
+
+#ifdef DBM_MYSQL
+struct MakeMySqlSession
+{
+    std::shared_ptr<dbm::mysql_session> operator()();
+};
+
+using MySqlPool = dbm::pool<MakeMySqlSession>;
+#endif
+
+#ifdef DBM_SQLITE3
+struct MakeSQLiteSession
+{
+    std::shared_ptr<dbm::sqlite_session> operator()();
+};
+
+using SQLitePool = dbm::pool<MakeSQLiteSession>;
+#endif
 
 #endif //DBM_DB_SETTINGS_H

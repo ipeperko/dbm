@@ -12,14 +12,9 @@ using namespace boost::unit_test;
 using namespace std::chrono_literals;
 
 namespace{
-void setup_pool(dbm::pool& pool)
+void setup_pool(MySqlPool& pool)
 {
     pool.set_max_connections(10);
-    pool.set_session_initializer([]() {
-        auto conn = std::make_shared<dbm::mysql_session>();
-        db_settings::instance().init_mysql_session(*conn);
-        return conn;
-    });
 }
 }
 
@@ -27,14 +22,14 @@ BOOST_AUTO_TEST_SUITE(TstPool)
 
 BOOST_AUTO_TEST_CASE(pool_init)
 {
-    dbm::pool pool;
+    MySqlPool pool;
     setup_pool(pool);
     BOOST_TEST(pool.num_connections() == 0);
 }
 
 BOOST_AUTO_TEST_CASE(pool_acquire_release)
 {
-    dbm::pool pool;
+    MySqlPool pool;
     setup_pool(pool);
     BOOST_TEST(pool.num_connections() == 0);
 
@@ -89,7 +84,7 @@ BOOST_AUTO_TEST_CASE(pool_acquire_release)
 
 BOOST_AUTO_TEST_CASE(pool_connection_move)
 {
-    dbm::pool pool;
+    MySqlPool pool;
     setup_pool(pool);
     BOOST_TEST(pool.num_connections() == 0);
 
@@ -122,7 +117,7 @@ BOOST_AUTO_TEST_CASE(pool_connection_move)
 
 BOOST_AUTO_TEST_CASE(pool_acquire_timeout_exception)
 {
-    dbm::pool pool;
+    MySqlPool pool;
     setup_pool(pool);
     pool.set_max_connections(1);
     pool.set_acquire_timeout(2s);
@@ -156,7 +151,7 @@ BOOST_AUTO_TEST_CASE(pool_acquire_timeout_exception)
 
 BOOST_AUTO_TEST_CASE(pool_heartbeat_error)
 {
-    dbm::pool pool;
+    MySqlPool pool;
     setup_pool(pool);
     pool.set_heartbeat_interval(1s);
     BOOST_TEST(pool.num_connections() == 0);
@@ -178,7 +173,7 @@ BOOST_AUTO_TEST_CASE(pool_heartbeat_error)
 
 BOOST_AUTO_TEST_CASE(pool_no_handover_if_connection_closed)
 {
-    dbm::pool pool;
+    MySqlPool pool;
     setup_pool(pool);
     pool.set_max_connections(1);
     pool.set_heartbeat_interval(1s);
@@ -195,7 +190,7 @@ BOOST_AUTO_TEST_CASE(pool_no_handover_if_connection_closed)
 
 BOOST_AUTO_TEST_CASE(pool_acquire_order)
 {
-    dbm::pool pool;
+    MySqlPool pool;
     size_t const pool_size = 5;
     size_t const nconn = 100;
 
@@ -229,8 +224,8 @@ BOOST_AUTO_TEST_CASE(pool_acquire_order)
 
     std::this_thread::sleep_for(1s);
     std::mutex mtx;
-    std::vector<dbm::pool::id_t> acquired;
-    pool.set_event_callback([&](dbm::pool_event event, dbm::pool::id_t id) {
+    std::vector<MySqlPool::id_t> acquired;
+    pool.set_event_callback([&](dbm::pool_event event, MySqlPool::id_t id) {
         dbm::utils::debug_logger(dbm::utils::debug_logger::level::Debug) << "pool event #" << id << " " << dbm::to_string(event);
         if (event == dbm::pool_event::acquired) {
             std::lock_guard lck(mtx);
@@ -255,7 +250,7 @@ class LoadTask
 {
 public:
 
-    explicit LoadTask(dbm::pool& p)
+    explicit LoadTask(MySqlPool& p)
         : pool(p)
     {}
 
@@ -303,7 +298,7 @@ public:
         total_rows = 0;
     }
 
-    dbm::pool& pool;
+    MySqlPool& pool;
     std::atomic<size_t> num_exceptions = 0;
     std::mutex mtx;
     std::atomic<size_t> max_active_conn = 0;
@@ -334,7 +329,7 @@ public:
 
     size_t const n_conn = 10;
     size_t const n_threads = 300;
-    dbm::pool pool;
+    MySqlPool pool;
 };
 
 // The goal of this test is to verify if all tasks acquired connection
@@ -435,7 +430,7 @@ public:
         side_thr.join();
     }
 
-    dbm::pool pool;
+    MySqlPool pool;
     size_t run_count {0};
 };
 

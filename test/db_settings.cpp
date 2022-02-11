@@ -1,4 +1,3 @@
-#include "dbm/dbm.hpp"
 #include "db_settings.h"
 #ifdef DBM_MYSQL
 #include <dbm/drivers/mysql/mysql_session.hpp>
@@ -92,3 +91,20 @@ void db_settings::initialize()
 #endif
 }
 
+#ifdef DBM_MYSQL
+std::shared_ptr<dbm::mysql_session> MakeMySqlSession::operator()()
+{
+    auto conn = std::make_shared<dbm::mysql_session>();
+    db_settings::instance().init_mysql_session(*conn);
+    return conn;
+}
+#endif
+
+#ifdef DBM_SQLITE3
+std::shared_ptr<dbm::sqlite_session> MakeSQLiteSession::operator()()
+{
+    auto conn = std::make_shared<dbm::sqlite_session>();
+    db_settings::instance().init_sqlite_session(*conn);
+    return conn;
+}
+#endif
