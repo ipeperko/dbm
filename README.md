@@ -359,30 +359,29 @@ One solution is also to use separate model and session objects for each thread.
 Example:
 
 ```c++
-pool p
-p.set_max_connections(10);
-p.set_acquire_timeout(std::chrono::seconds(5));
-p.set_heartbeat_interval(std::chrono::milliseconds(5000));
-p.set_heartbeat_query("SELECT 1");
-p.set_session_initializer([] {
+pool p([] {
     auto conn = std::make_shared<dbm::mysql_session>();
     conn.init("localhost", "username", "password", 3306, "dbname");
     conn->open();
     return conn;
 });
+p.set_max_connections(10);
+p.set_acquire_timeout(std::chrono::seconds(5));
+p.set_heartbeat_interval(std::chrono::milliseconds(5000));
+p.set_heartbeat_query("SELECT 1");
 
 auto conn1 = p.acquire();       // creates a new connection
-conn1.get()->query("....");
+conn1.get().query("....");
 
 {
     auto conn2 = p.acquire();   // creates a new connection
-    conn2.get()->query("....");
+    conn2.get().query("....");
     // conn2 automatically released
 }
 
 {
     auto conn3 = p.acquire();   // existing idle connection reused (released by conn2)
-    conn3.get()->query("....");
+    conn3.get().query("....");
     // conn3 automatically released
 }
 
