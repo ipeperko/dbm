@@ -534,6 +534,8 @@ void pool<SessionInitializer>::calculate_wait_time(pool_intern_item::clock_t::ti
     range *= stat_wait_step_.count();
     if (rem)
         range += stat_wait_step_.count();
+    if (range == 0)
+        range = 1;
     stat_.acquire_stat[range]++;
 }
 
