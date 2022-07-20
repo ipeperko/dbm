@@ -3,28 +3,33 @@
 
 namespace dbm {
 
-DBM_INLINE session::transaction::transaction(session& db)
+template<typename Impl>
+DBM_INLINE session<Impl>::transaction::transaction(session& db)
     : db_(db)
 {
     db_.transaction_begin();
 }
 
-DBM_INLINE session::transaction::~transaction()
+template<typename Impl>
+DBM_INLINE session<Impl>::transaction::~transaction()
 {
     perform(false);
 }
 
-DBM_INLINE void session::transaction::commit()
+template<typename Impl>
+DBM_INLINE void session<Impl>::transaction::commit()
 {
     perform(true);
 }
 
-DBM_INLINE void session::transaction::rollback()
+template<typename Impl>
+DBM_INLINE void session<Impl>::transaction::rollback()
 {
     perform(false);
 }
 
-DBM_INLINE void session::transaction::perform(bool do_commit)
+template<typename Impl>
+DBM_INLINE void session<Impl>::transaction::perform(bool do_commit)
 {
     if (!executed_) {
         if (do_commit) {
@@ -37,18 +42,21 @@ DBM_INLINE void session::transaction::perform(bool do_commit)
     }
 }
 
-DBM_INLINE session::session(const session& oth)
+template<typename Impl>
+DBM_INLINE session<Impl>::session(const session& oth)
     : last_statement_(oth.last_statement_)
 {
 }
 
-DBM_INLINE session::session(session&& oth) noexcept
+template<typename Impl>
+DBM_INLINE session<Impl>::session(session&& oth) noexcept
     : last_statement_(std::move(oth.last_statement_))
     , prepared_stm_handle_(std::move(oth.prepared_stm_handle_))
 {
 }
 
-DBM_INLINE session& session::operator=(const session& oth)
+template<typename Impl>
+DBM_INLINE session<Impl>& session<Impl>::operator=(const session& oth)
 {
     if (this != &oth) {
         last_statement_ = oth.last_statement_;
@@ -56,7 +64,8 @@ DBM_INLINE session& session::operator=(const session& oth)
     return *this;
 }
 
-DBM_INLINE session& session::operator=(session&& oth) noexcept
+template<typename Impl>
+DBM_INLINE session<Impl>& session<Impl>::operator=(session&& oth) noexcept
 {
     if (this != &oth) {
         last_statement_ = std::move(oth.last_statement_);
@@ -65,22 +74,26 @@ DBM_INLINE session& session::operator=(session&& oth) noexcept
     return *this;
 }
 
-DBM_INLINE void session::query(const std::string& statement)
+template<typename Impl>
+DBM_INLINE void session<Impl>::query(const std::string& statement)
 {
     last_statement_ = statement;
 }
 
-DBM_INLINE void session::query(const detail::statement& q)
+template<typename Impl>
+DBM_INLINE void session<Impl>::query(const detail::statement& q)
 {
     query(q.get());
 }
 
-DBM_INLINE kind::sql_rows session::select(const std::string& statement)
+template<typename Impl>
+DBM_INLINE kind::sql_rows session<Impl>::select(const std::string& statement)
 {
     return select_rows(statement);
 }
 
-DBM_INLINE kind::sql_rows session::select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria)
+template<typename Impl>
+DBM_INLINE kind::sql_rows session<Impl>::select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria)
 {
     std::string& statement = last_statement_;
     statement = "SELECT ";
@@ -103,19 +116,22 @@ DBM_INLINE kind::sql_rows session::select(const std::vector<std::string>& what, 
     return select_rows(statement);
 }
 
-DBM_INLINE kind::sql_rows session::select(const detail::statement& q)
+template<typename Impl>
+DBM_INLINE kind::sql_rows session<Impl>::select(const detail::statement& q)
 {
     return select(q.get());
 }
 
-DBM_INLINE void session::remove_prepared_statement(std::string const& s)
+template<typename Impl>
+DBM_INLINE void session<Impl>::remove_prepared_statement(std::string const& s)
 {
     auto p = prepared_stm_handle_.find(s);
     if (p != prepared_stm_handle_.end())
         prepared_stm_handle_.erase(p);
 }
 
-DBM_INLINE void session::create_database(const std::string& db_name, bool if_not_exists)
+template<typename Impl>
+DBM_INLINE void session<Impl>::create_database(const std::string& db_name, bool if_not_exists)
 {
     std::string q = "CREATE DATABASE ";
     if (if_not_exists) {
@@ -125,7 +141,8 @@ DBM_INLINE void session::create_database(const std::string& db_name, bool if_not
     query(q);
 }
 
-DBM_INLINE void session::drop_database(const std::string& db_name, bool if_exists)
+template<typename Impl>
+DBM_INLINE void session<Impl>::drop_database(const std::string& db_name, bool if_exists)
 {
     std::string q = "DROP DATABASE ";
     if (if_exists) {
@@ -135,30 +152,35 @@ DBM_INLINE void session::drop_database(const std::string& db_name, bool if_exist
     query(q);
 }
 
-DBM_INLINE void session::create_table(const model& m, bool if_not_exists)
+template<typename Impl>
+DBM_INLINE void session<Impl>::create_table(const model& m, bool if_not_exists)
 {
     std::string q = create_table_query(m, if_not_exists);
     query(q);
 }
 
-DBM_INLINE void session::drop_table(const model& m, bool if_exists)
+template<typename Impl>
+DBM_INLINE void session<Impl>::drop_table(const model& m, bool if_exists)
 {
     std::string q = drop_table_query(m, if_exists);
     query(q);
 }
 
-DBM_INLINE std::string session::last_statement_info() const
+template<typename Impl>
+DBM_INLINE std::string session<Impl>::last_statement_info() const
 {
     return " - statement : " + last_statement_;
 }
 
-DBM_INLINE model& session::operator>>(model& m)
+template<typename Impl>
+DBM_INLINE model& session<Impl>::operator>>(model& m)
 {
     m.read_record(*this);
     return m;
 }
 
-DBM_INLINE model&& session::operator>>(model&& m)
+template<typename Impl>
+DBM_INLINE model&& session<Impl>::operator>>(model&& m)
 {
     m.read_record(*this);
     return std::move(m);

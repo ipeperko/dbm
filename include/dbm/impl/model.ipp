@@ -199,13 +199,15 @@ DBM_INLINE void model::erase(std::string_view key)
     items_.erase(it);
 }
 
-DBM_INLINE void model::write_record(session& s)
+template<typename DBType>
+DBM_INLINE void model::write_record(DBType& s)
 {
     auto q = s.write_model_query(*this);
     s.query(q);
 }
 
-DBM_INLINE void model::read_record(session& s, const std::string& extra_condition)
+template<typename DBType>
+DBM_INLINE void model::read_record(DBType& s, const std::string& extra_condition)
 {
     auto q = s.read_model_query(*this, extra_condition);
     auto rows = s.select(q);
@@ -243,18 +245,21 @@ DBM_INLINE void model::read_record(const kind::sql_row& row)
     }
 }
 
-DBM_INLINE void model::delete_record(session& s)
+template<typename DBType>
+DBM_INLINE void model::delete_record(DBType& s)
 {
     auto q = s.delete_model_query(*this);
     s.query(q);
 }
 
-DBM_INLINE void model::create_table(session& s, bool if_not_exists)
+template<typename DBType>
+DBM_INLINE void model::create_table(DBType& s, bool if_not_exists)
 {
     s.create_table(*this, if_not_exists);
 }
 
-DBM_INLINE void model::drop_table(session& s, bool if_exists)
+template<typename DBType>
+DBM_INLINE void model::drop_table(DBType& s, bool if_exists)
 {
     s.drop_table(*this, if_exists);
 }
@@ -285,7 +290,8 @@ DBM_INLINE model& model::operator>>(serializer&& ser)
     return *this;
 }
 
-DBM_INLINE model& model::operator>>(session& s)
+template<typename DBType, typename>
+DBM_INLINE model& model::operator>>(DBType& s)
 {
     write_record(s);
     return *this;

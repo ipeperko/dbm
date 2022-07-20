@@ -6,6 +6,7 @@
 
 namespace dbm {
 
+template<typename DBSession>
 class DBM_EXPORT pool_intern_item
 {
 public:
@@ -19,14 +20,14 @@ public:
         canceled
     };
 
-    explicit pool_intern_item(std::shared_ptr<session>&& s)
+    explicit pool_intern_item(std::shared_ptr<DBSession>&& s)
         : session_(std::move(s))
     {
         state_ = state::active;
     }
 
     state state_ {state::idle};
-    std::shared_ptr<session> session_;
+    std::shared_ptr<DBSession> session_;
     clock_t::time_point heartbeat_time_;
 };
 

@@ -11,10 +11,16 @@ namespace dbm {
 
 class model;
 
+class DBM_EXPORT session_base
+{
+public:
+};
+
 /*!
  * Database session interface class
  */
-class DBM_EXPORT session
+template<typename Impl>
+class DBM_EXPORT session : private session_base
 {
 public:
     class transaction;
@@ -75,7 +81,8 @@ protected:
 /*!
  * Database transaction class
  */
-class DBM_EXPORT session::transaction
+template<typename Impl>
+class DBM_EXPORT session<Impl>::transaction
 {
 public:
     explicit transaction(session& db);
@@ -89,7 +96,7 @@ public:
 private:
     void perform(bool do_commit);
 
-    dbm::session& db_;
+    dbm::session<Impl>& db_;
     bool executed_ {false};
 };
 

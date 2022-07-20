@@ -3,7 +3,8 @@
 
 namespace dbm::kind {
 
-DBM_INLINE prepared_statement& prepared_statement::operator>>(session& s)
+template<typename DBType>
+DBM_INLINE prepared_statement& prepared_statement::operator>>(DBType& s)
 {
     s.query(*this);
     return *this;

@@ -7,7 +7,7 @@ struct sqlite3;
 
 namespace dbm {
 
-class DBM_EXPORT sqlite_session : public session
+class DBM_EXPORT sqlite_session : public session<sqlite_session>
 {
 public:
     sqlite_session() = default;

@@ -5,7 +5,7 @@
 
 namespace dbm {
 
-class DBM_EXPORT mysql_session : public session
+class DBM_EXPORT mysql_session : public session<mysql_session>
 {
 public:
     mysql_session() = default;

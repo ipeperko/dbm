@@ -7,7 +7,7 @@
 
 namespace dbm {
 
-class session;
+class session_base;
 
 namespace detail {
 template<typename>
@@ -101,17 +101,22 @@ public:
 
     void erase(std::string_view key);
 
-    void write_record(session& s);
+    template<typename DBType>
+    void write_record(DBType& s);
 
-    void read_record(session& s, const std::string& extra_condition = "");
+    template<typename DBType>
+    void read_record(DBType& s, const std::string& extra_condition = "");
 
     void read_record(const kind::sql_row& row);
 
-    void delete_record(session& s);
+    template<typename DBType>
+    void delete_record(DBType& s);
 
-    void create_table(session& s, bool if_not_exists=true);
+    template<typename DBType>
+    void create_table(DBType& s, bool if_not_exists=true);
 
-    void drop_table(session& s, bool if_exists=true);
+    template<typename DBType>
+    void drop_table(DBType& s, bool if_exists=true);
 
     void serialize(serializer& ser);
 
@@ -121,7 +126,9 @@ public:
 
     model& operator>>(serializer&& ser);
 
-    model& operator>>(session& s);
+    // TODO: replace sfinae with traits
+    template<typename DBType, typename = std::enable_if_t< std::is_base_of_v<session_base, DBType> >>
+    model& operator>>(DBType& s);
 
     model& operator<<(const kind::sql_row& row);
 
