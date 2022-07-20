@@ -9,40 +9,37 @@ namespace dbm {
 
 class DBM_EXPORT sqlite_session : public session<sqlite_session>
 {
+    friend class session;
 public:
     sqlite_session() = default;
     sqlite_session(const sqlite_session& oth);
     sqlite_session(sqlite_session&& oth) = delete;
     sqlite_session& operator=(const sqlite_session& oth);
     sqlite_session& operator=(sqlite_session&& oth) = delete;
-    ~sqlite_session() override;
+    ~sqlite_session();
 
     void connect(std::string_view db_file_name);
-    void close() override;
-
-    bool is_connected() const override { return db3_ != nullptr; }
-
-    using session::query;
-    void query(const std::string& statement) override;
-
-    using session::select;
-
-    void init_prepared_statement(kind::prepared_statement& stmt) override;
-    void query(kind::prepared_statement& stmt) override;
-    std::vector<std::vector<container_ptr>> select(kind::prepared_statement& stmt) override;
-
-    std::string write_model_query(const model& m) const override;
-    std::string read_model_query(const model& m, const std::string& extra_condition) const override;
-    std::string delete_model_query(const model& m) const override;
-    std::string create_table_query(const model& m, bool if_not_exists) const override;
-    std::string drop_table_query(const model& m, bool if_exists) const override;
-
-    void transaction_begin() override;
-    void transaction_commit() override;
-    void transaction_rollback() override;
 
 private:
-    kind::sql_rows select_rows(const std::string& statement) override;
+    void close_impl();
+    bool is_connected_impl() const { return db3_ != nullptr; }
+
+    void query_impl(std::string_view statement);
+    void init_prepared_statement_impl(kind::prepared_statement& stmt);
+    void query_impl(kind::prepared_statement& stmt);
+    std::vector<std::vector<container_ptr>> select_impl(kind::prepared_statement& stmt);
+
+    std::string write_model_query_impl(const model& m) const;
+    std::string read_model_query_impl(const model& m, const std::string& extra_condition) const;
+    std::string delete_model_query_impl(const model& m) const;
+    std::string create_table_query_impl(const model& m, bool if_not_exists) const;
+    std::string drop_table_query_impl(const model& m, bool if_exists) const;
+
+    void transaction_begin_impl();
+    void transaction_commit_impl();
+    void transaction_rollback_impl();
+
+    kind::sql_rows select_rows_impl(std::string_view statement);
     void free_table();
     void destroy_prepared_stmt_handles();
 

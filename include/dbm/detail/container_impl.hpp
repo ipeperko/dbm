@@ -120,7 +120,7 @@ public:
 
     void* buffer() noexcept override { return &val_; }
 
-    size_t length() const noexcept;
+    size_t length() const noexcept override;
 
 private:
     value_type val_;

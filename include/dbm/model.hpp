@@ -1,8 +1,6 @@
 #ifndef DBM_MODEL_HPP
 #define DBM_MODEL_HPP
 
-//#include <dbm/model_item.hpp>
-//#include <dbm/impl/model_item.ipp>
 #include <vector>
 
 namespace dbm {
@@ -126,7 +124,6 @@ public:
 
     model& operator>>(serializer&& ser);
 
-    // TODO: replace sfinae with traits
     template<typename DBType, typename = std::enable_if_t< std::is_base_of_v<session_base, DBType> >>
     model& operator>>(DBType& s);
 

@@ -209,7 +209,7 @@ DBM_INLINE void model::write_record(DBType& s)
 template<typename DBType>
 DBM_INLINE void model::read_record(DBType& s, const std::string& extra_condition)
 {
-    auto q = s.read_model_query(*this, extra_condition);
+    auto q = s.self().read_model_query(*this, extra_condition);
     auto rows = s.select(q);
 
     if (rows.empty()) {

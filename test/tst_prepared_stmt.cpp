@@ -327,12 +327,9 @@ BOOST_AUTO_TEST_SUITE(TstPreparedStmt)
 
 BOOST_AUTO_TEST_CASE(prepared_stmt_basic)
 {
-//    Test test;
-
 #ifdef DBM_MYSQL
     BOOST_TEST_CHECKPOINT("prepared statement basic MySql");
     Test<dbm::mysql_session>().run();
-
 #endif
 
 #ifdef DBM_SQLITE3

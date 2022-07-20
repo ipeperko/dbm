@@ -4,10 +4,10 @@
 namespace dbm {
 
 template<typename Impl>
-DBM_INLINE session<Impl>::transaction::transaction(session& db)
+DBM_INLINE session<Impl>::transaction::transaction(session<Impl>& db)
     : db_(db)
 {
-    db_.transaction_begin();
+    db_.self().transaction_begin();
 }
 
 template<typename Impl>
@@ -33,10 +33,10 @@ DBM_INLINE void session<Impl>::transaction::perform(bool do_commit)
 {
     if (!executed_) {
         if (do_commit) {
-            db_.transaction_commit();
+            db_.self().transaction_commit();
         }
         else {
-            db_.transaction_rollback();
+            db_.self().transaction_rollback();
         }
         executed_ = true;
     }
@@ -75,25 +75,7 @@ DBM_INLINE session<Impl>& session<Impl>::operator=(session&& oth) noexcept
 }
 
 template<typename Impl>
-DBM_INLINE void session<Impl>::query(const std::string& statement)
-{
-    last_statement_ = statement;
-}
-
-template<typename Impl>
-DBM_INLINE void session<Impl>::query(const detail::statement& q)
-{
-    query(q.get());
-}
-
-template<typename Impl>
-DBM_INLINE kind::sql_rows session<Impl>::select(const std::string& statement)
-{
-    return select_rows(statement);
-}
-
-template<typename Impl>
-DBM_INLINE kind::sql_rows session<Impl>::select(const std::vector<std::string>& what, const std::string& table, const std::string& criteria)
+DBM_INLINE kind::sql_rows session<Impl>::select(const std::vector<std::string>& what, std::string_view table, std::string_view criteria)
 {
     std::string& statement = last_statement_;
     statement = "SELECT ";
@@ -110,16 +92,11 @@ DBM_INLINE kind::sql_rows session<Impl>::select(const std::vector<std::string>& 
     statement += table;
 
     if (!criteria.empty()) {
-        statement += " " + criteria;
+        statement += " ";
+        statement += criteria;
     }
 
-    return select_rows(statement);
-}
-
-template<typename Impl>
-DBM_INLINE kind::sql_rows session<Impl>::select(const detail::statement& q)
-{
-    return select(q.get());
+    return self().select_rows(statement);
 }
 
 template<typename Impl>
@@ -131,39 +108,39 @@ DBM_INLINE void session<Impl>::remove_prepared_statement(std::string const& s)
 }
 
 template<typename Impl>
-DBM_INLINE void session<Impl>::create_database(const std::string& db_name, bool if_not_exists)
+DBM_INLINE void session<Impl>::create_database(std::string_view db_name, bool if_not_exists)
 {
     std::string q = "CREATE DATABASE ";
     if (if_not_exists) {
         q += "IF NOT EXISTS ";
     }
     q += db_name;
-    query(q);
+    self().query(q);
 }
 
 template<typename Impl>
-DBM_INLINE void session<Impl>::drop_database(const std::string& db_name, bool if_exists)
+DBM_INLINE void session<Impl>::drop_database(std::string_view db_name, bool if_exists)
 {
     std::string q = "DROP DATABASE ";
     if (if_exists) {
         q += "IF EXISTS ";
     }
     q += db_name;
-    query(q);
+    self().query(q);
 }
 
 template<typename Impl>
 DBM_INLINE void session<Impl>::create_table(const model& m, bool if_not_exists)
 {
-    std::string q = create_table_query(m, if_not_exists);
-    query(q);
+    std::string q = self().create_table_query(m, if_not_exists);
+    self().query(q);
 }
 
 template<typename Impl>
 DBM_INLINE void session<Impl>::drop_table(const model& m, bool if_exists)
 {
-    std::string q = drop_table_query(m, if_exists);
-    query(q);
+    std::string q = self().drop_table_query(m, if_exists);
+    self().query(q);
 }
 
 template<typename Impl>
