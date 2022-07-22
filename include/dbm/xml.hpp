@@ -86,7 +86,7 @@ public:
     DBM_EXPORT void cleanup();
 
     // Adding elements
-    DBM_EXPORT node& add(string_view name, string_view param);
+    DBM_EXPORT node& add(string_view name, std::string&& param);
 
     DBM_EXPORT node& add(string_view name = "");
 
@@ -97,10 +97,9 @@ public:
     template<typename T>
     node& add(string_view name, T&& val)
     {
-        std::ostringstream ss;
-        ss << val;
-        items_.emplace_back(name, ss.str());
+        items_.emplace_back(name);
         node& n = items_.back();
+        n.set_value(std::forward<T>(val));
         n.set_parent(this);
         return n;
     }
@@ -108,23 +107,27 @@ public:
     DBM_EXPORT node& add(string_view name, std::nullptr_t);
 
     // Get/set tag, value, attriute access
-    DBM_EXPORT std::string& tag();
+    DBM_EXPORT std::string& tag() { return tag_; }
 
-    DBM_EXPORT const std::string& tag() const;
+    DBM_EXPORT const std::string& tag() const { return tag_; }
 
-    DBM_EXPORT void set_tag(string_view str);
+    DBM_EXPORT void set_tag(std::string&& str) { tag_ = std::move(str); }
 
-    DBM_EXPORT std::string& value();
+    DBM_EXPORT std::string& value() { return value_; }
 
-    DBM_EXPORT const std::string& value() const;
+    DBM_EXPORT const std::string& value() const { return value_; }
 
-    DBM_EXPORT void set_value(string_view str);
+    DBM_EXPORT void set_value(string_view str) { value_ = str; }
 
-    DBM_EXPORT void set_value(std::nullptr_t) { set_value(""); }
+    DBM_EXPORT void set_value(const char* str) { value_ = str; }
+
+    DBM_EXPORT void set_value(std::string&& str) { value_ = std::move(str); }
+
+    DBM_EXPORT void set_value(std::nullptr_t) { set_value(std::string{}); }
 
     template<typename T>
     typename std::enable_if_t<not utils::is_string_type<T>::value, void>
-    set_value(const T& val)
+    set_value(T&& val)
     {
         std::ostringstream ss;
         ss << val;
@@ -132,14 +135,14 @@ public:
     }
 
     template<typename T>
-    void set(string_view key, const T& val)
+    void set(string_view key, T&& val)
     {
         auto n = find(key);
         if (n == end()) {
-            add(key, val);
+            add(key, std::forward<T>(val));
         }
         else {
-            n->set_value(val);
+            n->set_value(std::forward<T>(val));
         }
     }
 

@@ -147,6 +147,27 @@ public:
 #endif
 };
 
+struct serializer_base_tag
+{};
+
+template<typename Derived>
+struct serializer2 : public serializer_base_tag
+{
+    auto& self() { return static_cast<Derived&>(*this); }
+    auto const& self() const { return static_cast<Derived const&>(*this); }
+};
+
+struct deserializer_base_tag
+{
+    enum parse_result
+    {
+        error,
+        undefined,
+        ok,
+        null
+    };
+};
+
 }// namespace dbm
 
 #endif//DBM_SERIALIZER_HPP

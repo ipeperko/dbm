@@ -118,6 +118,9 @@ public:
 
     void serialize(serializer& ser);
 
+    template<typename Serializer>
+    void serialize2(Serializer& ser);
+
     void deserialize(deserializer& ser);
 
     model& operator>>(serializer& ser);

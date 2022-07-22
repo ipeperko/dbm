@@ -229,6 +229,31 @@ BOOST_AUTO_TEST_CASE(model_swap)
     BOOST_TEST(m3.conf().valquotes());
 }
 
+class xml_serializer2 : public dbm::serializer2<xml_serializer2>
+{
+public:
+    xml_serializer2(dbm::xml::node& root)
+        : root_(root)
+    {}
+
+    void serialize(std::string_view tag, dbm::variant&& val)
+    {
+        std::visit([this, tag](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr(std::is_same_v<T, dbm::kind::detail::timestamp2u_converter>) {
+                // dbm::xml doesn't accept timestamp2u_converter directly,
+                // so we need to specialize the setter
+                root_.set(tag, std::forward<typename T::value_type>(arg.get()));
+            }
+            else {
+                root_.set(tag, std::forward<T>(arg));
+            }
+        }, val);
+    }
+
+    dbm::xml::node& root_;
+};
+
 BOOST_AUTO_TEST_CASE(model_test_serialization)
 {
     dbm::model model("tbl", {
@@ -258,6 +283,12 @@ BOOST_AUTO_TEST_CASE(model_test_serialization)
 
     model.at("not_defined").set(dbm::required(true));
     BOOST_REQUIRE_THROW(model.serialize(serializer), std::exception);
+
+    model.at("not_defined").set(dbm::required(false));
+    dbm::xml::node xml2("xml");
+    xml_serializer2 ser2(xml2);
+    model.serialize2(ser2);
+    std::cout << ser2.root_.to_string() << "\n";
 }
 
 int getActiveProfileId(int controller_id)

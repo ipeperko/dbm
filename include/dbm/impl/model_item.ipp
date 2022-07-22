@@ -209,7 +209,7 @@ DBM_INLINE void model_item::serialize(serializer& s)
 
     if (!is_defined()) {
         if (conf().required()) {
-            throw::std::domain_error("Serializing failed - item '" + std::string(sv) + "' is required but not defined" );
+            throw_exception<std::domain_error>("Serializing failed - item '" + std::string(sv) + "' is required but not defined" );
         }
         return;
     }

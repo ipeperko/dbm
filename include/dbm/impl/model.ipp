@@ -271,6 +271,31 @@ DBM_INLINE void model::serialize(serializer& ser)
     }
 }
 
+template<typename Serializer>
+DBM_INLINE void model::serialize2(Serializer& ser)
+{
+    for (auto& it : items_) {
+        if (!it.conf().taggable())
+            continue;
+
+        std::string_view tag = !it.tag().empty() ? it.tag().get() : it.key().get();
+
+        if (!it.is_defined()) {
+            if (it.conf().required()) {
+                throw::std::domain_error("Serializing failed - item '" + std::string(tag) + "' is required but not defined" );
+            }
+            continue;
+        }
+
+        if (it.is_null()) {
+            ser.serialize(tag, nullptr); // TODO: check if can return nullptr within variant
+        }
+        else {
+            ser.serialize(tag, it.value());
+        }
+    }
+}
+
 DBM_INLINE void model::deserialize(deserializer& ser)
 {
     for (auto& it : items_) {
