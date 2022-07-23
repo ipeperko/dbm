@@ -123,12 +123,24 @@ public:
 
     void deserialize(deserializer& ser);
 
+    template<typename Serializer>
+    void deserialize2(Serializer& ser);
+
     model& operator>>(serializer& ser);
 
     model& operator>>(serializer&& ser);
 
-    template<typename DBType, typename = std::enable_if_t< std::is_base_of_v<session_base, DBType> >>
-    model& operator>>(DBType& s);
+    template<typename Serializer>
+    std::enable_if_t< std::is_base_of_v<serializer_base_tag, Serializer>, model&>
+    operator>>(Serializer& s);
+
+    template<typename Serializer>
+    std::enable_if_t< std::is_base_of_v<serializer_base_tag, Serializer>, model&>
+    operator>>(Serializer&& s);
+
+    template<typename DBType /*, typename = std::enable_if_t< std::is_base_of_v<session_base, DBType>, void>*/>
+    std::enable_if_t< std::is_base_of_v<session_base, DBType>, model&>
+    operator>>(DBType& s);
 
     model& operator<<(const kind::sql_row& row);
 

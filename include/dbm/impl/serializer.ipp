@@ -16,6 +16,22 @@ model&& deserializer::operator>>(model&& m)
     return std::move(m);
 }
 
+template<typename Derived>
+template<typename>
+model& serializer2<Derived>::operator>>(model& m)
+{
+    m.deserialize2(self());
+    return m;
 }
+
+template<typename Derived>
+template<typename>
+model&& serializer2<Derived>::operator>>(model&& m)
+{
+    m.deserialize2(self());
+    return std::move(m);
+}
+
+} // namespace dbm
 
 #endif //DBM_SERIALIZER_IPP

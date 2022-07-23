@@ -18,6 +18,7 @@ add_executable(${BINARY}
     tst_mysql_procedure.cpp
     tst_pool.cpp
     tst_prepared_stmt.cpp
+    tst_serializer.cpp
     tst_sql_types.cpp
     tst_sqlite_pool.cpp
     tst_transaction.cpp

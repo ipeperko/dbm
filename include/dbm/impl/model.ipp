@@ -282,17 +282,112 @@ DBM_INLINE void model::serialize2(Serializer& ser)
 
         if (!it.is_defined()) {
             if (it.conf().required()) {
-                throw::std::domain_error("Serializing failed - item '" + std::string(tag) + "' is required but not defined" );
+                throw_exception<std::domain_error>("Serializing failed - item '" + std::string(tag) + "' is required but not defined" );
             }
             continue;
         }
 
-        if (it.is_null()) {
-            ser.serialize(tag, nullptr); // TODO: check if can return nullptr within variant
+        auto val = it.value();
+
+        std::visit([&](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+
+            if (it.is_null()) {
+                ser.template serialize<std::nullptr_t>(tag, nullptr); // TODO: check if can return nullptr within variant
+            }
+            else {
+                if constexpr(std::is_same_v<T, dbm::kind::detail::timestamp2u_converter>) {
+                    // dbm::xml doesn't accept timestamp2u_converter directly,
+                    // so we need to specialize the setter
+                    ser.template serialize(tag, std::forward<typename T::value_type>(arg.get()));
+                }
+                else {
+                    ser.template serialize(tag, std::forward<T>(arg));
+                }
+            }
+        }, val);
+    }
+}
+
+template<typename T, typename Serializer>
+DBM_INLINE void treat_deserialize_result(Serializer& ser, model_item& item, std::string_view tag)
+{
+    auto [res, val] = ser.template deserialize<T>(tag);
+
+    switch (res) {
+        case dbm::parse_result::ok:
+            if (!val) {
+                item.get().set_defined(false);
+                throw_exception<std::domain_error>("Deserialize failed - optional result without value tag " + std::string(tag));
+            }
+            item.set_value(val.value());
+            break;
+//        case dbm::parse_result::undefined:
+//            item.get().set_defined(false);
+//            break;
+        case dbm::parse_result::null:
+            item.set_value(nullptr);
+            break;
+        case dbm::parse_result::undefined:
+            // do not change anything
+            break;
+        case dbm::parse_result::error:
+            [[fallthrough]];
+        default:
+            item.get().set_defined(false);
+            throw_exception<std::domain_error>("Deserialize failed - tag " + std::string(tag));
+    }
+}
+
+template<typename Serializer>
+DBM_INLINE void model::deserialize2(Serializer& ser)
+{
+    for (auto& it : items_) {
+        if (!it.conf().taggable())
+            continue;
+
+        std::string_view tag = !it.tag().empty() ? it.tag().get() : it.key().get();
+
+        switch(it.get().type()) {
+            case kind::data_type::Bool:
+                treat_deserialize_result<bool>(ser, it, tag);
+                break;
+            case kind::data_type::Int32:
+                treat_deserialize_result<int32_t>(ser, it, tag);
+                break;
+            case kind::data_type::Int16:
+                treat_deserialize_result<int16_t>(ser, it, tag);
+                break;
+            case kind::data_type::Int64:
+                treat_deserialize_result<int64_t>(ser, it, tag);
+                break;
+            case kind::data_type::UInt32:
+                treat_deserialize_result<uint32_t>(ser, it, tag);
+                break;
+            case kind::data_type::UInt16:
+                treat_deserialize_result<uint16_t>(ser, it, tag);
+                break;
+            case kind::data_type::UInt64:
+                treat_deserialize_result<uint64_t>(ser, it, tag);
+                break;
+            case kind::data_type::Timestamp2u:
+                treat_deserialize_result<kind::detail::timestamp2u_converter::value_type>(ser, it, tag);
+                break;
+            case kind::data_type::Double:
+                treat_deserialize_result<double>(ser, it, tag);
+                break;
+            case kind::data_type::String:
+                treat_deserialize_result<std::string>(ser, it, tag);
+                break;
+#ifdef DBM_EXPERIMENTAL_BLOB
+            case kind::data_type::Blob:
+                treat_deserialize_result<blob>(ser, it, tag);
+                break;
+#endif
+            default:
+                throw_exception("deserialize from unsupported type " );
         }
-        else {
-            ser.serialize(tag, it.value());
-        }
+
     }
 }
 
@@ -315,8 +410,28 @@ DBM_INLINE model& model::operator>>(serializer&& ser)
     return *this;
 }
 
-template<typename DBType, typename>
-DBM_INLINE model& model::operator>>(DBType& s)
+template<typename Serializer>
+DBM_INLINE
+std::enable_if_t< std::is_base_of_v<serializer_base_tag, Serializer>, model&>
+model::operator>>(Serializer& s)
+{
+    serialize2(s);
+    return *this;
+}
+
+template<typename Serializer>
+DBM_INLINE
+std::enable_if_t< std::is_base_of_v<serializer_base_tag, Serializer>, model&>
+model::operator>>(Serializer&& s)
+{
+    serialize2(s);
+    return *this;
+}
+
+template<typename DBType>
+DBM_INLINE
+std::enable_if_t< std::is_base_of_v<session_base, DBType>, model&>
+model::operator>>(DBType& s)
 {
     write_record(s);
     return *this;

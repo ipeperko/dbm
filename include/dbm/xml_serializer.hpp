@@ -134,6 +134,51 @@ private:
     deserializer dser_;
 };
 
-}// namespace dbm
+
+class serializer2 : public dbm::serializer2<serializer2>
+{
+public:
+    serializer2(dbm::xml::node& root)
+        : root_(root)
+    {}
+
+    template<typename T>
+    void serialize(std::string_view tag, T&& val)
+    {
+        if constexpr (std::is_same_v<T, std::nullptr_t>) {
+            root_.set(tag, "");
+            root_.find(tag)->attributes()["xis:nil"] = "true";
+        }
+        else {
+            root_.set(tag, std::forward<T>(val));
+        }
+    }
+
+    template<typename T>
+    std::pair<dbm::parse_result, std::optional<T>> deserialize(std::string_view tag) const
+    {
+        auto it = root_.find(tag);
+        if (it == root_.end())
+            return { dbm::parse_result::undefined, std::nullopt };
+
+        auto nil = it->attributes().find("xis:nil");
+        if (nil != it->attributes().end() && nil->second == "true")
+            return { dbm::parse_result::null, std::nullopt };
+
+        try {
+            auto val = root_.get<T>(tag); // TODO: add templated get function
+            return { dbm::parse_result::ok, std::move(val) };
+        }
+        catch (std::exception& e) {
+            //deserialization failed
+        }
+
+        return { dbm::parse_result::error, std::nullopt };
+    }
+
+    dbm::xml::node& root_;
+};
+
+}// namespace dbm::xml
 
 #endif//DBM_XML_SERIALIZER_HPP

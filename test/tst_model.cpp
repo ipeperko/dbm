@@ -229,68 +229,6 @@ BOOST_AUTO_TEST_CASE(model_swap)
     BOOST_TEST(m3.conf().valquotes());
 }
 
-class xml_serializer2 : public dbm::serializer2<xml_serializer2>
-{
-public:
-    xml_serializer2(dbm::xml::node& root)
-        : root_(root)
-    {}
-
-    void serialize(std::string_view tag, dbm::variant&& val)
-    {
-        std::visit([this, tag](auto&& arg) {
-            using T = std::decay_t<decltype(arg)>;
-            if constexpr(std::is_same_v<T, dbm::kind::detail::timestamp2u_converter>) {
-                // dbm::xml doesn't accept timestamp2u_converter directly,
-                // so we need to specialize the setter
-                root_.set(tag, std::forward<typename T::value_type>(arg.get()));
-            }
-            else {
-                root_.set(tag, std::forward<T>(arg));
-            }
-        }, val);
-    }
-
-    dbm::xml::node& root_;
-};
-
-BOOST_AUTO_TEST_CASE(model_test_serialization)
-{
-    dbm::model model("tbl", {
-                                { dbm::local<int>(13), dbm::key("id") },
-                                { dbm::local<std::string>("honda"), dbm::key("name") },
-                                { dbm::local(220), dbm::key("speed"), dbm::tag("tag_speed") },
-                                { dbm::local(1500), dbm::key("weight"), dbm::taggable(false) },
-                                { dbm::local<int>(), dbm::key("not_defined") },
-                            });
-
-    BOOST_TEST(model.at("not_defined").is_null());
-    BOOST_TEST(!model.at("not_defined").is_defined());
-
-    dbm::xml::node xml("xml");
-    dbm::xml::serializer serializer(xml);
-    model >> serializer;
-
-    auto xml_includes = [&](std::string_view k) {
-        return xml.find(k) != xml.end();
-    };
-
-    BOOST_TEST(xml_includes("id"));
-    BOOST_TEST(xml.get<int>("id") == 13);
-    BOOST_TEST(xml_includes("name"));
-    BOOST_TEST(xml.get<std::string>("name") == "honda");
-    BOOST_TEST(!xml_includes("not_defined"));
-
-    model.at("not_defined").set(dbm::required(true));
-    BOOST_REQUIRE_THROW(model.serialize(serializer), std::exception);
-
-    model.at("not_defined").set(dbm::required(false));
-    dbm::xml::node xml2("xml");
-    xml_serializer2 ser2(xml2);
-    model.serialize2(ser2);
-    std::cout << ser2.root_.to_string() << "\n";
-}
-
 int getActiveProfileId(int controller_id)
 {
     int active_profile_id;
@@ -633,39 +571,6 @@ BOOST_AUTO_TEST_CASE(model_test)
 #endif
 }
 
-BOOST_AUTO_TEST_CASE(const_json_serializer)
-{
-    using parse_result = dbm::deserializer::parse_result;
-
-    const nlohmann::json j {
-        { "id", 1 },
-        { "name", "rambo" },
-        { "score", 2.34 },
-        { "armed", true },
-        { "id_s", "2" },
-        { "score_s", "3.45" },
-    };
-
-    nlohmann::deserializer ser2(j);
-    int a;
-
-    parse_result res;
-    res = ser2.deserialize("not_exists", a);
-    BOOST_TEST(res == parse_result::undefined);
-
-    int id = -1;
-    BOOST_TEST(nlohmann::deserializer(j).deserialize("id", id) == parse_result::ok);
-    BOOST_TEST(id == 1);
-    id = -1;
-    BOOST_TEST(nlohmann::deserializer(j).deserialize("id_s", id) == parse_result::error);
-
-    double score = 0;
-    BOOST_TEST(nlohmann::deserializer(j).deserialize("score", score) == parse_result::ok);
-    BOOST_TEST(score == 2.34);
-    score = 0;
-    BOOST_TEST(nlohmann::deserializer(j).deserialize("score_s", score) == parse_result::error);
-}
-
 BOOST_AUTO_TEST_CASE(model_find_item)
 {
     dbm::model m("",
@@ -690,42 +595,6 @@ BOOST_AUTO_TEST_CASE(model_find_item)
     it = m.find("time");
     test = it == m.end();
     BOOST_TEST(test);
-}
-
-BOOST_AUTO_TEST_CASE(nlohmann_json_test)
-{
-    const nlohmann::json j {
-        { "id", 1 },
-        { "name", "rambo" },
-        { "score", 2.34 },
-        { "armed", true }
-    };
-
-    int id;
-    BOOST_REQUIRE_NO_THROW(id = j.at("id").get<int>());
-    BOOST_TEST(id == 1);
-    BOOST_REQUIRE_NO_THROW(id = j.at("id").get<double>());
-    BOOST_TEST(id == 1);
-    BOOST_REQUIRE_THROW(j.at("id").get<std::string>(), std::exception);
-
-    std::string name;
-    BOOST_REQUIRE_NO_THROW(name = j.at("name").get<std::string>());
-    BOOST_TEST(name == "rambo");
-    BOOST_REQUIRE_THROW(j.at("name").get<int>(), std::exception);
-
-    double score;
-    BOOST_REQUIRE_NO_THROW(score = j.at("score").get<double>());
-    BOOST_TEST(score == 2.34);
-    BOOST_REQUIRE_NO_THROW(score = j.at("score").get<int>());
-    BOOST_TEST(score == 2);
-    BOOST_REQUIRE_THROW(j.at("score").get<std::string>(), std::exception);
-
-    bool armed = false;
-    BOOST_REQUIRE_NO_THROW(armed = j.at("armed").get<bool>());
-    BOOST_TEST(armed == true);
-    armed = false;
-    BOOST_REQUIRE_NO_THROW(armed = j.at("armed").get<int>());
-    BOOST_TEST(armed == true);
 }
 
 template<typename SessionType>
