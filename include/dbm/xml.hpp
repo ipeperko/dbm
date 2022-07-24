@@ -135,25 +135,27 @@ public:
     }
 
     template<typename T>
-    void set(string_view key, T&& val)
+    node& set(string_view key, T&& val)
     {
         auto n = find(key);
         if (n == end()) {
-            add(key, std::forward<T>(val));
+            return add(key, std::forward<T>(val));
         }
         else {
             n->set_value(std::forward<T>(val));
+            return *n;
         }
     }
 
-    DBM_EXPORT void set(string_view key, std::nullptr_t)
+    DBM_EXPORT node& set(string_view key, std::nullptr_t)
     {
         auto n = find(key);
         if (n == end()) {
-            add(key, nullptr);
+            return add(key, nullptr);
         }
         else {
             n->set_value(nullptr);
+            return *n;
         }
     }
 

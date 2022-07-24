@@ -8,37 +8,6 @@ using namespace boost::unit_test;
 
 BOOST_AUTO_TEST_SUITE(TstSerializer)
 
-//BOOST_AUTO_TEST_CASE(model_test_serialization)
-//{
-//    dbm::model model("tbl", {
-//                                { dbm::local<int>(13), dbm::key("id") },
-//                                { dbm::local<std::string>("honda"), dbm::key("name") },
-//                                { dbm::local(220), dbm::key("speed"), dbm::tag("tag_speed") },
-//                                { dbm::local(1500), dbm::key("weight"), dbm::taggable(false) },
-//                                { dbm::local<int>(), dbm::key("not_defined") },
-//                            });
-//
-//    BOOST_TEST(model.at("not_defined").is_null());
-//    BOOST_TEST(!model.at("not_defined").is_defined());
-//
-//    dbm::xml::node xml("xml");
-//    dbm::xml::serializer serializer(xml);
-//    model >> serializer;
-//
-//    auto xml_includes = [&](std::string_view k) {
-//        return xml.find(k) != xml.end();
-//    };
-//
-//    BOOST_TEST(xml_includes("id"));
-//    BOOST_TEST(xml.get<int>("id") == 13);
-//    BOOST_TEST(xml_includes("name"));
-//    BOOST_TEST(xml.get<std::string>("name") == "honda");
-//    BOOST_TEST(!xml_includes("not_defined"));
-//
-//    model.at("not_defined").set(dbm::required(true));
-//    BOOST_REQUIRE_THROW(model.serialize(serializer), std::exception);
-//}
-
 BOOST_AUTO_TEST_CASE(model_test_xml_serialization2, *tolerance(0.00001))
 {
     time_t time = 1658560000;
@@ -62,9 +31,9 @@ BOOST_AUTO_TEST_CASE(model_test_xml_serialization2, *tolerance(0.00001))
 
     dbm::xml::node xml1("xml");
     dbm::xml::node xml2("xml");
-    dbm::xml::serializer2 ser2(xml2);
+    dbm::xml::serializer ser2(xml2);
 
-    model >> dbm::xml::serializer2(xml1); // model rvalue reference
+    model >> dbm::xml::serializer(xml1); // model rvalue reference
     //std::cout << xml1.to_string() << "\n";
 
     model >> ser2; // model lvalue reference
@@ -96,7 +65,7 @@ BOOST_AUTO_TEST_CASE(model_test_xml_serialization2, *tolerance(0.00001))
     set_data(xml2);
 
     // set with model rvalue reference
-    dbm::xml::serializer2(xml1) >> model;
+    dbm::xml::serializer(xml1) >> model;
     BOOST_TEST(model.at("id").value<int>() == 14);
     BOOST_TEST(model.at("name").value<std::string>() == "fiat");
     BOOST_TEST(model.at("speed").value<double>() == 200);
@@ -113,7 +82,7 @@ BOOST_AUTO_TEST_CASE(model_test_xml_serialization2, *tolerance(0.00001))
     BOOST_TEST(model.at("time").value<dbm::timestamp2u_converter>().get() == 1658566000);
 
     // reset model
-    dbm::xml::serializer2(xml_old) >> model;
+    dbm::xml::serializer(xml_old) >> model;
     BOOST_TEST(model.at("id").value<int>() == 13);
     BOOST_TEST(model.at("name").value<std::string>() == "honda");
     BOOST_TEST(model.at("speed").value<double>() == 220);
@@ -169,9 +138,9 @@ BOOST_AUTO_TEST_CASE(model_test_json_serialization2, *tolerance(0.00001))
 
     nlohmann::json j1;
     nlohmann::json j2;
-    nlohmann::serializer2 ser2(j2);
+    nlohmann::serializer ser2(j2);
 
-    model >> nlohmann::serializer2(j1); // model rvalue reference
+    model >> nlohmann::serializer(j1); // model rvalue reference
     std::cout << j1.dump() << "\n";
 
     model >> ser2; // model lvalue reference
@@ -202,7 +171,7 @@ BOOST_AUTO_TEST_CASE(model_test_json_serialization2, *tolerance(0.00001))
     set_data(j2);
 
     // set with model rvalue reference
-    nlohmann::serializer2(j1) >> model;
+    nlohmann::serializer(j1) >> model;
     BOOST_TEST(model.at("id").value<int>() == 14);
     BOOST_TEST(model.at("name").value<std::string>() == "fiat");
     BOOST_TEST(model.at("speed").value<double>() == 200);
@@ -219,7 +188,7 @@ BOOST_AUTO_TEST_CASE(model_test_json_serialization2, *tolerance(0.00001))
     BOOST_TEST(model.at("time").value<dbm::timestamp2u_converter>().get() == 1658566000);
 
     // reset model
-    nlohmann::serializer2(j_old) >> model;
+    nlohmann::serializer(j_old) >> model;
     BOOST_TEST(model.at("id").value<int>() == 13);
     BOOST_TEST(model.at("name").value<std::string>() == "honda");
     BOOST_TEST(model.at("speed").value<double>() == 220);
@@ -251,7 +220,6 @@ BOOST_AUTO_TEST_CASE(model_test_json_serialization2, *tolerance(0.00001))
     BOOST_TEST(model.at("nillable").value<std::string>() == "not null");
     BOOST_TEST(model.at("time").value<dbm::timestamp2u_converter>().get() == 1658566000);
 }
-
 
 BOOST_AUTO_TEST_CASE(nlohmann_json_test)
 {
@@ -289,10 +257,8 @@ BOOST_AUTO_TEST_CASE(nlohmann_json_test)
     BOOST_TEST(armed == true);
 }
 
-BOOST_AUTO_TEST_CASE(const_json_serializer)
+BOOST_AUTO_TEST_CASE(const_json_serializer, *tolerance(0.00001))
 {
-//    using parse_result = dbm::deserializer::parse_result;
-
     const nlohmann::json j {
         { "id", 1 },
         { "name", "rambo" },
@@ -302,25 +268,36 @@ BOOST_AUTO_TEST_CASE(const_json_serializer)
         { "score_s", "3.45" },
     };
 
-    nlohmann::serializer2 ser2(j);
-//    int a;
-//
-//    {
-//        auto [res, val] = ser2.deserialize<int>("not_exists");
-//        BOOST_TEST((res == dbm::parse_result::undefined));
-//    }
+    nlohmann::serializer ser2(j);
 
-//    int id = -1;
-//    BOOST_TEST(nlohmann::serializer2(j).deserialize<int>("id", id) == parse_result::ok);
-//    BOOST_TEST(id == 1);
-//    id = -1;
-//    BOOST_TEST(nlohmann::deserializer(j).deserialize("id_s", id) == parse_result::error);
-//
-//    double score = 0;
-//    BOOST_TEST(nlohmann::deserializer(j).deserialize("score", score) == parse_result::ok);
-//    BOOST_TEST(score == 2.34);
-//    score = 0;
-//    BOOST_TEST(nlohmann::deserializer(j).deserialize("score_s", score) == parse_result::error);
+    {
+        auto [res, val] = ser2.deserialize<int>("not_exists");
+        BOOST_TEST((res == dbm::parse_result::undefined));
+    }
+
+    {
+        auto [res, val] = nlohmann::serializer(j).deserialize<int>("id");
+        BOOST_TEST((res == dbm::parse_result::ok));
+        BOOST_TEST(val.value() == 1);
+    }
+
+    {
+        auto [res, val] = nlohmann::serializer(j).deserialize<int>("id_s"); // should fail because id_s is of type string
+        BOOST_TEST((res == dbm::parse_result::error));
+        BOOST_TEST(val.has_value() == false);
+    }
+
+    {
+        auto [res, val] = nlohmann::serializer(j).deserialize<double>("score");
+        BOOST_TEST((res == dbm::parse_result::ok));
+        BOOST_TEST(val.value() == 2.34);
+    }
+
+    {
+        auto [res, val] = nlohmann::serializer(j).deserialize<int>("score_s"); // should fail because score_s is of type string
+        BOOST_TEST((res == dbm::parse_result::error));
+        BOOST_TEST(val.has_value() == false);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

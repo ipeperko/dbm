@@ -116,19 +116,14 @@ public:
     template<typename DBType>
     void drop_table(DBType& s, bool if_exists=true);
 
-//    void serialize(serializer& ser);
+    template<typename Serializer>
+    void serialize(Serializer& ser) const;
 
     template<typename Serializer>
-    void serialize2(Serializer& ser);
-
-//    void deserialize(deserializer& ser);
+    void deserialize(Serializer const& ser);
 
     template<typename Serializer>
-    void deserialize2(Serializer& ser);
-
-//    model& operator>>(serializer& ser);
-//
-//    model& operator>>(serializer&& ser);
+    void deserialize(Serializer const& ser, model_item& mitem);
 
     template<typename Serializer>
     std::enable_if_t< std::is_base_of_v<serializer_base_tag, Serializer>, model&>
