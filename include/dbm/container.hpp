@@ -65,9 +65,9 @@ public:
 
     virtual void from_string(std::string_view v) = 0;
 
-    virtual void serialize(serializer& s, std::string_view tag) = 0;
-
-    virtual bool deserialize(deserializer& s, std::string_view tag) = 0;
+//    virtual void serialize(serializer& s, std::string_view tag) = 0;
+//
+//    virtual bool deserialize(deserializer& s, std::string_view tag) = 0;
 
     virtual kind::data_type type() const noexcept = 0;
 

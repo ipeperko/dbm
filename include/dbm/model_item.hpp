@@ -108,9 +108,9 @@ public:
 
     void from_string(std::string_view v);
 
-    void serialize(serializer& s);
-
-    void deserialize(deserializer& s);
+//    void serialize(serializer& s);
+//
+//    void deserialize(deserializer& s);
 
     detail::model_item_conf_helper conf() const;
 

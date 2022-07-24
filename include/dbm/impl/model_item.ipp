@@ -199,37 +199,37 @@ DBM_INLINE void model_item::from_string(std::string_view v)
     return cont_->from_string(v);
 }
 
-DBM_INLINE void model_item::serialize(serializer& s)
-{
-    if (!conf().taggable()) {
-        return;
-    }
+//DBM_INLINE void model_item::serialize(serializer& s)
+//{
+//    if (!conf().taggable()) {
+//        return;
+//    }
+//
+//    std::string_view sv = !tag_.empty() ? tag_.get() : key_.get();
+//
+//    if (!is_defined()) {
+//        if (conf().required()) {
+//            throw_exception<std::domain_error>("Serializing failed - item '" + std::string(sv) + "' is required but not defined" );
+//        }
+//        return;
+//    }
+//
+//    if (is_null()) {
+//        s.serialize(sv, nullptr);
+//    }
+//    else {
+//        cont_->serialize(s, sv);
+//    }
+//}
 
-    std::string_view sv = !tag_.empty() ? tag_.get() : key_.get();
-
-    if (!is_defined()) {
-        if (conf().required()) {
-            throw_exception<std::domain_error>("Serializing failed - item '" + std::string(sv) + "' is required but not defined" );
-        }
-        return;
-    }
-
-    if (is_null()) {
-        s.serialize(sv, nullptr);
-    }
-    else {
-        cont_->serialize(s, sv);
-    }
-}
-
-DBM_INLINE void model_item::deserialize(deserializer& s)
-{
-    std::string_view sv = !tag_.empty() ? tag_.get() : key_.get();
-    if (!cont_) {
-        throw_exception<std::domain_error>("Cannot deserialize - no container");
-    }
-    cont_->deserialize(s, sv);
-}
+//DBM_INLINE void model_item::deserialize(deserializer& s)
+//{
+//    std::string_view sv = !tag_.empty() ? tag_.get() : key_.get();
+//    if (!cont_) {
+//        throw_exception<std::domain_error>("Cannot deserialize - no container");
+//    }
+//    cont_->deserialize(s, sv);
+//}
 
 DBM_INLINE void model_item::make_default_container()
 {

@@ -455,8 +455,8 @@ void test_model()
     dbm::xml::node xml("xml");
     nlohmann::json json;
 
-    dbm::xml::serializer xml_serializer(xml);
-    nlohmann::serializer json_serializer(json);
+    dbm::xml::serializer2 xml_serializer(xml);
+    nlohmann::serializer2 json_serializer(json);
 
     model model = get_test_model<SessionType>();
 
@@ -472,7 +472,7 @@ void test_model()
     {
         // Test model copy
         dbm::xml::node xml2("xml");
-        dbm::model(model) >> dbm::xml::serializer(xml2);
+        dbm::model(model) >> dbm::xml::serializer2(xml2);
         BOOST_TEST(xml2.to_string() == xml.to_string());
     }
 
@@ -512,7 +512,7 @@ void test_model()
     {
         // Test model copy
         nlohmann::json j2;
-        dbm::model(model) >> nlohmann::serializer(j2);
+        dbm::model(model) >> nlohmann::serializer2(j2);
         BOOST_TEST(j2.dump() == json.dump());
     }
 

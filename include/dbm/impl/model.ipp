@@ -264,12 +264,12 @@ DBM_INLINE void model::drop_table(DBType& s, bool if_exists)
     s.drop_table(*this, if_exists);
 }
 
-DBM_INLINE void model::serialize(serializer& ser)
-{
-    for (auto& it : items_) {
-        it.serialize(ser);
-    }
-}
+//DBM_INLINE void model::serialize(serializer& ser)
+//{
+//    for (auto& it : items_) {
+//        it.serialize(ser);
+//    }
+//}
 
 template<typename Serializer>
 DBM_INLINE void model::serialize2(Serializer& ser)
@@ -391,24 +391,24 @@ DBM_INLINE void model::deserialize2(Serializer& ser)
     }
 }
 
-DBM_INLINE void model::deserialize(deserializer& ser)
-{
-    for (auto& it : items_) {
-        it.deserialize(ser);
-    }
-}
-
-DBM_INLINE model& model::operator>>(serializer& ser)
-{
-    serialize(ser);
-    return *this;
-}
-
-DBM_INLINE model& model::operator>>(serializer&& ser)
-{
-    serialize(ser);
-    return *this;
-}
+//DBM_INLINE void model::deserialize(deserializer& ser)
+//{
+//    for (auto& it : items_) {
+//        it.deserialize(ser);
+//    }
+//}
+//
+//DBM_INLINE model& model::operator>>(serializer& ser)
+//{
+//    serialize(ser);
+//    return *this;
+//}
+//
+//DBM_INLINE model& model::operator>>(serializer&& ser)
+//{
+//    serialize(ser);
+//    return *this;
+//}
 
 template<typename Serializer>
 DBM_INLINE

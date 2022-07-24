@@ -2,19 +2,19 @@
 #define DBM_SERIALIZER_IPP
 
 namespace dbm {
-template<typename>
-model& deserializer::operator>>(model& m)
-{
-    m.deserialize(*this);
-    return m;
-}
-
-template<typename>
-model&& deserializer::operator>>(model&& m)
-{
-    m.deserialize(*this);
-    return std::move(m);
-}
+//template<typename>
+//model& deserializer::operator>>(model& m)
+//{
+//    m.deserialize(*this);
+//    return m;
+//}
+//
+//template<typename>
+//model&& deserializer::operator>>(model&& m)
+//{
+//    m.deserialize(*this);
+//    return std::move(m);
+//}
 
 template<typename Derived>
 template<typename>

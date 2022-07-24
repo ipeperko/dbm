@@ -109,9 +109,9 @@ public:
         set(v);
     }
 
-    void serialize(serializer& s, std::string_view tag) override;
-
-    bool deserialize(deserializer& s, std::string_view tag) override;
+//    void serialize(serializer& s, std::string_view tag) override;
+//
+//    bool deserialize(deserializer& s, std::string_view tag) override;
 
     kind::data_type type() const noexcept override
     {
