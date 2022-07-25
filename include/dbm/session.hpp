@@ -11,16 +11,15 @@ namespace dbm {
 
 class model;
 
-class DBM_EXPORT session_base
+struct DBM_EXPORT session_base_tag
 {
-public:
 };
 
 /*!
  * Database session interface class
  */
 template<typename Impl>
-class DBM_EXPORT session : private session_base
+class DBM_EXPORT session : private session_base_tag
 {
 public:
 

@@ -7,14 +7,6 @@ namespace dbm {
 
 class model;
 
-enum class parse_result
-{
-    error,
-    undefined,
-    ok,
-    null
-};
-
 struct serializer_base_tag
 {
 };

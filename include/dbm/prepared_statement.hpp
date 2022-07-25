@@ -3,10 +3,6 @@
 
 #include <dbm/container.hpp>
 
-//namespace dbm {
-//class session;
-//}
-
 namespace dbm::kind {
 
 class prepared_statement

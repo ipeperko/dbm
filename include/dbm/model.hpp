@@ -5,7 +5,7 @@
 
 namespace dbm {
 
-class session_base;
+class session_base_tag;
 
 namespace detail {
 template<typename>
@@ -133,13 +133,16 @@ public:
     std::enable_if_t< std::is_base_of_v<serializer_base_tag, Serializer>, model&>
     operator>>(Serializer&& s);
 
-    template<typename DBType /*, typename = std::enable_if_t< std::is_base_of_v<session_base, DBType>, void>*/>
-    std::enable_if_t< std::is_base_of_v<session_base, DBType>, model&>
+    template<typename DBType>
+    std::enable_if_t< std::is_base_of_v<session_base_tag, DBType>, model&>
     operator>>(DBType& s);
 
     model& operator<<(const kind::sql_row& row);
 
 private:
+    template<typename T, typename Serializer>
+    DBM_INLINE void handle_deserialize_result(Serializer const& ser, model_item& item, std::string_view tag);
+
     std::string table_;
     item_array items_;
 
@@ -149,7 +152,7 @@ private:
     std::string table_opts_; // table options (engine, collations...)
 };
 
-}// namespace dbm
+} // namespace dbm
 
 #endif//DBM_MODEL_HPP
 

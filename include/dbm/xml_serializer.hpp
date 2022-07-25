@@ -3,17 +3,17 @@
 
 #include <dbm/serializer.hpp>
 #include <dbm/xml.hpp>
-#include <dbm/dbm_common.hpp>
 
 namespace dbm::xml {
 
 template <typename Xml>
 class serializer : public dbm::serializer<serializer<Xml>>
 {
-    Xml& root_;
 public:
-
     static_assert(std::is_same_v<std::decay_t<Xml>, dbm::xml::node>);
+
+    using value_type = std::remove_reference_t<Xml>;
+    using parse_result = dbm::kind::parse_result;
 
     static bool constexpr is_const = std::is_const_v<Xml>;
 
@@ -40,26 +40,29 @@ public:
     }
 
     template<typename T>
-    std::pair<dbm::parse_result, std::optional<T>> deserialize(std::string_view tag) const
+    std::pair<parse_result, std::optional<T>> deserialize(std::string_view tag) const
     {
         auto it = root_.find(tag);
         if (it == root_.end())
-            return { dbm::parse_result::undefined, std::nullopt };
+            return { parse_result::undefined, std::nullopt };
 
         auto nil = it->attributes().find("xis:nil");
         if (nil != it->attributes().end() && nil->second == "true")
-            return { dbm::parse_result::null, std::nullopt };
+            return { parse_result::null, std::nullopt };
 
         try {
             auto val = root_.template get<T>(tag); // TODO: add templated get function
-            return { dbm::parse_result::ok, std::move(val) };
+            return { parse_result::ok, std::move(val) };
         }
         catch (std::exception& e) {
             //deserialization failed
         }
 
-        return { dbm::parse_result::error, std::nullopt };
+        return { parse_result::error, std::nullopt };
     }
+
+private:
+    value_type& root_;
 };
 
 }// namespace dbm::xml

@@ -302,33 +302,6 @@ DBM_INLINE void model::serialize(Serializer& ser) const
     }
 }
 
-template<typename T, typename Serializer>
-DBM_INLINE void handle_deserialize_result(Serializer const& ser, model_item& item, std::string_view tag)
-{
-    auto [res, val] = ser.template deserialize<T>(tag);
-
-    switch (res) {
-        case dbm::parse_result::ok:
-            if (!val) {
-                item.get().set_defined(false);
-                throw_exception<std::domain_error>("Deserialize failed - optional result without value tag " + std::string(tag));
-            }
-            item.set_value(val.value());
-            break;
-        case dbm::parse_result::null:
-            item.set_value(nullptr);
-            break;
-        case dbm::parse_result::undefined:
-            // do not change anything
-            break;
-        case dbm::parse_result::error:
-            [[fallthrough]];
-        default:
-            item.get().set_defined(false);
-            throw_exception<std::domain_error>("Deserialize failed - tag " + std::string(tag));
-    }
-}
-
 template<typename Serializer>
 DBM_INLINE void model::deserialize(Serializer const& ser)
 {
@@ -406,7 +379,7 @@ model::operator>>(Serializer&& s)
 
 template<typename DBType>
 DBM_INLINE
-std::enable_if_t< std::is_base_of_v<session_base, DBType>, model&>
+std::enable_if_t< std::is_base_of_v<session_base_tag, DBType>, model&>
 model::operator>>(DBType& s)
 {
     write_record(s);
@@ -419,6 +392,35 @@ DBM_INLINE model& model::operator<<(const kind::sql_row& row)
     return *this;
 }
 
+template<typename T, typename Serializer>
+DBM_INLINE void model::handle_deserialize_result(Serializer const& ser, model_item& item, std::string_view tag)
+{
+    using parse_result = dbm::kind::parse_result;
+
+    auto [res, val] = ser.template deserialize<T>(tag);
+
+    switch (res) {
+        case parse_result::ok:
+            if (!val) {
+                item.get().set_defined(false);
+                throw_exception<std::domain_error>("Deserialize failed - optional result without value tag " + std::string(tag));
+            }
+            item.set_value(val.value());
+            break;
+        case parse_result::null:
+            item.set_value(nullptr);
+            break;
+        case parse_result::undefined:
+            // do not change anything
+            break;
+        case parse_result::error:
+            [[fallthrough]];
+        default:
+            item.get().set_defined(false);
+            throw_exception<std::domain_error>("Deserialize failed - tag " + std::string(tag));
+    }
 }
+
+} // namespace dbm
 
 #endif //DBM_MODEL_IPP

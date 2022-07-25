@@ -259,6 +259,8 @@ BOOST_AUTO_TEST_CASE(nlohmann_json_test)
 
 BOOST_AUTO_TEST_CASE(const_json_serializer, *tolerance(0.00001))
 {
+    using parse_result = dbm::kind::parse_result;
+
     const nlohmann::json j {
         { "id", 1 },
         { "name", "rambo" },
@@ -272,30 +274,30 @@ BOOST_AUTO_TEST_CASE(const_json_serializer, *tolerance(0.00001))
 
     {
         auto [res, val] = ser2.deserialize<int>("not_exists");
-        BOOST_TEST((res == dbm::parse_result::undefined));
+        BOOST_TEST((res == parse_result::undefined));
     }
 
     {
         auto [res, val] = nlohmann::serializer(j).deserialize<int>("id");
-        BOOST_TEST((res == dbm::parse_result::ok));
+        BOOST_TEST((res == parse_result::ok));
         BOOST_TEST(val.value() == 1);
     }
 
     {
         auto [res, val] = nlohmann::serializer(j).deserialize<int>("id_s"); // should fail because id_s is of type string
-        BOOST_TEST((res == dbm::parse_result::error));
+        BOOST_TEST((res == parse_result::error));
         BOOST_TEST(val.has_value() == false);
     }
 
     {
         auto [res, val] = nlohmann::serializer(j).deserialize<double>("score");
-        BOOST_TEST((res == dbm::parse_result::ok));
+        BOOST_TEST((res == parse_result::ok));
         BOOST_TEST(val.value() == 2.34);
     }
 
     {
         auto [res, val] = nlohmann::serializer(j).deserialize<int>("score_s"); // should fail because score_s is of type string
-        BOOST_TEST((res == dbm::parse_result::error));
+        BOOST_TEST((res == parse_result::error));
         BOOST_TEST(val.has_value() == false);
     }
 }
