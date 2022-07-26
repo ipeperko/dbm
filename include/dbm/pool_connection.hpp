@@ -5,12 +5,13 @@
 
 namespace dbm {
 
+template<typename DBSession>
 class DBM_EXPORT pool_connection
 {
 public:
     pool_connection() = default;
 
-    pool_connection(std::shared_ptr<session> p, std::function<void(void)>&& resetter)
+    pool_connection(std::shared_ptr<DBSession> p, std::function<void(void)>&& resetter)
         : p_(std::move(p))
         , resetter_(std::move(resetter))
     {
@@ -34,26 +35,26 @@ public:
 
     pool_connection& operator=(pool_connection&&) = default;
 
-    session& get()
+    DBSession& get()
     {
         if (!p_)
             throw_exception("pool_connection::get session is null");
         return *p_;
     }
 
-    session const& get() const
+    DBSession const& get() const
     {
         if (!p_)
             throw_exception("pool_connection::get session is null");
         return *p_;
     }
 
-    session& operator*()
+    DBSession& operator*()
     {
         return get();
     }
 
-    session const& operator*() const
+    DBSession const& operator*() const
     {
         return get();
     }
@@ -79,7 +80,7 @@ public:
     }
 
 private:
-    std::shared_ptr<session> p_;
+    std::shared_ptr<DBSession> p_;
     std::function<void(void)> resetter_;
 };
 

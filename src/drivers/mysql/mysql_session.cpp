@@ -96,7 +96,7 @@ void mysql_session::connect(
     }
 }
 
-void mysql_session::close()
+void mysql_session::close_impl()
 {
     free_result_set();
 
@@ -112,7 +112,7 @@ void mysql_session::close()
     prepared_stm_handle_.clear();
 }
 
-void mysql_session::query(const std::string& statement)
+void mysql_session::query_impl(std::string_view statement)
 {
     last_statement_ = statement;
 
@@ -123,7 +123,7 @@ void mysql_session::query(const std::string& statement)
     free_result_set();
 
     /* query */
-    if (mysql_real_query(MYSQL_CONNECTION_HANDLE, statement.c_str(), statement.length())) {
+    if (mysql_real_query(MYSQL_CONNECTION_HANDLE, statement.data(), statement.length())) {
         auto errn = mysql_errno(MYSQL_CONNECTION_HANDLE);
         const char* errmsg = mysql_error(MYSQL_CONNECTION_HANDLE);
 
@@ -139,7 +139,7 @@ void mysql_session::query(const std::string& statement)
     }
 }
 
-kind::sql_rows mysql_session::select_rows(const std::string& statement)
+kind::sql_rows mysql_session::select_rows_impl(std::string_view statement)
 {
     kind::sql_rows rows;
     unsigned num_fields = 0;
@@ -198,7 +198,7 @@ kind::sql_rows mysql_session::select_rows(const std::string& statement)
     return rows;
 }
 
-void mysql_session::init_prepared_statement(kind::prepared_statement& stmt)
+void mysql_session::init_prepared_statement_impl(kind::prepared_statement& stmt)
 {
     if (stmt.native_handle())
         return;
@@ -220,7 +220,7 @@ void mysql_session::init_prepared_statement(kind::prepared_statement& stmt)
         throw_exception("MySql prepare statement failed : " + std::string() + mysql_stmt_error(stmt_handle));
 }
 
-void mysql_session::query(kind::prepared_statement& stmt)
+void mysql_session::query_impl(kind::prepared_statement& stmt)
 {
     using bool_type = std::remove_pointer<decltype(MYSQL_BIND::is_null)>::type;
 
@@ -302,7 +302,7 @@ void mysql_session::query(kind::prepared_statement& stmt)
         throw_exception("MySql prepared statement store result failed : " + std::string() + mysql_stmt_error(handle));
 }
 
-std::vector<std::vector<container_ptr>> mysql_session::select(dbm::kind::prepared_statement& stmt)
+std::vector<std::vector<container_ptr>> mysql_session::select_impl(dbm::kind::prepared_statement& stmt)
 {
     using bool_type = std::remove_pointer<decltype(MYSQL_BIND::is_null)>::type;
     using string_length_type = std::remove_pointer<decltype(MYSQL_BIND::length)>::type;
@@ -438,42 +438,42 @@ std::vector<std::vector<container_ptr>> mysql_session::select(dbm::kind::prepare
     return rows;
 }
 
-std::string mysql_session::write_model_query(const model& m) const
+std::string mysql_session::write_model_query_impl(const model& m) const
 {
     return detail::model_query_helper<detail::param_session_type_mysql>(m).write_query();
 }
 
-std::string mysql_session::read_model_query(const model& m, const std::string& extra_condition) const
+std::string mysql_session::read_model_query_impl(const model& m, const std::string& extra_condition) const
 {
     return detail::model_query_helper<detail::param_session_type_mysql>(m).read_query(extra_condition);
 }
 
-std::string mysql_session::delete_model_query(const model& m) const
+std::string mysql_session::delete_model_query_impl(const model& m) const
 {
     return detail::model_query_helper<detail::param_session_type_mysql>(m).delete_query();
 }
 
-std::string mysql_session::create_table_query(const model& m, bool if_not_exists) const
+std::string mysql_session::create_table_query_impl(const model& m, bool if_not_exists) const
 {
     return detail::model_query_helper<detail::param_session_type_mysql>(m).create_table_query(if_not_exists);
 }
 
-std::string mysql_session::drop_table_query(const model& m, bool if_exists) const
+std::string mysql_session::drop_table_query_impl(const model& m, bool if_exists) const
 {
     return detail::model_query_helper<detail::param_session_type_mysql>(m).drop_table_query(if_exists);
 }
 
-void mysql_session::transaction_begin()
+void mysql_session::transaction_begin_impl()
 {
     query("BEGIN");
 }
 
-void mysql_session::transaction_commit()
+void mysql_session::transaction_commit_impl()
 {
     query("COMMIT");
 }
 
-void mysql_session::transaction_rollback()
+void mysql_session::transaction_rollback_impl()
 {
     query("ROLLBACK");
 }

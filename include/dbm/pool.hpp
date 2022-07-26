@@ -33,13 +33,15 @@ DBM_INLINE std::string to_string(pool_event event)
     }
 }
 
-template<typename SessionInitializer>
+template<typename DBSession, typename SessionInitializer>
 class DBM_EXPORT pool
 {
 public:
 
     using id_t = size_t;
     using EventCallback = std::function<void(pool_event, id_t)>;
+    using pool_intern_item_type = pool_intern_item<DBSession>;
+    using pool_connection_type = pool_connection<DBSession>;
 
     struct statistics
     {
@@ -141,7 +143,7 @@ public:
         return s;
     }
 
-    pool_connection acquire();
+    pool_connection_type acquire();
 
     size_t num_connections() const
     {
@@ -183,22 +185,22 @@ public:
     static constexpr id_t invalid_id = -1;
 
 private:
-    pool_connection make_pool_connection_instance(std::shared_ptr<session> const& session, id_t acquire_id, bool remove, pool_intern_item::clock_t::time_point started);
-    void release(session* s);
+    pool_connection_type make_pool_connection_instance(std::shared_ptr<DBSession> const& session, id_t acquire_id, bool remove, typename pool_intern_item_type::clock_t::time_point started);
+    void release(DBSession* s);
     void heartbeat_task();
-    void calculate_wait_time(pool_intern_item::clock_t::time_point tp1, pool_intern_item::clock_t::time_point tp2);
+    void calculate_wait_time(typename pool_intern_item_type::clock_t::time_point tp1, typename pool_intern_item_type::clock_t::time_point tp2);
     void remove_acquiring(id_t id);
     void send_event(pool_event event, id_t id);
 
     // Session
     std::shared_mutex mutable mtx_;         // main control mutex
     std::deque<id_t> acquiring_;
-    std::unordered_map<::dbm::session*, std::unique_ptr<pool_intern_item>> sessions_active_;
-    std::unordered_map<::dbm::session*, std::unique_ptr<pool_intern_item>> sessions_idle_;
+    std::unordered_map<DBSession*, std::unique_ptr<pool_intern_item_type>> sessions_active_;
+    std::unordered_map<DBSession*, std::unique_ptr<pool_intern_item_type>> sessions_idle_;
 
     // Handover
     id_t ho_id_ {0};                        // handover id
-    std::shared_ptr<session> ho_session_;   // handover session
+    std::shared_ptr<DBSession> ho_session_;   // handover session
     std::condition_variable cv_ho_begin_;
     std::mutex mutable mtx_cv_ho_begin_;    // mutex protecting cv_ho_begin_
     std::condition_variable cv_ho_end_;
@@ -220,8 +222,8 @@ private:
     statistics stat_;
 };
 
-template<typename SessionInitializer>
-pool<SessionInitializer>::~pool()
+template<typename DBSession, typename SessionInitializer>
+pool<DBSession, SessionInitializer>::~pool()
 {
     debug_log() << "Exit pool begin";
 
@@ -250,10 +252,11 @@ pool<SessionInitializer>::~pool()
     debug_log() << "Exit pool end";
 }
 
-template<typename SessionInitializer>
-pool_connection pool<SessionInitializer>::acquire()
+template<typename DBSession, typename SessionInitializer>
+typename pool<DBSession, SessionInitializer>::pool_connection_type
+pool<DBSession, SessionInitializer>::acquire()
 {
-    using clock_t = pool_intern_item::clock_t;
+    using clock_t = typename pool_intern_item_type::clock_t;
     auto started = clock_t::now();
     auto expires = started + acquire_timeout_;
     id_t acquire_id;
@@ -274,7 +277,7 @@ pool_connection pool<SessionInitializer>::acquire()
 
     // Check existing connections
     auto it_available = std::find_if(sessions_idle_.begin(), sessions_idle_.end(), [](auto const& it) {
-        return it.second->state_ == pool_intern_item::state::idle;
+        return it.second->state_ == pool_intern_item_type::state::idle;
     });
 
     // If an idle session is available it will be reused
@@ -283,7 +286,7 @@ pool_connection pool<SessionInitializer>::acquire()
         debug_log() << "Activating idle session #" << acquire_id << " (" << s << ")";
 
         // change state
-        it_available->second->state_ = pool_intern_item::state::active;
+        it_available->second->state_ = pool_intern_item_type::state::active;
 
         // move to active map
         sessions_active_[s] = std::move(it_available->second);
@@ -299,7 +302,7 @@ pool_connection pool<SessionInitializer>::acquire()
     if (sessions_active_.size() + sessions_idle_.size() >= max_conn_) {
 
         // Handover session pointer
-        std::shared_ptr<session> sh;
+        std::shared_ptr<DBSession> sh;
 
         // Lock handover begin condition variable
         std::unique_lock cv_lk(mtx_cv_ho_begin_);
@@ -357,20 +360,21 @@ pool_connection pool<SessionInitializer>::acquire()
     // Create session
     auto* new_intern_item = new pool_intern_item(make_session_());
     auto* ptr = new_intern_item->session_.get();
-    sessions_active_[ptr] = std::unique_ptr<pool_intern_item>(new_intern_item);
+    sessions_active_[ptr] = std::unique_ptr<pool_intern_item_type>(new_intern_item);
     debug_log() << "Creating session #" << acquire_id << " (" << ptr << ")";
 
     // Return connection object
     return make_pool_connection_instance(new_intern_item->session_, acquire_id, true, started);
 }
 
-template<typename SessionInitializer>
-pool_connection pool<SessionInitializer>::make_pool_connection_instance(std::shared_ptr<session> const& session, id_t acquire_id, bool remove, pool_intern_item::clock_t::time_point started)
+template<typename DBSession, typename SessionInitializer>
+typename pool<DBSession, SessionInitializer>::pool_connection_type
+pool<DBSession, SessionInitializer>::make_pool_connection_instance(std::shared_ptr<DBSession> const& session, id_t acquire_id, bool remove, typename pool_intern_item_type::clock_t::time_point started)
 {
     if (sessions_active_.size() > stat_.n_max_conn)
         stat_.n_max_conn = sessions_active_.size();
     ++stat_.n_acquired;
-    calculate_wait_time(started, pool_intern_item::clock_t::now());
+    calculate_wait_time(started, pool_intern_item_type::clock_t::now());
     if (remove)
         remove_acquiring(acquire_id);
 
@@ -381,8 +385,8 @@ pool_connection pool<SessionInitializer>::make_pool_connection_instance(std::sha
             }};
 }
 
-template<typename SessionInitializer>
-void pool<SessionInitializer>::release(session* s)
+template<typename DBSession, typename SessionInitializer>
+void pool<DBSession, SessionInitializer>::release(DBSession* s)
 {
     std::unique_lock lck(mtx_, std::defer_lock);
     std::unique_lock lck_ho_begin(mtx_cv_ho_begin_, std::defer_lock);
@@ -392,7 +396,7 @@ void pool<SessionInitializer>::release(session* s)
 
     auto it = sessions_active_.find(s);
     if (it != sessions_active_.end()) {
-        it->second->heartbeat_time_ = pool_intern_item::clock_t::now();
+        it->second->heartbeat_time_ = pool_intern_item_type::clock_t::now();
 
         if (!acquiring_.empty() && it->second->session_->is_connected()) {
             // Begin handover
@@ -416,7 +420,7 @@ void pool<SessionInitializer>::release(session* s)
         }
         else {
             // No waiting tasks - move connection to idle map
-            it->second->state_ = pool_intern_item::state::idle;
+            it->second->state_ = pool_intern_item_type::state::idle;
             if (it->second->session_->is_connected()) {
                 sessions_idle_[s] = std::move(it->second);
             }
@@ -429,10 +433,10 @@ void pool<SessionInitializer>::release(session* s)
     }
 }
 
-template<typename SessionInitializer>
-void pool<SessionInitializer>::heartbeat_task()
+template<typename DBSession, typename SessionInitializer>
+void pool<DBSession, SessionInitializer>::heartbeat_task()
 {
-    using clock_t = pool_intern_item::clock_t;
+    using clock_t = typename pool_intern_item_type::clock_t;
 
     // initial sleep
     std::chrono::milliseconds sleep_time = std::chrono::milliseconds(500);
@@ -449,12 +453,12 @@ void pool<SessionInitializer>::heartbeat_task()
             // we managed to acquire mutex lock
 
             // find items and perform heartbeat query if necessary
-            std::vector<pool_intern_item*> items;
+            std::vector<pool_intern_item_type*> items;
 
             auto heartbeat_candidate = [this, &items]() {
                 for (auto it = sessions_idle_.begin(); it != sessions_idle_.end(); ++it) {
                     auto* s = it->first;
-                    if (it->second->state_ == pool_intern_item::state::idle && clock_t::now() - it->second->heartbeat_time_ > heartbeat_interval_) {
+                    if (it->second->state_ == pool_intern_item_type::state::idle && clock_t::now() - it->second->heartbeat_time_ > heartbeat_interval_) {
                         return it;
                     }
                 }
@@ -465,7 +469,7 @@ void pool<SessionInitializer>::heartbeat_task()
 
             while ((iter = heartbeat_candidate()) != sessions_idle_.end()) {
                 auto* s = iter->first;
-                iter->second->state_ = pool_intern_item::state::pending_heartbeat;
+                iter->second->state_ = pool_intern_item_type::state::pending_heartbeat;
                 sessions_active_[s] = std::move(iter->second);
                 sessions_idle_.erase(iter);
                 items.push_back(sessions_active_[s].get());
@@ -477,9 +481,9 @@ void pool<SessionInitializer>::heartbeat_task()
             // performed already have state pending_heartbeat
             mtx_.unlock();
 
-            std::vector<pool_intern_item*> items_failed;
+            std::vector<pool_intern_item_type*> items_failed;
             items_failed.reserve(items.size());
-            std::vector<pool_intern_item*> items_success;
+            std::vector<pool_intern_item_type*> items_success;
             items_success.reserve(items.size());
 
             for (auto* it : items) {
@@ -496,7 +500,7 @@ void pool<SessionInitializer>::heartbeat_task()
                 catch (std::exception& e) {
                     send_event(pool_event::heartbeat_fail, invalid_id);
                     error_log() << "Heartbeat error session " << it->session_.get() << " : " << e.what();
-                    it->state_ = pool_intern_item::state::canceled;
+                    it->state_ = pool_intern_item_type::state::canceled;
                     items_failed.push_back(it);
                 }
             }
@@ -525,8 +529,8 @@ void pool<SessionInitializer>::heartbeat_task()
     }
 }
 
-template<typename SessionInitializer>
-void pool<SessionInitializer>::calculate_wait_time(pool_intern_item::clock_t::time_point tp1, pool_intern_item::clock_t::time_point tp2)
+template<typename DBSession, typename SessionInitializer>
+void pool<DBSession, SessionInitializer>::calculate_wait_time(typename pool_intern_item_type::clock_t::time_point tp1, typename pool_intern_item_type::clock_t::time_point tp2)
 {
     long dur = std::chrono::duration_cast<std::chrono::milliseconds>(tp2 - tp1).count();
     long range = dur / stat_wait_step_.count();
@@ -539,8 +543,8 @@ void pool<SessionInitializer>::calculate_wait_time(pool_intern_item::clock_t::ti
     stat_.acquire_stat[range]++;
 }
 
-template<typename SessionInitializer>
-void pool<SessionInitializer>::remove_acquiring(id_t id)
+template<typename DBSession, typename SessionInitializer>
+void pool<DBSession, SessionInitializer>::remove_acquiring(id_t id)
 {
     for (auto it = acquiring_.begin(); it != acquiring_.end(); ++it) {
         if (*it == id) {
@@ -550,8 +554,8 @@ void pool<SessionInitializer>::remove_acquiring(id_t id)
     }
 }
 
-template<typename SessionInitializer>
-void pool<SessionInitializer>::send_event(pool_event event, id_t id)
+template<typename DBSession, typename SessionInitializer>
+void pool<DBSession, SessionInitializer>::send_event(pool_event event, id_t id)
 {
     if (event_cb_) {
         if (event_cb_async_) {

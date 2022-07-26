@@ -56,6 +56,14 @@ enum class direction : unsigned
     bidirectional,
 };
 
+enum class parse_result
+{
+    error,
+    undefined,
+    ok,
+    null
+};
+
 #ifdef DBM_EXPERIMENTAL_BLOB
 typedef std::vector<char> blob;
 #endif

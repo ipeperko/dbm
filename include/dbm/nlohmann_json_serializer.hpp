@@ -6,97 +6,58 @@
 
 namespace nlohmann {
 
-class deserializer : public dbm::deserializer
+template<typename Json>
+class serializer : public dbm::serializer<serializer<Json>>
 {
 public:
-    explicit deserializer(const json& root)
-        : dbm::deserializer()
-        , root_(root)
+    static_assert(std::is_same_v<std::decay_t<Json>, nlohmann::json>);
+
+    using value_type = std::remove_reference_t<Json>;
+    using parse_result = dbm::kind::parse_result;
+
+    static bool constexpr is_const = std::is_const_v<Json>;
+
+    explicit serializer(Json& root)
+        : root_(root)
     {}
 
-#define DBM_JSON_DESERIALIZE_TEMPLATE(Type)                                     \
-    parse_result deserialize(std::string_view tag, Type& val) const override {  \
-        return deserialize_helper<std::decay_t<decltype(val)>>(tag, val);       \
-    }
+    auto& get() { return root_; }
+    auto const& get() const { return root_; }
 
-    DBM_DESERIALIZE_GENERIC_FUNC(DBM_JSON_DESERIALIZE_TEMPLATE)
-
-#ifdef DBM_EXPERIMENTAL_BLOB
-    parse_result deserialize(std::string_view tag, dbm::kind::blob& val) const override
+    template<typename T, typename Tmp = Json, typename = std::enable_if_t<not std::is_const_v<Tmp>>>
+    void serialize(std::string_view tag, T&& val)
     {
-        std::string s;
-        auto res = deserialize_helper(tag, s);
-        if (res != ok) {
-            return res;
+        if constexpr (std::is_same_v<T, std::string_view>) {
+            root_[tag.data()] = val.data();
         }
-
-        std::string decoded = dbm::utils::b64_decode(s);
-        std::copy(decoded.begin(), decoded.end(), std::back_inserter(val));
-        return ok;
+        else {
+            root_[tag.data()] = std::forward<T>(val);
+        }
     }
-#endif
 
-private:
     template<typename T>
-    parse_result deserialize_helper(std::string_view tag, T& val) const
+    std::pair<parse_result, std::optional<T>> deserialize(std::string_view tag) const
     {
-        auto it = root_.find(tag.data());
-        if (it == root_.end()) {
-            return undefined;
-        }
+        auto it = root_.find(tag);
+        if (it == root_.end())
+            return { parse_result::undefined, std::nullopt };
+
+        if (it->is_null())
+            return { parse_result::null, std::nullopt };
 
         try {
-            if (it->is_null()) {
-                return null;
-            }
-            else {
-                val = it->get<T>();
-                return ok;
-            }
+            auto val = it.value().template get<T>();
+            return { parse_result::ok, std::move(val) };
         }
-        catch (std::exception&)
-        {}
+        catch (std::exception& e) {
+            //deserialization failed
+        }
 
-        return error;
+        return { parse_result::error, std::nullopt };
     }
-
-    json const& root_;
-};
-
-class serializer : public dbm::serializer
-{
-public:
-    explicit serializer(json& root)
-        : dbm::serializer()
-        , root_(root)
-        , dser_((root_))
-    {}
-
-    // visible const char* and std::string overloads
-    DBM_USING_SERIALIZE;
-
-#define DBM_JSON_SERIALIZE_TEMPLATE(Type)                                       \
-    void serialize(std::string_view tag, Type val) override {                   \
-        root_[tag.data()] = val;                                                \
-    }
-
-    DBM_SERIALIZE_GENERIC_FUNC(DBM_JSON_SERIALIZE_TEMPLATE)
-
-#ifdef DBM_EXPERIMENTAL_BLOB
-    void serialize(std::string_view tag, const dbm::kind::blob& blob) override
-    {
-        root_[tag.data()] = dbm::utils::b64_encode(blob.data(), blob.size());
-    }
-#endif
 
 private:
-    void deserialize(dbm::model& m) override
-    {
-        dser_ >> m;
-    }
-
-    json& root_;
-    deserializer dser_;
+    value_type& root_;
 };
 
 }// namespace nlohmann

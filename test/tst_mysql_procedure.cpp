@@ -12,7 +12,7 @@ namespace{
 constexpr std::string_view table_name = "tst_mysql_procedure";
 constexpr int n_inserts_pre_iter = 100;
 
-std::unique_ptr<dbm::session> get_session()
+std::unique_ptr<dbm::mysql_session> get_session()
 {
     auto conn = std::make_unique<dbm::mysql_session>();
     db_settings::instance().init_mysql_session(*conn);
@@ -33,11 +33,11 @@ class Inserter
 {
 public:
 
-    explicit Inserter(dbm::session& db)
+    explicit Inserter(dbm::mysql_session& db)
         : db(db)
     {}
 
-    dbm::session& db;
+    dbm::mysql_session& db;
     int id {0};
 
     std::string value(int col) const
@@ -74,11 +74,11 @@ class Reader
 {
 public:
 
-    explicit Reader(dbm::session& db)
+    explicit Reader(dbm::mysql_session& db)
         : db(db)
     {}
 
-    dbm::session& db;
+    dbm::mysql_session& db;
     int id {0};
 
     void read_with_select()

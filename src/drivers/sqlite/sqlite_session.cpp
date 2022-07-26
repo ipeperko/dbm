@@ -80,7 +80,7 @@ void sqlite_session::connect(std::string_view db_file_name)
     }
 }
 
-void sqlite_session::close()
+void sqlite_session::close_impl()
 {
     free_table();
     destroy_prepared_stmt_handles();
@@ -91,20 +91,20 @@ void sqlite_session::close()
     }
 }
 
-void sqlite_session::query(const std::string& statement)
+void sqlite_session::query_impl(std::string_view statement)
 {
     error_message zErrMsg;
 
     last_statement_ = statement;
 
-    int rc = sqlite3_exec(db3_, statement.c_str(), nullptr, nullptr, zErrMsg.ptr());
+    int rc = sqlite3_exec(db3_, statement.data(), nullptr, nullptr, zErrMsg.ptr());
     if (rc != SQLITE_OK) {
         // TODO: check connection lost
         throw_exception<std::runtime_error>("SQLite error " + zErrMsg.to_string() + last_statement_info());
     }
 }
 
-kind::sql_rows sqlite_session::select_rows(const std::string& statement)
+kind::sql_rows sqlite_session::select_rows_impl(std::string_view statement)
 {
     int rc;
     int nRow;
@@ -117,7 +117,7 @@ kind::sql_rows sqlite_session::select_rows(const std::string& statement)
     free_table();
 
     /* query */
-    rc = sqlite3_get_table(db3_, statement.c_str(), &azResult, &nRow, &nColumn, zErrMsg.ptr());
+    rc = sqlite3_get_table(db3_, statement.data(), &azResult, &nRow, &nColumn, zErrMsg.ptr());
     if (rc != SQLITE_OK) {
         throw_exception<std::runtime_error>("SQLite error " + zErrMsg.to_string() + last_statement_info());
     }
@@ -150,7 +150,7 @@ kind::sql_rows sqlite_session::select_rows(const std::string& statement)
     return rows;
 }
 
-void sqlite_session::init_prepared_statement(kind::prepared_statement& stmt)
+void sqlite_session::init_prepared_statement_impl(kind::prepared_statement& stmt)
 {
     if (stmt.native_handle()) {
         // check if handle is registered
@@ -184,7 +184,7 @@ void sqlite_session::init_prepared_statement(kind::prepared_statement& stmt)
     kind::prepared_statement_manipulator(stmt).set_native_handle(pStmt);
 }
 
-void sqlite_session::query(kind::prepared_statement& stmt)
+void sqlite_session::query_impl(kind::prepared_statement& stmt)
 {
     if (!db3_)
         throw_exception("SQLite connection is closed");
@@ -261,7 +261,7 @@ void sqlite_session::query(kind::prepared_statement& stmt)
         throw_exception("SQLite step error : " + std::string(sqlite3_errmsg(db3_)));
 }
 
-std::vector<std::vector<container_ptr>> sqlite_session::select(dbm::kind::prepared_statement& stmt)
+std::vector<std::vector<container_ptr>> sqlite_session::select_impl(dbm::kind::prepared_statement& stmt)
 {
     if (!db3_)
         throw_exception("SQLite connection is closed");
@@ -341,41 +341,41 @@ std::vector<std::vector<container_ptr>> sqlite_session::select(dbm::kind::prepar
     return rows;
 }
 
-std::string sqlite_session::write_model_query(const model& m) const
+std::string sqlite_session::write_model_query_impl(const model& m) const
 {
     return detail::model_query_helper<detail::param_session_type_sqlite>(m).write_query();
 }
 
-std::string sqlite_session::read_model_query(const model& m, const std::string& extra_condition) const
+std::string sqlite_session::read_model_query_impl(const model& m, const std::string& extra_condition) const
 {
     return detail::model_query_helper<detail::param_session_type_sqlite>(m).read_query(extra_condition);
 }
 
-std::string sqlite_session::delete_model_query(const model& m) const
+std::string sqlite_session::delete_model_query_impl(const model& m) const
 {
     return detail::model_query_helper<detail::param_session_type_sqlite>(m).delete_query();
 }
 
-std::string sqlite_session::create_table_query(const model& m, bool if_not_exists) const
+std::string sqlite_session::create_table_query_impl(const model& m, bool if_not_exists) const
 {
     return detail::model_query_helper<detail::param_session_type_sqlite>(m).create_table_query(if_not_exists);
 }
 
-std::string sqlite_session::drop_table_query(const model& m, bool if_exists) const
+std::string sqlite_session::drop_table_query_impl(const model& m, bool if_exists) const
 {
     return detail::model_query_helper<detail::param_session_type_sqlite>(m).drop_table_query(if_exists);
 }
 
-void sqlite_session::transaction_begin()
+void sqlite_session::transaction_begin_impl()
 {
     query("BEGIN");
 }
 
-void sqlite_session::transaction_commit()
+void sqlite_session::transaction_commit_impl()
 {
     query("COMMIT");
 }
-void sqlite_session::transaction_rollback()
+void sqlite_session::transaction_rollback_impl()
 {
     query("ROLLBACK");
 }

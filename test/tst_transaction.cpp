@@ -1,6 +1,8 @@
 #include "dbm/dbm.hpp"
 #include "db_settings.h"
 #include "common.h"
+#include <dbm/drivers/mysql/mysql_session.hpp>
+#include <dbm/drivers/sqlite/sqlite_session.hpp>
 
 using namespace boost::unit_test;
 using namespace std::chrono_literals;
@@ -38,7 +40,7 @@ public:
         model.drop_table(*db);
         model.create_table(*db);
 
-        dbm::session::transaction tr(*db);
+        typename DBType::transaction tr(*db);
         data.id = 1;
         data.value = "first entry";
         model >> *db;
@@ -57,7 +59,7 @@ public:
         auto model = get_model(data);
 
         {
-            dbm::session::transaction tr(*db);
+            typename DBType::transaction tr(*db);
             db->query("INSERT INTO test_transaction (value) VALUES('should not be there after rollback')");
             // we didn't commit, rollback expected
         }
@@ -82,7 +84,7 @@ public:
             s->query("INSERT INTO test_transaction (value) VALUES('parallel max_id was " + max_id + "')");
         });
 
-        dbm::session::transaction tr(*db);
+        typename DBType::transaction tr(*db);
         // #3
         db->query("INSERT INTO test_transaction (value) VALUES('main thread')");
         std::this_thread::sleep_for(1s);
@@ -119,7 +121,7 @@ public:
         }
     }
 
-    std::unique_ptr<dbm::session> get_db_session()
+    std::unique_ptr<DBType> get_db_session()
     {
         if constexpr (std::is_same_v<DBType, dbm::mysql_session>) {
             return db_settings::instance().get_mysql_session();

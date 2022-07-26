@@ -1,13 +1,11 @@
 #ifndef DBM_MODEL_HPP
 #define DBM_MODEL_HPP
 
-//#include <dbm/model_item.hpp>
-//#include <dbm/impl/model_item.ipp>
 #include <vector>
 
 namespace dbm {
 
-class session;
+class session_base_tag;
 
 namespace detail {
 template<typename>
@@ -101,31 +99,50 @@ public:
 
     void erase(std::string_view key);
 
-    void write_record(session& s);
+    template<typename DBType>
+    void write_record(DBType& s);
 
-    void read_record(session& s, const std::string& extra_condition = "");
+    template<typename DBType>
+    void read_record(DBType& s, const std::string& extra_condition = "");
 
     void read_record(const kind::sql_row& row);
 
-    void delete_record(session& s);
+    template<typename DBType>
+    void delete_record(DBType& s);
 
-    void create_table(session& s, bool if_not_exists=true);
+    template<typename DBType>
+    void create_table(DBType& s, bool if_not_exists=true);
 
-    void drop_table(session& s, bool if_exists=true);
+    template<typename DBType>
+    void drop_table(DBType& s, bool if_exists=true);
 
-    void serialize(serializer& ser);
+    template<typename Serializer>
+    void serialize(Serializer& ser) const;
 
-    void deserialize(deserializer& ser);
+    template<typename Serializer>
+    void deserialize(Serializer const& ser);
 
-    model& operator>>(serializer& ser);
+    template<typename Serializer>
+    void deserialize(Serializer const& ser, model_item& mitem);
 
-    model& operator>>(serializer&& ser);
+    template<typename Serializer>
+    std::enable_if_t< std::is_base_of_v<serializer_base_tag, Serializer>, model&>
+    operator>>(Serializer& s);
 
-    model& operator>>(session& s);
+    template<typename Serializer>
+    std::enable_if_t< std::is_base_of_v<serializer_base_tag, Serializer>, model&>
+    operator>>(Serializer&& s);
+
+    template<typename DBType>
+    std::enable_if_t< std::is_base_of_v<session_base_tag, DBType>, model&>
+    operator>>(DBType& s);
 
     model& operator<<(const kind::sql_row& row);
 
 private:
+    template<typename T, typename Serializer>
+    DBM_INLINE void handle_deserialize_result(Serializer const& ser, model_item& item, std::string_view tag);
+
     std::string table_;
     item_array items_;
 
@@ -135,7 +152,7 @@ private:
     std::string table_opts_; // table options (engine, collations...)
 };
 
-}// namespace dbm
+} // namespace dbm
 
 #endif//DBM_MODEL_HPP
 

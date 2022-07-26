@@ -451,9 +451,9 @@ void node::cleanup()
     value_.clear();
 }
 
-node& node::add(string_view name, string_view param)
+node& node::add(string_view name, std::string&& param)
 {
-    items_.emplace_back(name, param);
+    items_.emplace_back(name, std::move(param));
     node& n = items_.back();
     n.set_parent(this);
     return n;
@@ -481,36 +481,6 @@ node& node::add(string_view name)
 node& node::add(string_view name, std::nullptr_t)
 {
     return add(name, "");
-}
-
-std::string& node::tag()
-{
-    return tag_;
-}
-
-const std::string& node::tag() const
-{
-    return tag_;
-}
-
-void node::set_tag(string_view str)
-{
-    tag_ = str;
-}
-
-std::string& node::value()
-{
-    return value_;
-}
-
-const std::string& node::value() const
-{
-    return value_;
-}
-
-void node::set_value(string_view str)
-{
-    value_ = str;
 }
 
 attribute_map& node::attributes()

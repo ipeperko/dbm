@@ -9,7 +9,6 @@ add_executable(${BINARY}
     common.h
     db_settings.cpp
     db_settings.h
-    no_driver_session.h
 
     # tests
     tst_basic_types.cpp
@@ -19,6 +18,7 @@ add_executable(${BINARY}
     tst_mysql_procedure.cpp
     tst_pool.cpp
     tst_prepared_stmt.cpp
+    tst_serializer.cpp
     tst_sql_types.cpp
     tst_sqlite_pool.cpp
     tst_transaction.cpp

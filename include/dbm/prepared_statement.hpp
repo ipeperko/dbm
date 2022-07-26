@@ -3,10 +3,6 @@
 
 #include <dbm/container.hpp>
 
-namespace dbm {
-class session;
-}
-
 namespace dbm::kind {
 
 class prepared_statement
@@ -58,7 +54,8 @@ public:
 
     auto native_handle() { return native_handle_; }
 
-    prepared_statement& operator>>(session& s);
+    template<typename DBType>
+    prepared_statement& operator>>(DBType& s);
 
 private:
     void push_helper()

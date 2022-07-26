@@ -38,76 +38,66 @@ auto get_person_model(Person& person)
     };
 }
 
+template<typename DBType>
 class Test
 {
 public:
 
     Test()
+        : session_(db_settings::instance().get_session<DBType>())
     {
-#ifdef DBM_MYSQL
-        {
-            mysql_session_ = db_settings::instance().get_mysql_session();
-        }
-#endif
-#ifdef DBM_SQLITE3
-        {
-            sqlite_session_ = db_settings::instance().get_sqlite_session();
-        }
-#endif
     }
 
-    void insert_impl(dbm::session& session);
-    void upsert_impl(dbm::session& session);
-    void insert2_impl(dbm::session& session);
-    void select_impl(dbm::session& session);
-    void close_impl(dbm::session& session);
+    void insert_impl();
+    void upsert_impl();
+    void insert2_impl();
+    void select_impl();
+    void close_impl();
 
-    template<typename SessionType>
-    void run(dbm::session& session);
+    void run();
 
-    dbm::session& mysql_session() { return *mysql_session_; }
-    dbm::session& sqlite_session() { return *sqlite_session_; }
+//    auto& session() { return *session_; }
 
 private:
-    std::unique_ptr<dbm::session> mysql_session_;
-    std::unique_ptr<dbm::session> sqlite_session_;
+    std::unique_ptr<DBType> session_;
 };
 
-void Test::insert_impl(dbm::session& session)
+template<typename DBType>
+void Test<DBType>::insert_impl()
 {
     Person person;
     auto m = get_person_model(person);
 
-    m.drop_table(session);
-    m.create_table(session);
+    m.drop_table(*session_);
+    m.create_table(*session_);
 
     dbm::prepared_stmt stmt (original_insert_statement,
                             &m.at(1).get(),
                             &m.at(2).get(),
                             &m.at(3).get());
-    BOOST_TEST(session.prepared_statement_handles().size() == 0);
+    BOOST_TEST(session_->prepared_statement_handles().size() == 0);
 
     // 1
     person.name = "Tarzan";
     person.age = 20;
     person.weight = 75.5;
-    stmt >> session;
-    BOOST_TEST(session.prepared_statement_handles().size() == 1);
+    stmt >> *session_;
+    BOOST_TEST(session_->prepared_statement_handles().size() == 1);
 
     // 2
     person.name = "Jane";
     person.age = 18;
     person.weight = 62;
-    stmt >> session;
-    BOOST_TEST(session.prepared_statement_handles().size() == 1);
+    stmt >> *session_;
+    BOOST_TEST(session_->prepared_statement_handles().size() == 1);
 
     // 3
     person.name = "Chita";
     person.age = 8;
     person.weight = 51;
     stmt.param(2)->set_null(true);
-    stmt >> session;
-    BOOST_TEST(session.prepared_statement_handles().size() == 1);
+    stmt >> *session_;
+    BOOST_TEST(session_->prepared_statement_handles().size() == 1);
 
     // another instance with identical statement should reuse existing handle
     {
@@ -116,56 +106,57 @@ void Test::insert_impl(dbm::session& session)
                                  dbm::local<std::string>("Alien"),
                                  dbm::local(99),
                                  dbm::local(100.0));
-        stmt2 >> session;
-        BOOST_TEST(session.prepared_statement_handles().size() == 1);
+        stmt2 >> *session_;
+        BOOST_TEST(session_->prepared_statement_handles().size() == 1);
     }
 
-    BOOST_TEST(session.prepared_statement_handles().size() == 1);
+    BOOST_TEST(session_->prepared_statement_handles().size() == 1);
 
     // 5
     // write null values
     m.at("name").set_value(nullptr);
     m.at("age").set_value(nullptr);
     m.at("weight").set_value(nullptr);
-    stmt >> session;
+    stmt >> *session_;
 
     // check entry 1
     person.reset(1);
-    session >> m;
+    *session_ >> m;
     BOOST_TEST(person.name == "Tarzan");
     BOOST_TEST(person.age == 20);
     BOOST_TEST(person.weight == 75.5);
 
     // check entry 2
     person.reset(2);
-    session >> m;
+    *session_ >> m;
     BOOST_TEST(person.name == "Jane");
     BOOST_TEST(person.age == 18);
     BOOST_TEST(person.weight == 62);
 
     // check entry 3
     person.reset(3);
-    session >> m;
+    *session_ >> m;
     BOOST_TEST(person.name == "Chita");
     BOOST_TEST(person.age == 8);
     BOOST_TEST(m.at("weight").is_null());
 
     // check entry 4
     person.reset(4);
-    session >> m;
+    *session_ >> m;
     BOOST_TEST(person.name == "Alien");
     BOOST_TEST(person.age == 99);
     BOOST_TEST(person.weight == 100);
 
     // check entry 5 (all null)
     person.reset(5);
-    session >> m;
+    *session_ >> m;
     BOOST_TEST(m.at("name").is_null());
     BOOST_TEST(m.at("age").is_null());
     BOOST_TEST(m.at("weight").is_null());
 }
 
-void Test::upsert_impl(dbm::session& session)
+template<typename DBType>
+void Test<DBType>::upsert_impl()
 {
     Person person;
     auto m = get_person_model(person);
@@ -186,8 +177,8 @@ END)";
         m.at("weight").set_value(-1);
     };
 
-    session.query("DROP FUNCTION IF EXISTS upsert_test_prepared_stmt");
-    session.query(upsert_statement.data());
+    session_->query("DROP FUNCTION IF EXISTS upsert_test_prepared_stmt");
+    session_->query(upsert_statement.data());
 
     dbm::prepared_stmt stmt ("SELECT upsert_test_prepared_stmt(?, ?, ?, ?)",
                             &m.at(0).get(),
@@ -201,23 +192,23 @@ END)";
     person.weight = 80;
 
     // 6
-    stmt >> session;
+    stmt >> *session_;
 
     person.reset(99);
-    session >> m;
+    *session_ >> m;
     BOOST_TEST(m.at("name").value<std::string>() == "ivo");
 
     m.at("name").set_value(nullptr);
-    stmt >> session;
+    stmt >> *session_;
     reset_model();
-    session >> m;
+    *session_ >> m;
     BOOST_TEST(m.at("name").is_null());
 
     m.at("name").set_value("ivo no age");
     m.at("age").set_value(nullptr);
-    stmt >> session;
+    stmt >> *session_;
     reset_model();
-    session >> m;
+    *session_ >> m;
     BOOST_TEST(m.at("name").value<std::string>() == "ivo no age");
     BOOST_TEST(m.at("age").is_null());
     BOOST_TEST(!m.at("weight").is_null());
@@ -225,25 +216,27 @@ END)";
     m.at("name").set_value("ivo no weight");
     m.at("age").set_value(40);
     m.at("weight").set_value(nullptr);
-    stmt >> session;
+    stmt >> *session_;
     reset_model();
-    session >> m;
+    *session_ >> m;
     BOOST_TEST(m.at("name").value<std::string>() == "ivo no weight");
     BOOST_TEST(!m.at("age").is_null());
     BOOST_TEST(m.at("weight").is_null());
 }
 
-void Test::insert2_impl(dbm::session& session)
+template<typename DBType>
+void Test<DBType>::insert2_impl()
 {
     // 7
     dbm::prepared_stmt stmt (original_insert_statement,
                             dbm::local<std::string>("Snoopy"),
                             dbm::local(11),
                             dbm::local(19));
-    stmt >> session;
+    stmt >> *session_;
 }
 
-void Test::select_impl(dbm::session& session)
+template<typename DBType>
+void Test<DBType>::select_impl()
 {
     Person person;
     auto m = get_person_model(person);
@@ -257,20 +250,21 @@ void Test::select_impl(dbm::session& session)
 
     person.id = 1;
 
-    auto res = session.select(stmt);
+    auto res = session_->select(stmt);
 
     BOOST_TEST(res.size() == 7);
     BOOST_TEST(!res[0][1]->is_null());
-    BOOST_TEST(res[0][1]->get<std::string>() == "Tarzan");
-    BOOST_TEST(res[0][2]->get<int>() == 20);
-    BOOST_TEST(res[0][3]->get<double>() == 75.5);
+    BOOST_TEST(res[0][1]->template get<std::string>() == "Tarzan");
+    BOOST_TEST(res[0][2]->template get<int>() == 20);
+    BOOST_TEST(res[0][3]->template get<double>() == 75.5);
     BOOST_TEST(res[4][1]->is_null());
     BOOST_TEST(res[4][2]->is_null());
     BOOST_TEST(res[4][3]->is_null());
-    BOOST_TEST(res[5][1]->get<std::string>() == "ivo no weight");
+    BOOST_TEST(res[5][1]->template get<std::string>() == "ivo no weight");
 }
 
-void Test::close_impl(dbm::session& session)
+template<typename DBType>
+void Test<DBType>::close_impl()
 {
     dbm::prepared_stmt stmt (original_insert_statement,
                             dbm::local<std::string>(""),
@@ -279,51 +273,51 @@ void Test::close_impl(dbm::session& session)
 
     // 8
     // execute statement just to make sure this one works
-    session.query(stmt);
+    session_->query(stmt);
 
-    int nrows = session.select(dbm::statement() << "SELECT count(*) AS count FROM test_prepared_stmt").at(0).at("count").get<int>();
+    int nrows = session_->select(dbm::statement() << "SELECT count(*) AS count FROM test_prepared_stmt").at(0).at("count").template get<int>();
     BOOST_TEST(nrows == 8);
 
     // should close all handles on close
-    session.close();
-    BOOST_TEST(session.prepared_statement_handles().size() == 0);
+    session_->close();
+    BOOST_TEST(session_->prepared_statement_handles().size() == 0);
 
     // should throw since the handle becomes invalid after close
-    BOOST_REQUIRE_THROW(session.query(stmt), std::exception);
+    BOOST_REQUIRE_THROW(session_->query(stmt), std::exception);
 }
 
-template<typename SessionType>
-void Test::run(dbm::session& session)
+template<typename DBType>
+void Test<DBType>::run()
 {
     BOOST_TEST_CHECKPOINT("insert_impl");
-    insert_impl(session);
+    insert_impl();
 
     BOOST_TEST_CHECKPOINT("upsert_impl");
-    if constexpr (std::is_same_v<SessionType, dbm::mysql_session>) {
-        upsert_impl(session);
+    if constexpr (std::is_same_v<DBType, dbm::mysql_session>) {
+        upsert_impl();
     }
-    else if constexpr (std::is_same_v<SessionType, dbm::sqlite_session>) {
+    else if constexpr (std::is_same_v<DBType, dbm::sqlite_session>) {
         // 6
         // SQLite has no stored procedures support.
-        // We will just insert data required for the next test.
+        // We will just insert data required for the next test step.
         dbm::prepared_stmt stmt ("INSERT INTO test_prepared_stmt (id, name, age, weight) VALUES(?, ?, ?, ?)",
                                 dbm::local<int>(99),
                                 dbm::local<std::string>("ivo no weight"),
                                 dbm::local<int>(40),
                                 dbm::local<double>());
-        stmt >> session;
+        stmt >> *session_;
     }
 
-    BOOST_TEST(session.prepared_statement_handles().size() == 2);
+    BOOST_TEST(session_->prepared_statement_handles().size() == 2);
 
     BOOST_TEST_CHECKPOINT("insert2_impl");
-    insert2_impl(session);
+    insert2_impl();
 
     BOOST_TEST_CHECKPOINT("select_impl");
-    select_impl(session);
+    select_impl();
 
     BOOST_TEST_CHECKPOINT("close_impl");
-    close_impl(session);
+    close_impl();
 }
 
 } // namespace
@@ -333,16 +327,14 @@ BOOST_AUTO_TEST_SUITE(TstPreparedStmt)
 
 BOOST_AUTO_TEST_CASE(prepared_stmt_basic)
 {
-    Test test;
-
 #ifdef DBM_MYSQL
     BOOST_TEST_CHECKPOINT("prepared statement basic MySql");
-    test.run<dbm::mysql_session>(test.mysql_session());
+    Test<dbm::mysql_session>().run();
 #endif
 
 #ifdef DBM_SQLITE3
     BOOST_TEST_CHECKPOINT("prepared statement basic SQLite");
-    test.run<dbm::sqlite_session>(test.sqlite_session());
+    Test<dbm::sqlite_session>().run();
 #endif
 }
 

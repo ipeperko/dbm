@@ -109,7 +109,8 @@ auto get_model(values_t& lm, std::string descr)
     };
 }
 
-void init(dbm::session& db)
+template<typename DBType>
+void init(DBType& db)
 {
     values_t lm {};
     auto m = get_model(lm, "init");
@@ -117,7 +118,8 @@ void init(dbm::session& db)
     m.create_table(db);
 }
 
-void insert_model_limits(dbm::session& db)
+template<typename DBType>
+void insert_model_limits(DBType& db)
 {
     values_t lm {};
     set_values<Max>(lm);
@@ -129,8 +131,8 @@ void insert_model_limits(dbm::session& db)
     m >> db;
 }
 
-template<typename MinMax, typename Filter=void>
-void check_model_limits(dbm::session& db, std::string const& descr)
+template<typename DBType, typename MinMax, typename Filter=void>
+void check_model_limits(DBType& db, std::string const& descr)
 {
     values_t lm {};
     auto m = get_model(lm, descr);
@@ -139,7 +141,8 @@ void check_model_limits(dbm::session& db, std::string const& descr)
     check_values<MinMax, Filter>(lm);
 }
 
-void insert_prepared_stmt_limits(dbm::session& db)
+template<typename DBType>
+void insert_prepared_stmt_limits(DBType& db)
 {
     values_t lm {};
 
@@ -163,8 +166,8 @@ void insert_prepared_stmt_limits(dbm::session& db)
     stmt >> db;
 }
 
-template<typename MinMax, typename Filter=void>
-void check_prepared_stmt_limits(dbm::session& db)
+template<typename DBType, typename MinMax, typename Filter=void>
+void check_prepared_stmt_limits(DBType& db)
 {
     std::string descr;
     if constexpr (std::is_same_v<MinMax, Max>)
@@ -193,23 +196,25 @@ void check_prepared_stmt_limits(dbm::session& db)
     check_values<MinMax, Filter>(lm);
 }
 
-template<typename Filter=void>
-void check_limits_impl(dbm::session& db)
+
+// TODO: put all functions in a class with template parameter DBType
+template<typename DBType, typename Filter=void>
+void check_limits_impl(DBType& db)
 {
     init(db);
 
     insert_model_limits(db);
     BOOST_TEST_CHECKPOINT("model max limits");
-    check_model_limits<Max, Filter>(db, "model max");
+    check_model_limits<DBType, Max, Filter>(db, "model max");
     BOOST_TEST_CHECKPOINT("model min limits");
-    check_model_limits<Min>(db, "model min");
+    check_model_limits<DBType, Min>(db, "model min");
 
     insert_prepared_stmt_limits(db);
     BOOST_TEST_CHECKPOINT("prepared statement max limits");
-    check_prepared_stmt_limits<Max, Filter>(db);
+    check_prepared_stmt_limits<DBType, Max, Filter>(db);
 
     BOOST_TEST_CHECKPOINT("prepared statement min limits");
-    check_prepared_stmt_limits<Min>(db);
+    check_prepared_stmt_limits<DBType, Min>(db);
 }
 
 } // namespace
@@ -220,12 +225,12 @@ BOOST_AUTO_TEST_CASE(check_limits, * tolerance(0.00001))
 {
 #ifdef DBM_MYSQL
     BOOST_TEST_CHECKPOINT("check limits MySql");
-    check_limits_impl(*db_settings::instance().get_mysql_session());
+    check_limits_impl<dbm::mysql_session>(*db_settings::instance().get_mysql_session());
 #endif
 #ifdef DBM_SQLITE3
     BOOST_TEST_CHECKPOINT("check limits SQLite");
     // uint64 will be filtered out from checks
-    check_limits_impl<uint64_t>(*db_settings::instance().get_sqlite_session());
+    check_limits_impl<dbm::sqlite_session, uint64_t>(*db_settings::instance().get_sqlite_session());
 #endif
 }
 

@@ -4,7 +4,7 @@
 
 ![dbm](docs/dbm_diagram_3.png)
 
-Simple database table models with serialization support written in C++. 
+Simple database table models with serialization support, written in C++. 
 
 - currently supported databases: SQLite, MySQL
 - requires C++17
@@ -15,7 +15,7 @@ Note : this library is under development and subject to change. Contributions ar
 
 ### Example
 
-Writing and reading data from database into model
+Writing and reading data from the database to the model
 
 ```c++
 using namespace dbm;
@@ -68,8 +68,8 @@ xml.set("score", 43);
 xml >> m >> session;
 ```
 
-Note that build-in xml serializer is not fully compatible with the standard.
-But if you are ok with lightweight version without comments, namespaces, schemas it works well.
+Note that the build-in xml serializer is not fully compatible with the standard.
+But if you are ok with lightweight version without comments, namespaces, schemas, it works well.
 
 ##### Writing custom serializers
 See example [nlohmann json serializer](https://github.com/ipeperko/dbm/blob/master/include/nlohmann_json_serializer.hpp)  
@@ -131,7 +131,7 @@ m.erase("name"); // same as m.erase(key("name"))
 
 #### Value container
 
-Library supports containers with local storage and binding containers.
+The library supports containers with local storage and binding containers.
 
 ```c++
 std::string name;
@@ -154,7 +154,7 @@ m.item("name").set(binding(name));          // replace with new binding containe
 
 ##### Binding enums
 
-Binding enums is not directly supported. 
+Enum bindings is not directly supported. 
 One solution is to use c style cast with std::underlying_type_t.
 
 ```c++
@@ -168,9 +168,9 @@ cont->set(static_cast<std::underlying_type_t<MyEnum>>(MyEnum::two));
 
 ##### Parameters 'null' and 'defined'
 
-Parameter 'defined' determines if value has been set. If false it won't be written to db or serializer.
+The Parameter 'defined' determines whether a value has been set. If it's false, it's not written to the db or serializer.
 
-Parameter 'null' determines if value is null.
+The 'null' parameter determines whether the value is null.
 
 | Storage type             | null            | defined     |
 |--------------------------|-----------------|-------------|
@@ -206,7 +206,7 @@ binding(name, validate_string );
 
 ##### Multiple rows result set
 
-Alternatively you can retrieve data from database and pass separate rows to model. 
+Alternatively, you can retrieve data from the database and pass individual rows to the model. 
 
 ```c++
 stetement stm;
@@ -217,8 +217,8 @@ for (const sql_row& row : rows) {
 }
 ```
 
-Note that sql_rows do not store values. Field values are pointers to session internal result set.
-If you want to store data for further work use sql_rows_dump.
+Note that sql_rows do not store values. The field values are pointers to the session internal result set.
+If you want to store data for further work, use sql_rows_dump.
 
 ```c++
 sql_rows_dump data = rows;          // store data
@@ -227,7 +227,7 @@ sql_rows rows2 = data.restore();    // restore data
 
 #### Prepared statements
 
-Library supports prepared statements. When prepared_stmt object  
+The library supports prepared statements  
 
 Write example:
 ```c++
@@ -287,7 +287,7 @@ m.create_table(session);                // creates table if not exists
 m.drop_table(session);                  // drops table if exists
 ```
 
-Table field data types are created based on container type and constraints (e.g. not null, auto increment, defaultc etc).
+The data types of the table fields are created based on the container type and constraints (e.g. not null, auto increment, defaultc, etc.).
 
 | Container type | MySQL             | SQLite    |
 |----------------|-------------------|-----------|
@@ -304,7 +304,7 @@ Table field data types are created based on container type and constraints (e.g.
 
 (*) See timestamp section
 
-If custom_data_type is specified any other constraints will be ignored (e.g. not null, auto increment etc). 
+If custom_data_type is specified, all other constraints are ignored (e.g. not null, auto increment etc). 
 
 ```c++
 model_item(key("mytext"), local<std::string>(), custom_data_type("VARCHAR(45) NOT NULL DEFAULT ''"));
@@ -318,29 +318,29 @@ m.set_table_options("ENGINE=MEMORY");   // set table options (engine, collations
 
 ##### Timestamp
 
-If time is stored as integer simply create a container of type time_t.
+If the time is stored as an integer, you simply create a container of type time_t.
 
 ```c++
 time_t my_time;
 m.emplace_back( key("time"), binding(my_time) ); // Add item to model 
 ``` 
 
-Another option is to create a string container and dela with textual representation of time.
+Another option is to create a string container and represent the time in text form.
 
 ```c++
 std::string str_time;
 m.emplace_back( key("time"), binding(str_time), custom_data_type("TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP") );
 ```
 
-Converting unix time to timestamp is also possible. In this case model create member function will create 
-field of type timestamp.  
+Converting unix time to a timestamp is also possible. In this case the model create member function generates 
+a field of type timestamp.  
 
 ```c++
 time_t my_time;
 m.emplace_back( key("time"), timestamp(my_time), not_null(true), defaultc("CURRENT_TIMESTAMP") );
 ``` 
 
-timestamp is a special container which can hold time_t value internally or has a reference to an external variable.
+timestamp is a special container that can hold the value time_t internally or have a reference to an external variable.
 
 ```c++
 time_t my_time;
@@ -351,7 +351,7 @@ timestanp(my_time); // Holds reference to my_time variable
 ### Thread safety
 
 dbm classes are not thread safe and should not be used concurrently.
-For multithreaded applications pool can be used ([see instructions below](#Pool)).
+For multithreaded applications, pool can be used ([see instructions below](#Pool)).
 One solution is also to use separate model and session objects for each thread.
 
 ### Pool
@@ -412,8 +412,8 @@ target_link_libraries(target_name PUBLIC dbm::dbm)
 
 ### Exceptions
 
-It is possible to specify your own exception function. 
-Note that custom exception must inherit from std::exception.
+It is possible to define your own exception function. 
+Note that the custom exception must inherit from std::exception.
 
 ```c++
 config::set_custom_exception([](const std::string& msg) {

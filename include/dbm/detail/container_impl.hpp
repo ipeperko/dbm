@@ -109,9 +109,9 @@ public:
         set(v);
     }
 
-    void serialize(serializer& s, std::string_view tag) override;
-
-    bool deserialize(deserializer& s, std::string_view tag) override;
+//    void serialize(serializer& s, std::string_view tag) override;
+//
+//    bool deserialize(deserializer& s, std::string_view tag) override;
 
     kind::data_type type() const noexcept override
     {
@@ -120,7 +120,7 @@ public:
 
     void* buffer() noexcept override { return &val_; }
 
-    size_t length() const noexcept;
+    size_t length() const noexcept override;
 
 private:
     value_type val_;

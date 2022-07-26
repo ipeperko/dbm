@@ -2,9 +2,14 @@
 #define DBM_DB_SETTINGS_H
 
 #include <dbm/dbm.hpp>
+#ifdef DBM_MYSQL
+#include <dbm/drivers/mysql/mysql_session.hpp>
+#endif
+#ifdef DBM_SQLITE3
+#include <dbm/drivers/sqlite/sqlite_session.hpp>
+#endif
 
 namespace dbm {
-class session;
 class mysql_session;
 class sqlite_session;
 }
@@ -20,16 +25,24 @@ public:
     static db_settings& instance();
 
     void init_mysql_session(dbm::mysql_session& session, std::string const& db_name = instance().test_db_name);
-    void init_mysql_session(dbm::session& session, std::string const& db_name = instance().test_db_name);
-
     void init_sqlite_session(dbm::sqlite_session& session);
-    void init_sqlite_session(dbm::session& session);
 
-    std::unique_ptr<dbm::session> get_mysql_session();
-    std::unique_ptr<dbm::session> get_sqlite_session();
+    std::unique_ptr<dbm::mysql_session> get_mysql_session();
+    std::unique_ptr<dbm::sqlite_session> get_sqlite_session();
 
     template<typename DBType>
-    void init_session(dbm::session& s)
+    std::unique_ptr<DBType> get_session()
+    {
+        if constexpr (std::is_same_v<DBType, dbm::mysql_session>) {
+            return get_mysql_session();
+        }
+        else if constexpr (std::is_same_v<DBType, dbm::sqlite_session>) {
+            return get_sqlite_session();
+        }
+    }
+
+    template<typename DBType>
+    void init_session(DBType& s)
     {
         if constexpr (std::is_same_v<DBType, dbm::mysql_session>) {
             init_mysql_session(s);
@@ -59,7 +72,7 @@ struct MakeMySqlSession
     std::shared_ptr<dbm::mysql_session> operator()();
 };
 
-using MySqlPool = dbm::pool<MakeMySqlSession>;
+using MySqlPool = dbm::pool<dbm::mysql_session, MakeMySqlSession>;
 #endif
 
 #ifdef DBM_SQLITE3
@@ -68,7 +81,7 @@ struct MakeSQLiteSession
     std::shared_ptr<dbm::sqlite_session> operator()();
 };
 
-using SQLitePool = dbm::pool<MakeSQLiteSession>;
+using SQLitePool = dbm::pool<dbm::sqlite_session, MakeSQLiteSession>;
 #endif
 
 #endif //DBM_DB_SETTINGS_H
