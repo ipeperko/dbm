@@ -51,7 +51,7 @@ public:
             return { parse_result::null, std::nullopt };
 
         try {
-            auto val = root_.template get<T>(tag); // TODO: add templated get function
+            auto val = it->template get<T>();
             return { parse_result::ok, std::move(val) };
         }
         catch (std::exception& e) {

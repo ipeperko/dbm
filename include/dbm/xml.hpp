@@ -182,6 +182,27 @@ public:
     // @return type: T
     template<typename T>
     typename std::enable_if<not utils::is_string_type<T>::value, T>::type
+    get() const
+    {
+        T val;
+        std::istringstream ss(value_);
+        if (!(ss >> val)) {
+            throw std::domain_error("Conversion failed node " + std::string(tag_));
+        };
+        return val;
+    }
+
+    // @return type: std::string
+    template<typename T>
+    typename std::enable_if<utils::is_string_type<T>::value, std::string>::type
+    get() const
+    {
+        return value_;
+    }
+
+    // @return type: T
+    template<typename T>
+    typename std::enable_if<not utils::is_string_type<T>::value, T>::type
     get(string_view key) const
     {
         T val;
@@ -189,11 +210,7 @@ public:
         if (n == end()) {
             throw std::out_of_range("Cannot find tag " + std::string(key));
         }
-        std::istringstream ss((n)->value());
-        if (!(ss >> val)) {
-            throw std::domain_error("Conversion failed tag: " + std::string(key));
-        };
-        return val;
+        return n->get<T>();
     }
 
     // @return type: std::string
