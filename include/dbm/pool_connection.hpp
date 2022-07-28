@@ -5,26 +5,23 @@
 
 namespace dbm {
 
-template<typename DBSession>
+template<typename DBSession, typename DBSessionRessetter>
 class DBM_EXPORT pool_connection
 {
 public:
     pool_connection() = default;
 
-    pool_connection(std::shared_ptr<DBSession> p, std::function<void(void)>&& resetter)
+    pool_connection(std::shared_ptr<DBSession> p, DBSessionRessetter&& resetter)
         : p_(std::move(p))
         , resetter_(std::move(resetter))
     {
         if (!p_)
             throw_exception("pool connection constructed without session");
-
-        if (!resetter_)
-            throw_exception("pool_connection constructed without resetter");
     }
 
     pool_connection(pool_connection const&) = delete;
 
-    pool_connection(pool_connection&&) = default;
+    pool_connection(pool_connection&&) noexcept = default;
 
     ~pool_connection()
     {
@@ -33,7 +30,7 @@ public:
 
     pool_connection& operator=(pool_connection const&) = delete;
 
-    pool_connection& operator=(pool_connection&&) = default;
+    pool_connection& operator=(pool_connection&&) noexcept = default;
 
     DBSession& get()
     {
@@ -72,16 +69,13 @@ public:
     // releases session from pool
     void release()
     {
-        if (resetter_) {
-            resetter_();
-            resetter_ = nullptr;
-        }
+        resetter_();
         p_ = nullptr;
     }
 
 private:
     std::shared_ptr<DBSession> p_;
-    std::function<void(void)> resetter_;
+    DBSessionRessetter resetter_;
 };
 
 }

@@ -89,11 +89,13 @@ BOOST_AUTO_TEST_CASE(pool_connection_move)
     BOOST_TEST(pool.num_connections() == 0);
 
     {
-        dbm::pool_connection<dbm::mysql_session> conn1;
+        MySqlPool::pool_connection_type conn1;
 
         // Acquire connection and move to conn1
         {
             auto conn2 = pool.acquire();
+            BOOST_TEST(pool.num_connections() == 1);
+            BOOST_TEST(pool.num_active_connections() == 1);
             conn1 = std::move(conn2);
 
             // conn2 has been moved, should throw exception on get
@@ -201,12 +203,12 @@ BOOST_AUTO_TEST_CASE(pool_acquire_order)
     pool.set_max_connections(pool_size);
     pool.set_acquire_timeout(15s);
 
-    std::vector<dbm::pool_connection<dbm::mysql_session>> conn_active;
+    std::vector<MySqlPool::pool_connection_type> conn_active;
     conn_active.reserve(pool_size);
 
     std::vector<std::thread> thr_waiting;
     thr_waiting.reserve(nconn);
-    std::vector<dbm::pool_connection<dbm::mysql_session>> conn_waiting;
+    std::vector<MySqlPool::pool_connection_type> conn_waiting;
     conn_waiting.reserve(nconn);
 
     for (auto i = 0u; i < pool_size; i++) {
