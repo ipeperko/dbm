@@ -33,67 +33,18 @@ DBM_INLINE std::string to_string(pool_event event)
     }
 }
 
-template<typename Pool>
-class DBSessionResetter
-{
-public:
-    DBSessionResetter() = default;
-
-    DBSessionResetter(Pool* p, typename Pool::db_session_type* s)
-        : p_(p)
-        , s_(s)
-    {}
-
-    DBSessionResetter(DBSessionResetter const&) = delete;
-
-    DBSessionResetter(DBSessionResetter&& oth) noexcept
-        : p_(oth.p_)
-        , s_(oth.s_)
-    {
-        oth.p_ = nullptr;
-        oth.s_ = nullptr;
-    }
-
-    DBSessionResetter& operator=(DBSessionResetter const& oth) = delete;
-
-    DBSessionResetter& operator=(DBSessionResetter&& oth) noexcept
-    {
-        if (this != &oth) {
-            p_ = oth.p_;
-            s_ = oth.s_;
-            oth.p_ = nullptr;
-            oth.s_ = nullptr;
-        }
-        return *this;
-    }
-
-    void operator()()
-    {
-        if (p_ && s_) {
-            p_->release(s_);
-            p_ = nullptr;
-            s_ = nullptr;
-        }
-    }
-
-private:
-    Pool* p_ {nullptr};
-    typename Pool::db_session_type* s_ {nullptr};
-};
-
 template<typename DBSession, typename SessionInitializer>
 class DBM_EXPORT pool
 {
-    friend class DBSessionResetter<pool>;
+    friend class pool_connection<pool>;
 public:
 
     using id_t = size_t;
     using EventCallback = std::function<void(pool_event, id_t)>;
     using db_session_type = DBSession;
     using db_session_initializer_type = SessionInitializer;
-    using db_session_resetter_type = DBSessionResetter<pool>;
     using pool_intern_item_type = pool_intern_item<db_session_type>;
-    using pool_connection_type = pool_connection<db_session_type, db_session_resetter_type>;
+    using pool_connection_type = pool_connection<pool>;
 
     struct statistics
     {
@@ -121,7 +72,7 @@ public:
 
     pool(pool&&) = delete;
 
-    virtual ~pool();
+    ~pool();
 
     pool& operator=(pool const&) = delete;
 
@@ -432,7 +383,7 @@ pool<DBSession, SessionInitializer>::make_pool_connection_instance(std::shared_p
 
     send_event(pool_event::acquired, acquire_id);
 
-    return { session, DBSessionResetter<pool>(this, session.get()) };
+    return { *this, session };
 }
 
 template<typename DBSession, typename SessionInitializer>
@@ -619,6 +570,6 @@ void pool<DBSession, SessionInitializer>::send_event(pool_event event, id_t id)
     }
 }
 
-}
+} // namespace dbm
 
 #endif //DBM_POOL_HPP

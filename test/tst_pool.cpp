@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(pool_connection_move)
     BOOST_TEST(pool.num_connections() == 0);
 
     {
-        MySqlPool::pool_connection_type conn1;
+        MySqlPool::pool_connection_type conn1(pool, nullptr);
 
         // Acquire connection and move to conn1
         {
