@@ -117,6 +117,25 @@ BOOST_AUTO_TEST_CASE(pool_connection_move)
     BOOST_TEST(pool.num_idle_connections() == 1);
 }
 
+BOOST_AUTO_TEST_CASE(pool_connection_not_allow_move_across_pools)
+{
+    MySqlPool pool1, pool2;
+    setup_pool(pool1);
+    setup_pool(pool2);
+
+    BOOST_TEST(pool1.num_connections() == 0);
+    BOOST_TEST(pool2.num_connections() == 0);
+
+    auto conn1 = pool1.acquire();
+    BOOST_TEST(pool1.num_connections() == 1);
+    BOOST_TEST(pool2.num_connections() == 0);
+
+    MySqlPool::pool_connection_type conn2(pool2, nullptr);
+    conn2 = std::move(conn1);
+    BOOST_TEST(pool1.num_connections() == 1);
+    BOOST_TEST(pool2.num_connections() == 0);
+}
+
 BOOST_AUTO_TEST_CASE(pool_acquire_timeout_exception)
 {
     MySqlPool pool;

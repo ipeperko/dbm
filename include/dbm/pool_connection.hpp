@@ -38,10 +38,23 @@ public:
     pool_connection& operator=(pool_connection&& oth) noexcept
     {
         if (this != &oth) {
-            if (&pool_ != &oth.pool_)
-                throw_exception("Cannot transfer pool connection across different pools");
+            // release this first
+            try {
+                release();
+            }
+            catch(std::exception&) {}
 
-            session_ = std::move(oth.session_);
+            if (&pool_ == &oth.pool_) {
+                // move is only possible if not the same instance and connections belong to the same pool
+                session_ = std::move(oth.session_);
+            }
+            else {
+                // reset the oth connection
+                try {
+                    oth.release();
+                }
+                catch(std::exception&) {}
+            }
         }
         return *this;
     }

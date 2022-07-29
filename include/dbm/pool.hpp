@@ -228,6 +228,8 @@ private:
 template<typename DBSession, typename SessionInitializer>
 pool<DBSession, SessionInitializer>::~pool()
 {
+    using namespace std::chrono_literals;
+
     debug_log() << "Exit pool begin";
 
     do_run_ = false;
@@ -249,7 +251,7 @@ pool<DBSession, SessionInitializer>::~pool()
 
         lock.unlock();
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(1s);
     }
 
     debug_log() << "Exit pool end";
@@ -437,16 +439,18 @@ void pool<DBSession, SessionInitializer>::release(DBSession* s)
 template<typename DBSession, typename SessionInitializer>
 void pool<DBSession, SessionInitializer>::heartbeat_task()
 {
+    using namespace std::chrono_literals;
+
     using clock_t = typename pool_intern_item_type::clock_t;
 
     // initial sleep
-    std::chrono::milliseconds sleep_time = std::chrono::milliseconds(500);
+    auto sleep_time = 500ms;
 
     while (do_run_) {
 
         std::this_thread::sleep_for(sleep_time);
 
-        if (heartbeat_interval_ == std::chrono::seconds(0))
+        if (heartbeat_interval_ == 0s)
             continue;
 
         // try to lock mutex
@@ -456,9 +460,8 @@ void pool<DBSession, SessionInitializer>::heartbeat_task()
             // find items and perform heartbeat query if necessary
             std::vector<pool_intern_item_type*> items;
 
-            auto heartbeat_candidate = [this, &items]() {
+            auto heartbeat_candidate = [this]() {
                 for (auto it = sessions_idle_.begin(); it != sessions_idle_.end(); ++it) {
-                    auto* s = it->first;
                     if (it->second->state_ == pool_intern_item_type::state::idle && clock_t::now() - it->second->heartbeat_time_ > heartbeat_interval_) {
                         return it;
                     }
@@ -520,12 +523,12 @@ void pool<DBSession, SessionInitializer>::heartbeat_task()
                 release(it->session_.get());
             }
 
-            sleep_time = std::chrono::milliseconds(500);
+            sleep_time = 500ms;
         }
         else {
             // if try lock fails it is likely that pool load is high so we
             // will try later again and adjust sleep time to a lower value
-            sleep_time = std::chrono::milliseconds(100);
+            sleep_time = 100ms;
         }
     }
 }
