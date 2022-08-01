@@ -109,10 +109,6 @@ public:
         set(v);
     }
 
-//    void serialize(serializer& s, std::string_view tag) override;
-//
-//    bool deserialize(deserializer& s, std::string_view tag) override;
-
     kind::data_type type() const noexcept override
     {
         return static_cast<kind::data_type>(kind::detail::variant_index<unreferenced_type>());

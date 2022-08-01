@@ -93,7 +93,7 @@ public:
         return session_ != nullptr;
     }
 
-    // releases session from pool
+    // releases db session
     void release()
     {
         if (session_) {

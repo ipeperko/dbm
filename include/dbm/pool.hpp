@@ -60,6 +60,8 @@ public:
         std::map<long, size_t> acquire_stat;
     };
 
+    static constexpr id_t invalid_id = -1;
+
 
     explicit pool(SessionInitializer&& session_init = SessionInitializer())
         : make_session_(std::move(session_init))
@@ -133,7 +135,7 @@ public:
         stat_ = {};
     }
 
-    statistics stat() const
+    auto stat() const
     {
         statistics s;
         std::shared_lock lock(mtx_); // TODO: locking mutex is not the best way to get stat data
@@ -148,44 +150,42 @@ public:
 
     pool_connection_type acquire();
 
-    size_t num_connections() const
+    auto num_connections() const
     {
         std::shared_lock lock(mtx_);
         return sessions_active_.size() + sessions_idle_.size();
     }
 
-    size_t num_active_connections() const
+    auto num_active_connections() const
     {
         std::shared_lock lock(mtx_);
         return sessions_active_.size();
     }
 
-    size_t num_idle_connections() const
+    auto num_idle_connections() const
     {
         std::shared_lock lock(mtx_);
         return sessions_idle_.size();
     }
 
-    size_t heartbeats_count() const
+    auto heartbeats_count()->size_t const
     {
         return heartbeat_counter_;
     }
 
-    utils::debug_logger debug_log() const
+    auto debug_log() const
     {
         utils::debug_logger l(utils::debug_logger::level::Debug);
         l << "dbm::pool : ";
         return l;
     }
 
-    utils::debug_logger error_log() const
+    auto error_log() const
     {
         utils::debug_logger l(utils::debug_logger::level::Error);
         l << "dbm::pool : ";
         return l;
     }
-
-    static constexpr id_t invalid_id = -1;
 
 private:
     pool_connection_type make_pool_connection_instance(std::shared_ptr<DBSession> const& session, id_t acquire_id, bool remove, typename pool_intern_item_type::clock_t::time_point started);
@@ -215,6 +215,8 @@ private:
     std::atomic<size_t> heartbeat_counter_ {0};
     std::string heartbeat_query_ {"SELECT 1" };
     std::chrono::milliseconds heartbeat_interval_ {5000};
+    std::chrono::milliseconds heartbeat_sleep_time_normal_ {500};
+    std::chrono::milliseconds heartbeat_sleep_time_lower_ {100};
 
     SessionInitializer make_session_;
     EventCallback event_cb_;
@@ -444,7 +446,7 @@ void pool<DBSession, SessionInitializer>::heartbeat_task()
     using clock_t = typename pool_intern_item_type::clock_t;
 
     // initial sleep
-    auto sleep_time = 500ms;
+    auto sleep_time = heartbeat_sleep_time_normal_;
 
     while (do_run_) {
 
@@ -523,12 +525,12 @@ void pool<DBSession, SessionInitializer>::heartbeat_task()
                 release(it->session_.get());
             }
 
-            sleep_time = 500ms;
+            sleep_time = heartbeat_sleep_time_normal_;
         }
         else {
-            // if try lock fails it is likely that pool load is high so we
-            // will try later again and adjust sleep time to a lower value
-            sleep_time = 100ms;
+            // if try lock fails, it is likely that the pool load is high at the moment,
+            // so we will try again later and adjust the sleep time to a lower value
+            sleep_time = heartbeat_sleep_time_lower_;
         }
     }
 }

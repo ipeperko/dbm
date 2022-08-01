@@ -22,8 +22,8 @@ public:
 
     explicit pool_intern_item(std::shared_ptr<DBSession>&& s)
         : session_(std::move(s))
+        , state_(state::active)
     {
-        state_ = state::active;
     }
 
     state state_ {state::idle};
@@ -31,6 +31,6 @@ public:
     clock_t::time_point heartbeat_time_;
 };
 
-}
+} // namespace dbm
 
 #endif //DBM_POOL_INTERN_ITEM_HPP
