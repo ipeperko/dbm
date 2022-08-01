@@ -36,12 +36,15 @@ DBM_INLINE std::string to_string(pool_event event)
 template<typename DBSession, typename SessionInitializer>
 class DBM_EXPORT pool
 {
+    friend class pool_connection<pool>;
 public:
 
     using id_t = size_t;
     using EventCallback = std::function<void(pool_event, id_t)>;
-    using pool_intern_item_type = pool_intern_item<DBSession>;
-    using pool_connection_type = pool_connection<DBSession>;
+    using db_session_type = DBSession;
+    using db_session_initializer_type = SessionInitializer;
+    using pool_intern_item_type = pool_intern_item<db_session_type>;
+    using pool_connection_type = pool_connection<pool>;
 
     struct statistics
     {
@@ -57,6 +60,8 @@ public:
         std::map<long, size_t> acquire_stat;
     };
 
+    static constexpr id_t invalid_id = -1;
+
 
     explicit pool(SessionInitializer&& session_init = SessionInitializer())
         : make_session_(std::move(session_init))
@@ -69,7 +74,7 @@ public:
 
     pool(pool&&) = delete;
 
-    virtual ~pool();
+    ~pool();
 
     pool& operator=(pool const&) = delete;
 
@@ -130,7 +135,7 @@ public:
         stat_ = {};
     }
 
-    statistics stat() const
+    auto stat() const
     {
         statistics s;
         std::shared_lock lock(mtx_); // TODO: locking mutex is not the best way to get stat data
@@ -145,44 +150,42 @@ public:
 
     pool_connection_type acquire();
 
-    size_t num_connections() const
+    auto num_connections() const
     {
         std::shared_lock lock(mtx_);
         return sessions_active_.size() + sessions_idle_.size();
     }
 
-    size_t num_active_connections() const
+    auto num_active_connections() const
     {
         std::shared_lock lock(mtx_);
         return sessions_active_.size();
     }
 
-    size_t num_idle_connections() const
+    auto num_idle_connections() const
     {
         std::shared_lock lock(mtx_);
         return sessions_idle_.size();
     }
 
-    size_t heartbeats_count() const
+    auto heartbeats_count()->size_t const
     {
         return heartbeat_counter_;
     }
 
-    utils::debug_logger debug_log() const
+    auto debug_log() const
     {
         utils::debug_logger l(utils::debug_logger::level::Debug);
         l << "dbm::pool : ";
         return l;
     }
 
-    utils::debug_logger error_log() const
+    auto error_log() const
     {
         utils::debug_logger l(utils::debug_logger::level::Error);
         l << "dbm::pool : ";
         return l;
     }
-
-    static constexpr id_t invalid_id = -1;
 
 private:
     pool_connection_type make_pool_connection_instance(std::shared_ptr<DBSession> const& session, id_t acquire_id, bool remove, typename pool_intern_item_type::clock_t::time_point started);
@@ -212,6 +215,8 @@ private:
     std::atomic<size_t> heartbeat_counter_ {0};
     std::string heartbeat_query_ {"SELECT 1" };
     std::chrono::milliseconds heartbeat_interval_ {5000};
+    std::chrono::milliseconds heartbeat_sleep_time_normal_ {500};
+    std::chrono::milliseconds heartbeat_sleep_time_lower_ {100};
 
     SessionInitializer make_session_;
     EventCallback event_cb_;
@@ -225,6 +230,8 @@ private:
 template<typename DBSession, typename SessionInitializer>
 pool<DBSession, SessionInitializer>::~pool()
 {
+    using namespace std::chrono_literals;
+
     debug_log() << "Exit pool begin";
 
     do_run_ = false;
@@ -246,7 +253,7 @@ pool<DBSession, SessionInitializer>::~pool()
 
         lock.unlock();
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(1s);
     }
 
     debug_log() << "Exit pool end";
@@ -380,9 +387,7 @@ pool<DBSession, SessionInitializer>::make_pool_connection_instance(std::shared_p
 
     send_event(pool_event::acquired, acquire_id);
 
-    return { session, [this, ptr = session.get()]() {
-                release(ptr);
-            }};
+    return { *this, session };
 }
 
 template<typename DBSession, typename SessionInitializer>
@@ -436,16 +441,18 @@ void pool<DBSession, SessionInitializer>::release(DBSession* s)
 template<typename DBSession, typename SessionInitializer>
 void pool<DBSession, SessionInitializer>::heartbeat_task()
 {
+    using namespace std::chrono_literals;
+
     using clock_t = typename pool_intern_item_type::clock_t;
 
     // initial sleep
-    std::chrono::milliseconds sleep_time = std::chrono::milliseconds(500);
+    auto sleep_time = heartbeat_sleep_time_normal_;
 
     while (do_run_) {
 
         std::this_thread::sleep_for(sleep_time);
 
-        if (heartbeat_interval_ == std::chrono::seconds(0))
+        if (heartbeat_interval_ == 0s)
             continue;
 
         // try to lock mutex
@@ -455,9 +462,8 @@ void pool<DBSession, SessionInitializer>::heartbeat_task()
             // find items and perform heartbeat query if necessary
             std::vector<pool_intern_item_type*> items;
 
-            auto heartbeat_candidate = [this, &items]() {
+            auto heartbeat_candidate = [this]() {
                 for (auto it = sessions_idle_.begin(); it != sessions_idle_.end(); ++it) {
-                    auto* s = it->first;
                     if (it->second->state_ == pool_intern_item_type::state::idle && clock_t::now() - it->second->heartbeat_time_ > heartbeat_interval_) {
                         return it;
                     }
@@ -519,12 +525,12 @@ void pool<DBSession, SessionInitializer>::heartbeat_task()
                 release(it->session_.get());
             }
 
-            sleep_time = std::chrono::milliseconds(500);
+            sleep_time = heartbeat_sleep_time_normal_;
         }
         else {
-            // if try lock fails it is likely that pool load is high so we
-            // will try later again and adjust sleep time to a lower value
-            sleep_time = std::chrono::milliseconds(100);
+            // if try lock fails, it is likely that the pool load is high at the moment,
+            // so we will try again later and adjust the sleep time to a lower value
+            sleep_time = heartbeat_sleep_time_lower_;
         }
     }
 }
@@ -569,6 +575,6 @@ void pool<DBSession, SessionInitializer>::send_event(pool_event event, id_t id)
     }
 }
 
-}
+} // namespace dbm
 
 #endif //DBM_POOL_HPP

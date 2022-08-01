@@ -14,8 +14,8 @@ struct serializer_base_tag
 template<typename Derived>
 struct serializer : public serializer_base_tag
 {
-    auto& self() { return static_cast<Derived&>(*this); }
-    auto const& self() const { return static_cast<Derived const&>(*this); }
+    constexpr auto& self() { return static_cast<Derived&>(*this); }
+    constexpr auto const& self() const { return static_cast<Derived const&>(*this); }
 
     template<typename = void>
     model& operator>>(model& m);

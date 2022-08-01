@@ -5,26 +5,28 @@
 
 namespace dbm {
 
-template<typename DBSession>
+template<typename PoolType>
 class DBM_EXPORT pool_connection
 {
 public:
-    pool_connection() = default;
+    using pool_type = PoolType;
+    using db_session_type = typename PoolType::db_session_type;
 
-    pool_connection(std::shared_ptr<DBSession> p, std::function<void(void)>&& resetter)
-        : p_(std::move(p))
-        , resetter_(std::move(resetter))
+    pool_connection() = delete;
+
+    pool_connection(pool_type& pool, std::shared_ptr<db_session_type> p)
+        : pool_(pool)
+        , session_(std::move(p))
     {
-        if (!p_)
-            throw_exception("pool connection constructed without session");
-
-        if (!resetter_)
-            throw_exception("pool_connection constructed without resetter");
     }
 
     pool_connection(pool_connection const&) = delete;
 
-    pool_connection(pool_connection&&) = default;
+    pool_connection(pool_connection&& oth) noexcept
+        : pool_(oth.pool_)
+        , session_(std::move(oth.session_))
+    {
+    }
 
     ~pool_connection()
     {
@@ -33,57 +35,78 @@ public:
 
     pool_connection& operator=(pool_connection const&) = delete;
 
-    pool_connection& operator=(pool_connection&&) = default;
-
-    DBSession& get()
+    pool_connection& operator=(pool_connection&& oth) noexcept
     {
-        if (!p_)
-            throw_exception("pool_connection::get session is null");
-        return *p_;
+        if (this != &oth) {
+            // release this first
+            try {
+                release();
+            }
+            catch(std::exception&) {}
+
+            if (&pool_ == &oth.pool_) {
+                // move is only possible if not the same instance and connections belong to the same pool
+                session_ = std::move(oth.session_);
+            }
+            else {
+                // reset the oth connection
+                try {
+                    oth.release();
+                }
+                catch(std::exception&) {}
+            }
+        }
+        return *this;
     }
 
-    DBSession const& get() const
+    db_session_type& get()
     {
-        if (!p_)
+        if (!session_)
             throw_exception("pool_connection::get session is null");
-        return *p_;
+        return *session_;
     }
 
-    DBSession& operator*()
+    db_session_type const& get() const
+    {
+        if (!session_)
+            throw_exception("pool_connection::get session is null");
+        return *session_;
+    }
+
+    db_session_type& operator*()
     {
         return get();
     }
 
-    DBSession const& operator*() const
+    db_session_type const& operator*() const
     {
         return get();
     }
 
     bool is_valid() const
     {
-        return p_ != nullptr;
+        return session_ != nullptr;
     }
 
     operator bool() const
     {
-        return p_ != nullptr;
+        return session_ != nullptr;
     }
 
-    // releases session from pool
+    // releases db session
     void release()
     {
-        if (resetter_) {
-            resetter_();
-            resetter_ = nullptr;
+        if (session_) {
+            pool_.release(session_.get());
+            session_ = nullptr;
         }
-        p_ = nullptr;
     }
 
 private:
-    std::shared_ptr<DBSession> p_;
-    std::function<void(void)> resetter_;
+    pool_type& pool_;
+    std::shared_ptr<db_session_type> session_;
 };
 
-}
+} // namespace dbm
 
 #endif //DBM_POOL_CONNECTION_HPP
