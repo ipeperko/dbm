@@ -12,6 +12,7 @@ add_executable(${BINARY}
 
     # tests
     tst_basic_types.cpp
+    tst_injected_stmt.cpp
     tst_limits.cpp
     tst_model.cpp
     tst_mysql_pool_multi.cpp
