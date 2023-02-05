@@ -30,7 +30,10 @@ public:
 
     ~pool_connection()
     {
-        release();
+        try {
+            release();
+        }
+        catch(std::exception&) {}
     }
 
     pool_connection& operator=(pool_connection const&) = delete;
